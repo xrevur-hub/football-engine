@@ -1,0 +1,267 @@
+
+=== RESULTS: 172 passed, 6 failed, 178 total ===
+
+FAIL: tests.test_data_layer.test_seed_dataset_every_roster_resolves
+DatasetFileError: Dataset file not found: "/vercel/sandbox/data/football_project/data/normalized/players/player_seasons.json"
+Traceback (most recent call last):
+  File "/vercel/sandbox/data/football_project/run_tests_shim.py", line 75, in _run_one
+    thunk()
+    ~~~~~^^
+  File "/vercel/sandbox/data/football_project/run_tests_shim.py", line 70, in <lambda>
+    _run_one(full_name, lambda f=obj: call_with_fixtures(f), results)
+                                      ~~~~~~~~~~~~~~~~~~^^^
+  File "/vercel/sandbox/data/football_project/run_tests_shim.py", line 56, in call_with_fixtures
+    func(**kwargs)
+    ~~~~^^^^^^^^^^
+football_engine.data_layer.exceptions.DatasetFileError: Dataset file not found: "/vercel/sandbox/data/football_project/data/normalized/players/player_seasons.json"
+
+------------------------------------------------------------
+FAIL: tests.test_data_layer.test_seed_dataset_has_zero_production_ready_teams
+DatasetFileError: Dataset file not found: "/vercel/sandbox/data/football_project/data/normalized/players/player_seasons.json"
+Traceback (most recent call last):
+  File "/vercel/sandbox/data/football_project/run_tests_shim.py", line 75, in _run_one
+    thunk()
+    ~~~~~^^
+  File "/vercel/sandbox/data/football_project/run_tests_shim.py", line 70, in <lambda>
+    _run_one(full_name, lambda f=obj: call_with_fixtures(f), results)
+                                      ~~~~~~~~~~~~~~~~~~^^^
+  File "/vercel/sandbox/data/football_project/run_tests_shim.py", line 56, in call_with_fixtures
+    func(**kwargs)
+    ~~~~^^^^^^^^^^
+football_engine.data_layer.exceptions.DatasetFileError: Dataset file not found: "/vercel/sandbox/data/football_project/data/normalized/players/player_seasons.json"
+
+------------------------------------------------------------
+FAIL: tests.test_data_layer.test_seed_dataset_loads_completely
+DatasetFileError: Dataset file not found: "/vercel/sandbox/data/football_project/data/normalized/players/player_seasons.json"
+Traceback (most recent call last):
+  File "/vercel/sandbox/data/football_project/run_tests_shim.py", line 75, in _run_one
+    thunk()
+    ~~~~~^^
+  File "/vercel/sandbox/data/football_project/run_tests_shim.py", line 70, in <lambda>
+    _run_one(full_name, lambda f=obj: call_with_fixtures(f), results)
+                                      ~~~~~~~~~~~~~~~~~~^^^
+  File "/vercel/sandbox/data/football_project/run_tests_shim.py", line 56, in call_with_fixtures
+    func(**kwargs)
+    ~~~~^^^^^^^^^^
+football_engine.data_layer.exceptions.DatasetFileError: Dataset file not found: "/vercel/sandbox/data/football_project/data/normalized/players/player_seasons.json"
+
+------------------------------------------------------------
+FAIL: tests.test_data_layer.test_seed_dataset_no_duplicate_team_ids
+DatasetFileError: Dataset file not found: "/vercel/sandbox/data/football_project/data/normalized/players/player_seasons.json"
+Traceback (most recent call last):
+  File "/vercel/sandbox/data/football_project/run_tests_shim.py", line 75, in _run_one
+    thunk()
+    ~~~~~^^
+  File "/vercel/sandbox/data/football_project/run_tests_shim.py", line 70, in <lambda>
+    _run_one(full_name, lambda f=obj: call_with_fixtures(f), results)
+                                      ~~~~~~~~~~~~~~~~~~^^^
+  File "/vercel/sandbox/data/football_project/run_tests_shim.py", line 56, in call_with_fixtures
+    func(**kwargs)
+    ~~~~^^^^^^^^^^
+football_engine.data_layer.exceptions.DatasetFileError: Dataset file not found: "/vercel/sandbox/data/football_project/data/normalized/players/player_seasons.json"
+
+------------------------------------------------------------
+FAIL: tests.test_data_layer.test_seed_dataset_schema_versions_are_supported
+DatasetFileError: Dataset file not found: "/vercel/sandbox/data/football_project/data/normalized/players/player_seasons.json"
+Traceback (most recent call last):
+  File "/vercel/sandbox/data/football_project/run_tests_shim.py", line 75, in _run_one
+    thunk()
+    ~~~~~^^
+  File "/vercel/sandbox/data/football_project/run_tests_shim.py", line 70, in <lambda>
+    _run_one(full_name, lambda f=obj: call_with_fixtures(f), results)
+                                      ~~~~~~~~~~~~~~~~~~^^^
+  File "/vercel/sandbox/data/football_project/run_tests_shim.py", line 56, in call_with_fixtures
+    func(**kwargs)
+    ~~~~^^^^^^^^^^
+football_engine.data_layer.exceptions.DatasetFileError: Dataset file not found: "/vercel/sandbox/data/football_project/data/normalized/players/player_seasons.json"
+
+------------------------------------------------------------
+FAIL: tests.test_data_layer.test_seed_dataset_tier_coverage
+DatasetFileError: Dataset file not found: "/vercel/sandbox/data/football_project/data/normalized/players/player_seasons.json"
+Traceback (most recent call last):
+  File "/vercel/sandbox/data/football_project/run_tests_shim.py", line 75, in _run_one
+    thunk()
+    ~~~~~^^
+  File "/vercel/sandbox/data/football_project/run_tests_shim.py", line 70, in <lambda>
+    _run_one(full_name, lambda f=obj: call_with_fixtures(f), results)
+                                      ~~~~~~~~~~~~~~~~~~^^^
+  File "/vercel/sandbox/data/football_project/run_tests_shim.py", line 56, in call_with_fixtures
+    func(**kwargs)
+    ~~~~^^^^^^^^^^
+football_engine.data_layer.exceptions.DatasetFileError: Dataset file not found: "/vercel/sandbox/data/football_project/data/normalized/players/player_seasons.json"
+
+------------------------------------------------------------
+
+Passed tests:
+  PASS: tests.test_data_layer.test_duplicate_player_id_rejected
+  PASS: tests.test_data_layer.test_duplicate_roster_entry_rejected
+  PASS: tests.test_data_layer.test_formation_duplicate_slot_id_rejected
+  PASS: tests.test_data_layer.test_formation_wrong_slot_count_rejected
+  PASS: tests.test_data_layer.test_gk_ability_role_mismatch_rejected
+  PASS: tests.test_data_layer.test_historical_prior_unknown_team_rejected
+  PASS: tests.test_data_layer.test_historical_prior_valid_loads
+  PASS: tests.test_data_layer.test_invalid_default_formation_reference_rejected
+  PASS: tests.test_data_layer.test_invalid_player_attribute_rejected
+  PASS: tests.test_data_layer.test_invalid_season_format_rejected
+  PASS: tests.test_data_layer.test_malformed_json_raises_dataset_file_error
+  PASS: tests.test_data_layer.test_missing_file_raises_dataset_file_error
+  PASS: tests.test_data_layer.test_missing_roster_reference_rejected
+  PASS: tests.test_data_layer.test_new_team_can_be_added_via_data_only
+  PASS: tests.test_data_layer.test_non_placeholder_requires_source
+  PASS: tests.test_data_layer.test_placeholder_metadata_requires_confidence_zero_and_null_source
+  PASS: tests.test_data_layer.test_player_repository_excludes_placeholders_by_default
+  PASS: tests.test_data_layer.test_production_ready_requires_team_and_roster_both_non_placeholder
+  PASS: tests.test_data_layer.test_repository_lookup_works
+  PASS: tests.test_data_layer.test_team_repository_excludes_placeholders_by_default
+  PASS: tests.test_data_layer.test_tier3_alpha_must_be_one
+  PASS: tests.test_data_layer.test_tier3_alpha_one_is_accepted
+  PASS: tests.test_data_layer.test_unsupported_schema_version_rejected
+  PASS: tests.test_data_layer.test_valid_formation_loads
+  PASS: tests.test_data_layer.test_valid_player_season_loads
+  PASS: tests.test_data_layer.test_valid_team_season_loads
+  PASS: tests.test_formation_slot_geometry.TestEveryFormationSlotHasExplicitSideDepth.test_standard_formation_slots_all_have_side_and_depth
+  PASS: tests.test_formation_slot_geometry.TestFormationEngineDoesNotParseSlotId.test_source_does_not_string_match_on_slot_id
+  PASS: tests.test_formation_slot_geometry.TestFormationEngineDoesNotParseSlotId.test_validation_behavior_identical_regardless_of_slot_id_spelling
+  PASS: tests.test_formation_slot_geometry.TestInvalidOrMissingSideDepthIsRejected.test_invalid_depth_value_is_rejected
+  PASS: tests.test_formation_slot_geometry.TestInvalidOrMissingSideDepthIsRejected.test_invalid_side_value_is_rejected
+  PASS: tests.test_formation_slot_geometry.TestInvalidOrMissingSideDepthIsRejected.test_missing_depth_is_rejected
+  PASS: tests.test_formation_slot_geometry.TestInvalidOrMissingSideDepthIsRejected.test_missing_side_is_rejected
+  PASS: tests.test_formation_slot_geometry.TestSlotIdRenamingDoesNotAlterStructuralSemantics.test_renaming_slot_id_preserves_side_and_depth
+  PASS: tests.test_layer3_architecture_reference.TestLayer3ArchitectureReference.test_missing_helpers_remain_a_real_error_not_a_reference_fallback
+  PASS: tests.test_layer3_architecture_reference.TestLayer3ArchitectureReference.test_reference_does_not_claim_full_reproduction
+  PASS: tests.test_layer3_architecture_reference.TestLayer3ArchitectureReference.test_reported_base_and_creation_to_adjusted_base
+  PASS: tests.test_layer3_architecture_reference.TestLayer3ArchitectureReference.test_reported_m_and_t_to_lambda_base
+  PASS: tests.test_layer3_architecture_reference.TestLayer3ArchitectureReference.test_reported_possession_to_creation_realization
+  PASS: tests.test_layer3_boundaries.TestLayer3ImportAndStateBoundaries.test_lambda_reads_only_context_flags_and_form_from_runtime
+  PASS: tests.test_layer3_boundaries.TestLayer3ImportAndStateBoundaries.test_new_tests_never_call_layer2_derivations
+  PASS: tests.test_layer3_boundaries.TestLayer3ImportAndStateBoundaries.test_no_attribute_or_subscript_mutation_in_production
+  PASS: tests.test_layer3_boundaries.TestLayer3ImportAndStateBoundaries.test_no_forbidden_production_imports
+  PASS: tests.test_layer3_boundaries.TestLayer3ImportAndStateBoundaries.test_no_formation_classification_or_quality_weight_reads
+  PASS: tests.test_layer3_boundaries.TestLayer3ImportAndStateBoundaries.test_no_rng_probability_event_calls_or_production_io
+  PASS: tests.test_layer3_boundaries.TestLayer3ImportAndStateBoundaries.test_runtime_model_import_is_confined_to_lambda_calculator
+  PASS: tests.test_layer3_boundaries.TestLayer3ImportAndStateBoundaries.test_transition_threat_reads_only_authorized_tactical_fields
+  PASS: tests.test_layer3_boundaries.TestLayer3SinglePathRouting.test_attack_pace_affects_t_only
+  PASS: tests.test_layer3_boundaries.TestLayer3SinglePathRouting.test_attacker_build_up_control_affects_m_only
+  PASS: tests.test_layer3_boundaries.TestLayer3SinglePathRouting.test_defender_cover_affects_t_only
+  PASS: tests.test_layer3_boundaries.TestLayer3SinglePathRouting.test_defender_press_quality_affects_m_only
+  PASS: tests.test_layer3_boundaries.TestLayer3SinglePathRouting.test_direction_ignores_other_direction_only_fields
+  PASS: tests.test_layer3_boundaries.TestLayer3SinglePathRouting.test_high_defender_line_affects_t_only
+  PASS: tests.test_layer3_boundaries.TestLayer3SinglePathRouting.test_home_advantage_form_and_unused_kt_are_absent_from_matchup
+  PASS: tests.test_layer3_boundaries.TestLayer3SinglePathRouting.test_no_direct_width_field_path_besides_supplied_mismatch
+  PASS: tests.test_layer3_boundaries.TestLayer3SinglePathRouting.test_possession_has_only_creation_realization_path
+  PASS: tests.test_layer3_boundaries.TestLayer3SinglePathRouting.test_press_disruption_affects_m_only
+  PASS: tests.test_layer3_boundaries.TestLayer3SinglePathRouting.test_press_transition_opportunity_affects_t_only
+  PASS: tests.test_layer3_boundaries.TestLayer3SinglePathRouting.test_tempo_affects_m_only
+  PASS: tests.test_layer3_boundaries.TestLayer3SinglePathRouting.test_transition_tendency_affects_t_only
+  PASS: tests.test_layer3_boundaries.TestLayer3SinglePathRouting.test_two_press_helpers_are_not_aliased_or_reused
+  PASS: tests.test_layer3_boundaries.TestLayer3SinglePathRouting.test_width_mismatch_affects_m_only
+  PASS: tests.test_layer3_lambda.TestLayer3LambdaContext.test_exact_standalone_final_rates
+  PASS: tests.test_layer3_lambda.TestLayer3LambdaContext.test_exact_tournament_final_rates
+  PASS: tests.test_layer3_lambda.TestLayer3LambdaContext.test_inconsistent_home_away_flags_are_rejected
+  PASS: tests.test_layer3_lambda.TestLayer3LambdaContext.test_no_probability_or_duration_scaling_in_output
+  PASS: tests.test_layer3_lambda.TestLayer3LambdaContext.test_no_v2_red_card_modifier_or_player_count_factor
+  PASS: tests.test_layer3_lambda.TestLayer3LambdaContext.test_repeated_execution_is_deterministic
+  PASS: tests.test_layer3_lambda.TestLayer3LambdaContext.test_runtime_and_matchup_inputs_are_not_mutated
+  PASS: tests.test_layer3_lambda.TestLayer3LambdaContext.test_varying_k_form_does_not_recompute_precomputed_tournament_form
+  PASS: tests.test_layer3_lambda.TestLayer3LambdaFormulae.test_base_uses_parameter_set_not_hardcoded_priors
+  PASS: tests.test_layer3_lambda.TestLayer3LambdaFormulae.test_exact_form_factor_clamp_boundaries
+  PASS: tests.test_layer3_lambda.TestLayer3LambdaFormulae.test_exact_form_factor_linear_region
+  PASS: tests.test_layer3_lambda.TestLayer3LambdaFormulae.test_exact_home_and_away_multipliers
+  PASS: tests.test_layer3_lambda.TestLayer3LambdaFormulae.test_exact_lambda_base
+  PASS: tests.test_layer3_lambda.TestLayer3LambdaFormulae.test_form_bounds_are_explicit_layer3_configuration
+  PASS: tests.test_layer3_lambda.TestLayer3LambdaFormulae.test_form_uses_existing_k_form_parameter
+  PASS: tests.test_layer3_lambda.TestLayer3LambdaFormulae.test_home_and_away_multipliers_are_configurable
+  PASS: tests.test_layer3_lambda.TestLayer3LambdaFormulae.test_home_context_requires_bool
+  PASS: tests.test_layer3_lambda.TestLayer3LambdaFormulae.test_invalid_tournament_form_not_repaired
+  PASS: tests.test_layer3_lambda.TestLayer3LambdaFormulae.test_layer3_coefficient_validation
+  PASS: tests.test_layer3_lambda.TestLayer3LambdaFormulae.test_negative_or_nonfinite_rates_rejected
+  PASS: tests.test_layer3_lambda.TestLayer3LambdaFormulae.test_nonfinite_recent_performance_index_rejected
+  PASS: tests.test_layer3_lambda.TestLayer3LambdaFormulae.test_standalone_form_is_exactly_one_regardless_of_stored_value
+  PASS: tests.test_layer3_lambda.TestLayer3LambdaFormulae.test_tournament_context_requires_explicit_bool
+  PASS: tests.test_layer3_lambda.TestLayer3LambdaFormulae.test_tournament_reads_precomputed_form_without_reapplying_formula
+  PASS: tests.test_layer3_lambda.TestLayer3LambdaFormulae.test_transition_is_not_scaled_by_baseline
+  PASS: tests.test_layer3_lambda.TestLayer3LambdaFormulae.test_zero_m_and_t_gives_zero_lambda
+  PASS: tests.test_layer3_matchup.TestLayer3MatchupComposition.test_deterministic_repeated_execution
+  PASS: tests.test_layer3_matchup.TestLayer3MatchupComposition.test_full_direction_matches_independent_hand_calculation
+  PASS: tests.test_layer3_matchup.TestLayer3MatchupComposition.test_helper_and_engine_configuration_are_frozen
+  PASS: tests.test_layer3_matchup.TestLayer3MatchupComposition.test_helper_fields_have_no_defaults
+  PASS: tests.test_layer3_matchup.TestLayer3MatchupComposition.test_missing_helpers_are_explicit_specification_gap
+  PASS: tests.test_layer3_matchup.TestLayer3MatchupComposition.test_missing_reverse_helpers_are_not_copied_from_forward
+  PASS: tests.test_layer3_matchup.TestLayer3MatchupComposition.test_nonfinite_helper_values_rejected
+  PASS: tests.test_layer3_matchup.TestLayer3MatchupComposition.test_swapping_sides_swaps_outputs_without_home_advantage
+  PASS: tests.test_layer3_matchup.TestLayer3MatchupComposition.test_two_directions_use_distinct_inputs_and_helpers
+  PASS: tests.test_layer3_matchup.TestLayer3MatchupComposition.test_upstream_inputs_and_configuration_are_not_mutated
+  PASS: tests.test_layer3_matchup.TestLayer3SpecifiedFormulae.test_coefficients_are_explicit_configuration_not_literals
+  PASS: tests.test_layer3_matchup.TestLayer3SpecifiedFormulae.test_creation_realization_rejects_invalid_share
+  PASS: tests.test_layer3_matchup.TestLayer3SpecifiedFormulae.test_distinct_attack_defense_anchors_are_not_cancelled
+  PASS: tests.test_layer3_matchup.TestLayer3SpecifiedFormulae.test_exact_adjusted_base
+  PASS: tests.test_layer3_matchup.TestLayer3SpecifiedFormulae.test_exact_base_relative_strength
+  PASS: tests.test_layer3_matchup.TestLayer3SpecifiedFormulae.test_exact_creation_factor
+  PASS: tests.test_layer3_matchup.TestLayer3SpecifiedFormulae.test_exact_creation_realization
+  PASS: tests.test_layer3_matchup.TestLayer3SpecifiedFormulae.test_exact_gk_factor
+  PASS: tests.test_layer3_matchup.TestLayer3SpecifiedFormulae.test_exact_organized_attack_product
+  PASS: tests.test_layer3_matchup.TestLayer3SpecifiedFormulae.test_exact_possession_share_uses_final_fields
+  PASS: tests.test_layer3_matchup.TestLayer3SpecifiedFormulae.test_exact_press_interaction
+  PASS: tests.test_layer3_matchup.TestLayer3SpecifiedFormulae.test_exact_sigmoid
+  PASS: tests.test_layer3_matchup.TestLayer3SpecifiedFormulae.test_exact_space_behind_defense
+  PASS: tests.test_layer3_matchup.TestLayer3SpecifiedFormulae.test_exact_tempo_interaction
+  PASS: tests.test_layer3_matchup.TestLayer3SpecifiedFormulae.test_exact_transition_threat
+  PASS: tests.test_layer3_matchup.TestLayer3SpecifiedFormulae.test_exact_width_interaction
+  PASS: tests.test_layer3_matchup.TestLayer3SpecifiedFormulae.test_keeper_at_anchor_has_factor_one
+  PASS: tests.test_layer3_matchup.TestLayer3SpecifiedFormulae.test_negative_gk_result_not_clamped
+  PASS: tests.test_layer3_matchup.TestLayer3SpecifiedFormulae.test_negative_interaction_rejected_without_clamp
+  PASS: tests.test_layer3_matchup.TestLayer3SpecifiedFormulae.test_negative_transition_result_rejected
+  PASS: tests.test_layer3_matchup.TestLayer3SpecifiedFormulae.test_nonfinite_anchor_rejected
+  PASS: tests.test_layer3_matchup.TestLayer3SpecifiedFormulae.test_parameter_set_knobs_are_actually_consumed
+  PASS: tests.test_layer3_matchup.TestLayer3SpecifiedFormulae.test_possession_directions_are_not_forced_complements
+  PASS: tests.test_layer3_matchup.TestLayer3SpecifiedFormulae.test_sigmoid_extremes_do_not_overflow
+  PASS: tests.test_layer3_matchup.TestLayer3SpecifiedFormulae.test_sigmoid_nonfinite_or_non_numeric_rejected
+  PASS: tests.test_layer3_matchup.TestLayer3SpecifiedFormulae.test_space_zero_at_zero_line_or_full_cover
+  PASS: tests.test_layer3_matchup.TestLayer3SpecifiedFormulae.test_transition_second_term_is_independent_of_space
+  PASS: tests.test_layer3_matchup.TestLayer3SpecifiedFormulae.test_weaker_keeper_increases_relative_factor
+  PASS: tests.test_layer3_matchup.TestLayer3SpecifiedFormulae.test_zero_attack_gives_zero_base
+  PASS: tests.test_layer3_matchup.TestLayer3SpecifiedFormulae.test_zero_defense_fails_without_epsilon
+  PASS: tests.test_layer3_matchup.TestLayer3SpecifiedFormulae.test_zero_or_negative_global_anchors_rejected
+  PASS: tests.test_layer3_matchup.TestLayer3SpecifiedFormulae.test_zero_pace_zeroes_space_term_only
+  PASS: tests.test_layer3_matchup.TestLayer3SpecifiedFormulae.test_zero_transition_tendency_zeroes_both_terms
+  PASS: tests.test_layer3_pipeline.TestLayer3ManualFixturePipeline.test_form_changes_only_final_lambda_not_matchup
+  PASS: tests.test_layer3_pipeline.TestLayer3ManualFixturePipeline.test_full_layer3_chain_matches_independent_arithmetic
+  PASS: tests.test_layer3_pipeline.TestLayer3ManualFixturePipeline.test_home_advantage_changes_only_final_lambda
+  PASS: tests.test_layer3_pipeline.TestLayer3ManualFixturePipeline.test_repeated_fixture_chain_has_identical_serialization
+  PASS: tests.test_layer3_tactical.TestLayer3TacticalBoundary.test_all_nine_profile_fields_are_retained
+  PASS: tests.test_layer3_tactical.TestLayer3TacticalBoundary.test_explicit_fixture_profiles_support_each_state_without_inferred_adjustments
+  PASS: tests.test_layer3_tactical.TestLayer3TacticalBoundary.test_identity_schema_is_not_overloaded_with_structural_fields
+  PASS: tests.test_layer3_tactical.TestLayer3TacticalBoundary.test_input_immutability_and_deterministic_repetition
+  PASS: tests.test_layer3_tactical.TestLayer3TacticalBoundary.test_invalid_boundary_input_types_rejected
+  PASS: tests.test_layer3_tactical.TestLayer3TacticalBoundary.test_legacy_type_and_formation_name_have_no_generator_effect
+  PASS: tests.test_layer3_tactical.TestLayer3TacticalBoundary.test_missing_baseline_composition_is_explicit
+  PASS: tests.test_layer3_tactical.TestLayer3TacticalBoundary.test_no_default_state_equation_for_any_match_state
+  PASS: tests.test_layer3_tactical.TestLayer3TacticalBoundary.test_policy_output_is_validated_even_after_model_construct
+  PASS: tests.test_layer3_tactical.TestLayer3TacticalBoundary.test_policy_receives_identity_structure_and_state_separately
+  PASS: tests.test_layer3_tactical.TestLayer3TacticalBoundary.test_wrong_policy_return_type_rejected
+  PASS: tests.test_team_model.TestDependencyBoundaries.test_no_module_in_team_model_mutates_runtime_state
+  PASS: tests.test_team_model.TestDependencyBoundaries.test_no_module_in_team_model_uses_randomness
+  PASS: tests.test_team_model.TestDependencyBoundaries.test_team_dimension_engine_module_has_no_formation_import
+  PASS: tests.test_team_model.TestDependencyBoundaries.test_team_identity_engine_module_has_no_formation_import
+  PASS: tests.test_team_model.TestFormationEngineContract.test_deterministic_failure
+  PASS: tests.test_team_model.TestFormationEngineContract.test_duplicate_player_id_rejected
+  PASS: tests.test_team_model.TestFormationEngineContract.test_role_count_mismatch_rejected
+  PASS: tests.test_team_model.TestFormationEngineContract.test_valid_input_reaches_not_implemented
+  PASS: tests.test_team_model.TestFormationEngineContract.test_wrong_squad_size_rejected_before_not_implemented
+  PASS: tests.test_team_model.TestHistoricalPriorBlendWiring.test_dimensions_blend_is_noop_for_tier3_or_none
+  PASS: tests.test_team_model.TestHistoricalPriorBlendWiring.test_identity_blend_applies_tier1_prior
+  PASS: tests.test_team_model.TestHistoricalPriorBlendWiring.test_identity_blend_is_noop_for_none
+  PASS: tests.test_team_model.TestTeamDimensionEngineContract.test_dependency_boundary_no_formation_object_required
+  PASS: tests.test_team_model.TestTeamDimensionEngineContract.test_deterministic_failure
+  PASS: tests.test_team_model.TestTeamDimensionEngineContract.test_duplicate_player_id_rejected
+  PASS: tests.test_team_model.TestTeamDimensionEngineContract.test_valid_input_reaches_not_implemented
+  PASS: tests.test_team_model.TestTeamDimensionEngineContract.test_wrong_squad_size_rejected
+  PASS: tests.test_team_model.TestTeamIdentityEngineContract.test_deterministic_failure
+  PASS: tests.test_team_model.TestTeamIdentityEngineContract.test_duplicate_player_id_rejected
+  PASS: tests.test_team_model.TestTeamIdentityEngineContract.test_none_historical_prior_is_accepted_shape
+  PASS: tests.test_team_model.TestTeamIdentityEngineContract.test_valid_input_reaches_not_implemented
+  PASS: tests.test_team_model.TestTeamIdentityEngineContract.test_wrong_squad_size_rejected
+  PASS: tests.test_team_model.TestTeamModelBuilderOrchestration.test_build_accepts_optional_historical_prior
+  PASS: tests.test_team_model.TestTeamModelBuilderOrchestration.test_build_calls_formation_engine_first
+  PASS: tests.test_team_model.TestTeamModelBuilderOrchestration.test_build_propagates_not_implemented_from_formation_engine
+  PASS: tests.test_team_model.TestTeamModelBuilderOrchestration.test_team_model_dataclass_shape

@@ -1,0 +1,352 @@
+--- a/PROJECT_OVERVIEW.md
++++ b/PROJECT_OVERVIEW.md
+@@ -1,6 +1,6 @@
+ # Football Match Simulation Engine — Project Overview
+ 
+-**Status snapshot:** **E-12 migration CLOSED; FormationEngine V1 implemented** · Layer 2 TeamDimensionEngine/TeamIdentityEngine derivations still blocked on missing approved equations · Layer 3 specified M/T/λ implementation remains APPROVED and unchanged · No complete real-historical or end-to-end simulation yet.
++**Status snapshot:** E-12 CLOSED and FormationEngine V1 implemented · **D1 dimensions and seven identity components implemented** · Complete TeamModel assembly requires an explicit possession source · Layer 3 approved formulas unchanged · No automatic historical reconstruction or full match simulation claimed.
+ 
+ This document is a complete, honest snapshot of the project: what it's
+ for, how it's structured, what's been built, what actually works today
+@@ -23,13 +23,10 @@
+   optionally blended with curated historical priors for iconic teams.
+ - **Reproducible.** Same seed + same code path = bit-for-bit same
+   simulated match, forever.
+-- **Calibratable.** Existing calibration parameters and anchors come from the immutable `ParameterSet`. Layer 3 exposes the explicitly supplied creation coefficients and FormFactor clamp bounds in a separate immutable `Layer3Coefficients`, because the existing ParameterSet has no fields for them and Layer 0 changes are prohibited. No hidden coefficients are introduced.
++- **Calibratable, not yet calibrated.** Existing anchors use immutable ParameterSet; Layer 3 has its separately disclosed coefficients. Layer 2 now has immutable, uncalibrated role-weight priors supplied by the design memo, separate from attribution weights. No optimizer ran and no new Core schema or hidden possession default was introduced.
+ - **Extensible without touching engine code.** Adding team #41, #101, or
+   #501 should require editing JSON data files only — never Python.
+-- **Anti-double-counting.** Every football phenomenon (press quality,
+-  possession, transition threat, home advantage, form, etc.) has exactly
+-  one path into the final goal-rate calculation, enforced by an explicit
+-  dependency graph.
++- **Anti-double-counting is a design invariant to audit, not a blanket empirical guarantee.** Explicit ownership rules guide the implementation. Known build-up/press verbal-rule tensions and unspecified tactical/helper dependencies are recorded in the corrected memo without silently changing approved Layer 3 equations.
+ 
+ ### The core philosophy, in one line
+ 
+@@ -81,7 +78,7 @@
+ |---|---|---|
+ | 0 | Project Skeleton + Base Types | Approved E-12 migration applied; unrelated contracts unchanged |
+ | 1 | Data Layer + JSON Schemas | Snapshot-quality type/weight metadata added; existing loader/schemas retained; normalized seed data absent |
+-| 2 | Team Model | FormationEngine six-rule derivation implemented; Module 2/3 derivation specifications still absent |
++| 2 | Team Model | FormationEngine, D1 dimensions and conditional identity assembly implemented; actual possession source still required |
+ | 3 | **Matchup + λ Engine** | **Specified M/T/λ formulas implemented; explicit Module 5 policy and Module 6 helper gaps remain** |
+ | 4 | Probability models (legacy roadmap label: λ + Probability) | Not implemented; λ is Module 7 in Layer 3 and must not be duplicated here |
+ | 5 | Full Simulation | Not implemented; future orchestrator only |
+@@ -307,50 +304,32 @@
+ 
+ ---
+ 
+-## 6. Layer 2 — FormationEngine implemented; two derivations still blocked
+-
+-**Implemented in two separate checkpoints:**
+-
+-1. **Step A — E-12 migration:** removed the misnamed FormationStructuralType enum and StructuralFeatures.formation_type; legacy/unknown fields now fail explicitly. HistoricalSnapshotQuality and its read-only canonical calibration-weight registry live in Layer 1. Old fixture labels were not converted into quality evidence.
+-2. **Step B — FormationEngine:** implemented exactly W/H/C/P/U/Ts from explicit side/depth and role occupancy, after Step A tests passed. The public derive(players, formation) input contract is retained; players are read only for id/role validation.
++## 6. Layer 2 — implemented mathematics with an explicit possession dependency
+ 
+ ### Current status
+ 
+ | Component | Current state |
+ |---|---|
+-| E-12 | **CLOSED** on explicit migrated contracts and construction/derivation test evidence |
+-| FormationEngine | **Implemented:** six approved numeric features and descriptive formation_name; no classifier, player-quality input, randomness, or λ |
+-| TeamDimensionEngine | **Blocked:** no approved aggregation/role-weight/structural-dependence equations for attack, creation, defense, goalkeeping |
+-| TeamIdentityEngine | **Blocked:** no approved pre-prior equations for its eight identity outputs |
+-| Historical-prior blends | Existing implementation and wiring retained unchanged |
+-| TeamModelBuilder | Now passes Module 1 and reaches the genuine Module 2 specification gap; it does not build a fake complete model |
+-
+-### Approved and implemented FormationEngine mathematics
+-
+-For the ten non-GK slots, K=floor(N²/4)=25; connectivity excludes only opposite LEFT/RIGHT pairs:
+-
+-- W = (left + right outfield slots)/N.
+-- H = 0.5, the named, disclosed V1 baseline prior—not inferred line height.
+-- C = (back slots + midfield DM slots)/N.
+-- P = connected middle/front pairs / K.
+-- U = connected back/middle pairs / K.
+-- Ts = front slots × non-front outfield slots / K.
+-
+-The manual standard geometry produces **(.8, .5, .5, .28, .32, .84)**. This is real code execution against explicit test geometry, not a verified historical reconstruction. V3 fields remain inert; no new modeling coefficients were invented.
+-
+-### Why Layer 2 is not yet entirely complete
+-
+-The repository defines the Module 2/3 shapes and prior blending, but not the numerical mapping from PlayerSeason abilities/tendencies to the four dimensions and eight identity values. Attribution/scorer/assist weights are not an approved substitute. These derivations require canonical equations or an explicitly approved new mathematical design; their source files remain unchanged and raise clear specification-gap errors.
+-
+-### Structural transport and real-data limits
+-
+-F-1(b) is unchanged: future Layer 5 passes TeamModel.identity and TeamModel.structural_features separately to Module 5. No overload of TeamIdentity or TeamRuntimeState was introduced.
+-
+-Formation Structure ≠ Snapshot Quality ≠ Historical Tier. Snapshot-quality metadata has no runtime strength/identity/λ path. No inferred quality field was added to historical records whose snapshot granularity is not specified.
+-
+-Full historical data and the two remaining derivations are still missing; end-to-end model reconstruction is not complete.
+-
+-Documents: [E-12 decision](docs/E12_ARCHITECTURE_DECISION.md), [FormationEngine V1 spec](docs/FORMATION_ENGINE_V1_SPEC.md), [current implementation report](docs/LAYER2_E12_FORMATION_REPORT.md).
++| E-12 | CLOSED; structure/quality/tier separation unchanged |
++| FormationEngine | W/H/C/P/U/Ts implemented; geometry/roles only; unchanged in this delivery |
++| TeamDimensionEngine | D1 weighted Attack/Creation/Defense; unique-GK Goalkeeping; four independent values |
++| TeamIdentityEngine | Five weighted components + C/U proxies; eighth pre-prior field supplied by an explicit PossessionTendencySource |
++| Historical-prior blends | Existing functions and exact-once wiring unchanged |
++| TeamModelBuilder | Returns a complete model with an explicitly configured source; raises a named gap without one |
++
++D1 validates but does not numerically use StructuralFeatures. For a fixed squad/role assignment it is geometry-invariant: an explicit V1 simplification, not a hidden formation bonus. Its role weights are the memo's new Layer 2 priors, never reused scorer/assist weights.
++
++Identity formulas and limitations are fully specified in [the corrected V3 memo](docs/team_dimension_and_identity_design_memo_v3.md). Tempo/risk/compactness/build-up are labeled modeling proxies. No evidence of empirical validity or independent pace contributions is invented.
++
++The optional-at-construction possession source is an explicit missing-data/model boundary. It receives sorted immutable player-season IDs and supplies independently established pre-prior tendency. There is no production default source, new schema field, neutral value, prior-only bypass or inferred possession formula. Missing/invalid source data raises, rather than returning a fake identity.
++
++The unchanged FormationEngine produces (.8,.5,.5,.28,.32,.84) for the fully specified synthetic 11-player geometry. The new exact-reference fixture verifies real Module 1→2→3 execution, source injection and prior blending. It is not historical reconstruction.
++
++F-1(b) remains: identity and raw structural features travel separately to future Module 5. That policy must define ownership once, especially for C/U also represented by identity proxies. It is not silently supplied by this implementation.
++
++**Still open:** actual possession-data/estimator choice, proxy/weight calibration and real historical normalized data. Automatic Layer 2 is not declared complete solely because a caller can supply its missing input.
++
++Current delivery: [implementation report](docs/LAYER2_MEMO_V3_IMPLEMENTATION_REPORT.md). Previous checkpoints: [E-12](docs/E12_ARCHITECTURE_DECISION.md), [FormationEngine spec](docs/FORMATION_ENGINE_V1_SPEC.md), [historical migration/formation report](docs/LAYER2_E12_FORMATION_REPORT.md).
+ 
+ ---
+ 
+@@ -375,7 +354,7 @@
+ - Module 7 implements `baseline*M + transition_weight*T`, then venue multiplier and Form exactly once. Standalone Form is exactly 1.0; tournament Form is read from TeamRuntimeState. The provided RPI-to-Form clamp is implemented as a scalar helper; RPI derivation itself remains external/unspecified.
+ - There is no RNG, probability model, event generation, FormationEngine duplication, generic tactical multiplier, V2 red-card multiplier, or duration scaling.
+ - Possession uses the existing `possession_tendency_final` field. The literal supplied formula is evaluated separately in both directions; no unapproved complementary-share normalization is added.
+-- Tests hand-build valid upstream objects and final tactical/helper inputs. A Module 5→6→7 fixture chain is tested, but **Layer 2→Layer 3 integration remains pending**.
++- Original Layer 3 tests still hand-build upstream fixtures. New V3 tests additionally transport real Layer 2 outputs through an explicitly test-only tactical policy and supplied helpers. Canonical policy/helper integration and real-data end-to-end validation remain pending.
+ 
+ ### Remaining helper-spec gaps
+ 
+@@ -386,7 +365,7 @@
+ 5. Exact one-time structural P/U/Ts + identity baseline composition.
+ 6. RecentPerformanceIndex derivation (not needed when a valid tournament form_factor is already supplied).
+ 
+-The original raw architecture-example inputs are also absent. **PossessionShare(B) = 0.231; CreationRealization(B) = 0.6 + 0.4 × 0.231 = 0.6924 ≈ 0.692, not 0.231.** Three downstream links are verified from the provided rounded intermediates: 0.6924 creation realization, 0.730719 adjusted base, and 1.24285 base λ. A full canonical-example replay is **not** claimed.
++The original architecture checkpoint is now preserved under docs/references/; the original Layer 3 test fixture still records only the previously supplied rounded intermediates. No new full canonical-example regression was added in this Layer 2 task. **PossessionShare(B) = 0.231; CreationRealization(B) = 0.6 + 0.4 × 0.231 = 0.6924 ≈ 0.692, not 0.231.** Three downstream links are verified from the provided rounded intermediates: 0.6924 creation realization, 0.730719 adjusted base, and 1.24285 base λ. A full canonical-example replay is **not** claimed.
+ 
+ Detailed equations/interfaces and scope: `docs/LAYER3_SPEC_AND_GAPS.md`. Actual results, failed-test reasons, and file-change audit: `docs/LAYER3_IMPLEMENTATION_REPORT.md` and `verification/`.
+ 
+@@ -414,38 +393,37 @@
+ 
+ ## 9. Test suites — current actual execution
+ 
+-| Scope / checkpoint | Passed | Failed | Total |
++| Scope | Passed | Failed | Total |
+ |---|---:|---:|---:|
+-| Pre-migration repository baseline | 172 | 6 | 178 |
+-| Step A — E-12 migration checkpoint | 184 | 6 | 190 |
+-| **Current repository-wide result (after Step B)** | **223** | **6** | **229** |
+-| E-12 dedicated contract tests | 12 | 0 | 12 |
+-| FormationEngine V1 dedicated tests | 39 | 0 | 39 |
+-| **Layer 3-specific health** | **112** | **0** | **112** |
+-
+-**223/229 is repository-wide; 112/112 remains the Layer 3-specific result.** The previous 172/178 was an earlier repository-wide checkpoint, never a Layer 3 pass rate. The six current failures are unchanged data-layer seed tests: DatasetFileError at missing data/normalized/players/player_seasons.json. No seed data, identity, or team strength was fabricated to obtain green.
+-
+-Existing contract assertions that depended on the removed field or on FormationEngine raising NotImplementedError were explicitly migrated. No unrelated test was disabled or weakened. Module 2/3 missing-spec tests passing does not mean their derivations exist. Layer 3 production code and mathematical tests remain unchanged.
+-
+-Run from the repository root:
++| Previous E-12/Formation repository checkpoint | 223 | 6 | 229 |
++| **Current repository-wide result** | **280** | **6** | **286** |
++| New D1 numerical tests | 21 | 0 | 21 |
++| New identity numerical/source tests | 25 | 0 | 25 |
++| New real Layer 2 pipeline/memo-audit tests | 11 | 0 | 11 |
++| **New tests, isolated rerun** | **57** | **0** | **57** |
++| **Layer 3-specific health, isolated rerun** | **112** | **0** | **112** |
++
++280/286 is repository-wide; 112/112 is Layer 3-specific. Earlier 172/178 and 223/229 totals describe earlier repository checkpoints. All six current failures are unchanged seed tests first raising DatasetFileError at missing data/normalized/players/player_seasons.json.
++
++Only obsolete Module 2/default-builder stub expectations were migrated in existing tests. Nothing was skipped/xfail or weakened to hide a regression. The default identity-gap tests still pass because an explicit possession source is required, not because automatic possession estimation exists.
++
++Run from the project root:
+ 
+ ```bash
+ python3 run_tests_shim.py --json test-results.json
+ ```
+ 
+-Execution uses the existing limited pytest-compatible harness, not the real pytest distribution. The earlier shim .value compatibility repair is unchanged. Failed suite runs exit nonzero; no tests are skipped or xfailed to hide the six missing-data failures.
+-
+-Current results, stage patches, and file-change audit: verification/layer2/. Older verification records describe their historical delivery checkpoints, not the current migrated schema.
++This is the existing limited pytest-compatible harness, not the full pytest distribution. Full repository runs correctly exit nonzero for the six known failures. New results, source audit and patches: verification/layer2_memo_v3/. Older logs retain their checkpoint-specific meaning.
+ 
+ ---
+ 
+ ## 10. Known limitations — stated plainly
+ 
+-- **Layer 2 remains partly incomplete.** E-12 is migrated and FormationEngine works; TeamDimensionEngine and TeamIdentityEngine still lack approved derivation equations. Their explicit gaps are not filled with defaults or fixture data.
++- **Automatic Layer 2 remains incomplete.** Formation, D1 and the specified identity components work, but the actual possession source/estimator is not defined by the current data schema. Explicit dependency injection is not a fabricated estimator or closure of that gap.
+ - **Layer 3 missing helper equations remain explicit.** Module 5 needs its approved composition/state policy. Module 6 needs three independent named helper outputs per direction. Defaults, inferred formations, and fabricated tactical multipliers are not supplied.
+-- **The canonical-example replay is partial.** Only three links can be reproduced from the provided rounded intermediate outputs. Raw dimensions/tactics and canonical helpers are still needed for a complete replay.
++- **The canonical-example regression remains partial.** The source checkpoint is now available, but the historical test fixture still checks only three rounded-intermediate links. Full reference verification and missing helper definitions remain separate work.
+ - **Normalized seed data is absent.** The six existing seed tests fail transparently; no synthetic production dataset was invented. Data-layer tests using temporary fixtures do execute.
+-- **No end-to-end game exists yet.** Layer 2→3 integration, probability/sampling, the Layer 5 runtime loop, events/attribution, and calibration remain pending.
++- **No end-to-end game exists yet.** Conditional synthetic Layer 2→3 transport is tested, not complete canonical integration. Probability/sampling, the Layer 5 runtime loop, events/attribution and calibration remain pending.
+ - **State write ownership remains orchestration discipline.** The eventual Layer 5 state updater is not implemented; Layer 3 only reads its limited runtime inputs.
+ - **Global Layer 0 architecture tests are not a completed suite.** New Layer 3 tests cover its own purity/import/anti-double-counting boundaries, not every future whole-engine invariant.
+ - **No real historical ingestion or calibration has been performed.** Fixtures are labeled test inputs, not researched historical estimates.
+@@ -453,11 +431,10 @@
+ 
+ ---
+ 
+-## 11. What's next — the two missing Layer 2 derivations
+-
+-1. Supply canonical or explicitly approve new mathematical specifications for TeamDimensionEngine and TeamIdentityEngine. Specify role/player contribution weights and normalization, the eight identity mappings, and any structural ownership without double-counting.
+-2. Implement those approved equations and preserve the already-working historical-prior blend and Module 1→2→3 orchestration. Do not reuse attribution weights or manufacture default team outputs.
+-3. Supply/validate real historical normalized data and formation geometry, then test actual Layer 2 reconstruction rather than only synthetic fixtures.
+-4. Formally resolve the remaining Layer 3 helper/state-policy equations without guesses, preserving existing interfaces and M/T ownership.
+-5. Validate real Layer 2→3 integration and the complete canonical example, then implement probability models and the orchestrator-only simulation loop.
+-6. Continue to events/attribution, tournament-state evolution, calibration, and UI only within their later approved scopes.
++## 11. What's next — real data and the remaining explicit dependencies
++
++1. Decide and populate the actual pre-prior possession-tendency source or estimator. Any PlayerSeason/TeamSeason schema extension is a separate explicit migration; do not use a neutral fallback or reuse the same historical prior.
++2. Validate the D1/identity weight priors and pace/shot/cover/connectivity proxies against real historical data, not only synthetic numerical tests.
++3. Specify Module 5 composition/state rules and Layer 3 helper equations, reconciling build-up/press ownership without hidden changes to the approved math.
++4. Verify the complete reference example and real-data integration, then implement probability/sampling and runtime orchestration.
++5. Continue to events/attribution, tournament state, calibration and UI within their later approved scopes.
+--- a/docs/E12_ARCHITECTURE_DECISION.md
++++ b/docs/E12_ARCHITECTURE_DECISION.md
+@@ -133,5 +133,5 @@
+ - Actual manual-layout output: W=.8, H=.5, C=.5, P=.28, U=.32, Ts=.84, plus descriptive formation_name; no formation_type is required or returned.
+ - Quality classification predicates, snapshot-record granularity, and calibration objective usage remain outside this migration. No automatic quality classification or runtime quality weighting was added.
+ - Layer 3 production equations are unchanged and its migrated fixture-based suite passes **112/112**.
+-- **Layer 2 is not entirely complete:** approved numerical specifications for TeamDimensionEngine and TeamIdentityEngine are still absent. Their explicit errors remain; no fallback/fixture values are inserted into production.
++- **Automatic Layer 2 is not entirely complete:** D1 and specified identity components are now implemented under the corrected V3 memo, but a complete identity requires an explicitly supplied possession source. Its actual data/estimator definition remains open; no fallback/fixture value is inserted into production.
+ - Real historical normalized data and full end-to-end validation remain pending.
+--- a/docs/LAYER2_E12_FORMATION_REPORT.md
++++ b/docs/LAYER2_E12_FORMATION_REPORT.md
+@@ -1,4 +1,6 @@
+ # Layer 2 delivery — E-12 migration and FormationEngine V1
++
++**Historical checkpoint report.** D1 dimensions and conditional identity assembly were subsequently implemented; see [the current V3 report](LAYER2_MEMO_V3_IMPLEMENTATION_REPORT.md). The 223/229 count and missing-all-Module-2/3 statements below describe the earlier delivery, not today's state.
+ 
+ Date: 2026-09-08. The user's request to complete Layer 2 was used to execute the previously approved E-12 architecture migration and FormationEngine mathematics as separate checkpoints.
+ 
+--- /dev/null
++++ b/docs/LAYER2_MEMO_V3_IMPLEMENTATION_REPORT.md
+@@ -0,0 +1,111 @@
++# Layer 2 — Design Memo V3 implementation report
++
++Date: 2026-09-09. Scope: apply corrections to the user-supplied V2 memo and execute the specified next-step mathematics. Original source documents are preserved unchanged under docs/references/.
++
++## Actual delivery status
++
++- **FormationEngine and E-12:** unchanged, already implemented/closed.
++- **TeamDimensionEngine:** D1 implemented using the exact V2 role weights, separate from Section R attribution tables. Four dimensions remain distinct. A unique GK supplies Goalkeeping directly.
++- **TeamIdentityEngine:** five role-weighted components and the C/U structural proxies implemented. An explicit PossessionTendencySource supplies the eighth pre-prior field; no estimator, neutral constant, prior reuse, or rejected proxy was added.
++- **Full TeamModel assembly works conditionally**, with a deliberately supplied source. The default builder still raises TeamIdentitySpecificationGapError because possession cannot be inferred from the current schema under the specified constraints.
++- **Automatic Layer 2 reconstruction is NOT declared complete.** Its possession-data/estimator decision remains open. The statistical validity of proxies and weights is also unproven without real data/calibration.
++- Layer 0/1 source and schemas, FormationEngine, existing prior blends, Layer 3 production/math tests, RNG, and the harness are unchanged. Builder execution order/signatures are unchanged; only its status docstrings changed.
++
++## Memo corrections actually applied
++
++The standalone corrected memo is `team_dimension_and_identity_design_memo_v3.md`.
++
++1. Removed the false attribution of `PressDisruption=B.press_final*(1-A.build_up_control_score)` as an approved existing helper equation. Current code takes an explicit helper value; the source checkpoint does not supply that equation.
++2. Distinguished the real verbal-rule/PossessionShare ownership tension from an unproven duplicate implementation. Both build-up and opponent press explicitly affect PossessionShare. Layer 3 is preserved, not silently repaired.
++3. Replaced the inaccurate quadratic-sensitivity claim with the correct fixed-helper sigmoid sensitivity, verified numerically. No hypothetical helper was implemented.
++4. Replaced unconditional SAFE/independence claims about pace with a conditional, testable audit. M/T additivity is not independence; FB and CM have nonzero attack-pace weights.
++5. Labeled pace-based tempo, shooting-based risk, cover-based compactness and connectivity-based build-up as uncalibrated proxies, not empirical measurements.
++6. Clarified D1 invariance: for a fixed PlayerSeason list/role assignment, geometry does not alter dimensions. This is a deliberate V1 simplification, not implemented structural bonuses.
++7. Replaced missing V1 cross-references and the incomplete four-player toy example with complete definitions, edge cases, and a fully specified 11-player reference, including GK pace.
++8. Corrected calibration accounting: 72 displayed entries are not 72 identifiable fit parameters. With zeros and GK lookup fixed, there are at most 47 scale-normalized positive-weight ratios. This delivery fits zero parameters.
++9. Distinguished pre-prior compactness=C from final compactness after the existing historical blend. No double prior blending is introduced.
++10. Defined missing-data, zero-denominator, malformed/nonfinite input, determinism and source-boundary behavior explicitly.
++
++## Production changes
++
++### New files
++
++- `football_engine/team_model/role_weight_priors.py`: frozen row types and read-only dimension/identity weight mappings.
++- `football_engine/team_model/_validation.py`: strict selection/role/GK validation and finite numerical guards.
++- `football_engine/team_model/_weighted_mean.py`: deterministic positive-weight means with explicit denominator errors and a convex-interval floating-point guard.
++- `football_engine/team_model/dependencies.py`: ID-only PossessionTendencySource protocol; no default implementation.
++
++### Updated existing files
++
++- `team_dimension_engine.py`: replaces the missing-formula stub with actual D1 computation.
++- `team_identity_engine.py`: implements specified components, validates the explicit source result and prior inputs, preserves exact-once historical blending, and exposes the remaining gap precisely.
++- `team_model_builder.py`: documentation only. Its existing injected-engine wiring now supports conditional complete assembly without changing execution/signatures.
++- `team_model/__init__.py`: accurate status and exports of the new dependency/error.
++- `tests/test_team_model.py`: only obsolete Module 2/default-builder stub expectations and associated comments updated. No unrelated tests were disabled or weakened.
++
++### Possession dependency details
++
++The new constructor parameter is keyword-only. Existing derive/build signatures stay the same:
++
++```python
++identity_engine = TeamIdentityEngine(possession_source=my_preloaded_source)
++builder = TeamModelBuilder(identity_engine=identity_engine)
++model = builder.build(players, formation, historical_prior)
++```
++
++The source receives only `player_season_ids=tuple(sorted_ids)` and must return separately established, finite pre-prior tendency data for that exact roster. Its purity/provenance are a caller contract, not something a Python Protocol can guarantee. Source errors propagate and invalid results are rejected. No source is an explicit NotImplementedError subtype, including when a curated prior exists or alpha=0. No new PlayerSeason/TeamSeason field or legacy data default was introduced.
++
++The fixture value 0.62 exists only as labeled synthetic test data. It is not a production default or a newly calibrated prior. Rejected creation/press/geometry possession proxies are not hidden in production callbacks.
++
++## Numerical reference and tests
++
++An independent Fraction-based calculation generated all expected values before production aggregation was executed. The full inputs and rational reference are in `tests/fixtures/layer2_memo_v3_example.json`.
++
++The 11-player example gives:
++
++- Structure: W=.8, H=.5, C=.5, P=.28, U=.32, Ts=.84.
++- Dimensions: Attack=77.35443037974683, Creation=74.11111111111111, Defense=73.93406593406593, Goalkeeping=85.
++- With explicit pre-prior possession=.62, the eight-field identity is complete; its five weighted values and all post-prior results are specified in the corrected memo/fixture.
++- Existing alpha=.55 and creation delta=.03 yield final Creation=75.46111111111111, not a new adjustment formula. Existing possession prior=.95 yields final possession=.7685.
++
++### Executed results
++
++| Scope | Passed | Failed | Total |
++|---|---:|---:|---:|
++| Pre-change repository baseline | 223 | 6 | 229 |
++| Compatibility after replacing old stubs | 223 | 6 | 229 |
++| **Current repository-wide** | **280** | **6** | **286** |
++| New D1 tests | 21 | 0 | 21 |
++| New identity tests | 25 | 0 | 25 |
++| New real Layer 2 pipeline / memo-audit tests | 11 | 0 | 11 |
++| **New tests, separate run** | **57** | **0** | **57** |
++| **Layer 3, separate run** | **112** | **0** | **112** |
++
++The runner is the existing limited local pytest-compatible harness, not the full pytest distribution. Repository runs correctly exit 1 because of the same six data-layer seed failures; both isolated scopes exit 0. The earlier 172/178 and 223/229 were historical repository-wide checkpoints, never Layer 3 pass rates.
++
++The only six failures remain in tests/test_data_layer.py:
++
++- test_seed_dataset_every_roster_resolves
++- test_seed_dataset_has_zero_production_ready_teams
++- test_seed_dataset_loads_completely
++- test_seed_dataset_no_duplicate_team_ids
++- test_seed_dataset_schema_versions_are_supported
++- test_seed_dataset_tier_coverage
++
++Each first raises DatasetFileError at missing `data/normalized/players/player_seasons.json`. No seed data, silent skip, xfail or fabricated historical model was used to hide them.
++
++### Coverage and limits
++
++Tests cover exact weight values, immutability, independent arithmetic, convexity/bounds, monotonicity, input-order invariance, selected-GK behavior, ability-vs-identity isolation, zero denominators, bad types/nonfinite values, role-dependent pace responses, ID-only source calls, no source/prior fallback, distinct roster lookups, and exact-once prior blending.
++
++Real FormationEngine→DimensionEngine→IdentityEngine builder execution is tested with an explicit synthetic possession source. A separate transport test supplies a **test-only** tactical policy and helper values to unchanged Layer 3. This does not implement the missing Module 5/6 equations or a full match simulation. Contract tests expecting the default possession gap pass for that reason, not because the gap is closed.
++
++## What stays open
++
++1. Actual possession data/estimator and any separately approved schema migration.
++2. Formal Module 5 structural/identity composition and state adjustments; C/U cannot be blindly applied twice.
++3. Three Layer 3 helper equations and the verbal-vs-formula ownership issue for build-up/press. No A/B interpretation was silently chosen.
++4. Historical-data validation and calibration of the proposed proxies/weights.
++5. Probability/sampling, runtime orchestration and full end-to-end match simulation.
++
++Current logs, exact source-change audit, diffs and original-reference hashes are under `verification/layer2_memo_v3/`. Earlier verification reports retain their historical checkpoint scope. No Git commits are claimed; changes are delivered as source and auditable patches.
+--- a/docs/LAYER3_IMPLEMENTATION_REPORT.md
++++ b/docs/LAYER3_IMPLEMENTATION_REPORT.md
+@@ -1,6 +1,6 @@
+ # Layer 3 Implementation Report
+ 
+-**Historical Layer 3 delivery record.** Subsequent Layer 2 work migrated E-12 and implemented FormationEngine; see [the current report](LAYER2_E12_FORMATION_REPORT.md). This report's original 172/178 repository result and unchanged-core assertions describe the earlier Layer 3 delivery only. Current repository result: 223/229; Layer 3 remains 112/112 after explicit fixture migration, with its production math unchanged.
++**Historical Layer 3 delivery record.** Subsequent E-12/Formation and V3 Layer 2 work is documented in [the current report](LAYER2_MEMO_V3_IMPLEMENTATION_REPORT.md). Original 172/178 and unchanged-core assertions below describe the earlier delivery only. Current repository: 280/286; Layer 3 remains 112/112, with production math and its original tests unchanged in the V3 task.
+ 
+ Date: 2026-09-08. Scope: **Matchup + λ Engine**, Modules 5/6/7, under the user's final authorization.
+ 
+--- a/docs/LAYER3_SPEC_AND_GAPS.md
++++ b/docs/LAYER3_SPEC_AND_GAPS.md
+@@ -1,4 +1,6 @@
+ # Layer 3 — Matchup + λ Engine
++
++**V3 Layer 2 update:** production Layer 3 is unchanged and separately passes 112/112. Original source availability statements below reflect the earlier delivery; the checkpoint is now preserved under docs/references/. The corrected V3 memo distinguishes its build-up/press verbal-rule tension from the still-undefined helper equations. No speculative press formula or term deletion was applied.
+ 
+ Implementation source: the user's **FINAL AUTHORIZATION — IMPLEMENT LAYER 3 NOW**, dated 2026-09-08. The formulas in that authorization are the source of truth for this layer. The original numbered architecture document was not supplied as a repository file.
+ 

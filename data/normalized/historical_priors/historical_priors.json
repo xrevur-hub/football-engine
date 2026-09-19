@@ -1,0 +1,49 @@
+{
+  "metadata": {
+    "dataset_version": "2026.09.0",
+    "schema_version": "1.0",
+    "description": "Historical priors for iconic teams"
+  },
+  "priors": [
+    {
+      "team_season_id": "barcelona_2010_11",
+      "tier": 1,
+      "alpha": 0.55,
+      "identity_priors": {
+        "possession_tendency": 0.92,
+        "press_tendency": 0.80,
+        "transition_tendency": 0.65,
+        "tempo": 0.85,
+        "risk_tolerance": 0.50,
+        "compactness": 0.85
+      },
+      "dimension_adjustment": {
+        "attack": 0.05,
+        "creation": 0.10,
+        "defense": 0.02,
+        "goalkeeping": 0.0
+      },
+      "metadata": {"status": "CURATED", "source": "manual_curation", "confidence": 0.9}
+    },
+    {
+      "team_season_id": "chelsea_2011_12",
+      "tier": 1,
+      "alpha": 0.58,
+      "identity_priors": {
+        "possession_tendency": 0.50,
+        "press_tendency": 0.72,
+        "transition_tendency": 0.60,
+        "tempo": 0.55,
+        "risk_tolerance": 0.55,
+        "compactness": 0.78
+      },
+      "dimension_adjustment": {
+        "attack": 0.03,
+        "creation": 0.02,
+        "defense": 0.05,
+        "goalkeeping": 0.02
+      },
+      "metadata": {"status": "CURATED", "source": "manual_curation", "confidence": 0.85}
+    }
+  ]
+}

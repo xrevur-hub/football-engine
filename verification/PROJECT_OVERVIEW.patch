@@ -1,0 +1,434 @@
+--- PROJECT_OVERVIEW.before.md
++++ PROJECT_OVERVIEW.md
+@@ -1,6 +1,6 @@
+ # Football Match Simulation Engine — Project Overview
+ 
+-**Status snapshot:** Layer 0 ✅ done · Layer 1 ✅ done · Layer 2 🟡 contracts/plumbing done, formulas intentionally unimplemented · Layers 3–7 not started.
++**Status snapshot:** **E-12 migration CLOSED; FormationEngine V1 implemented** · Layer 2 TeamDimensionEngine/TeamIdentityEngine derivations still blocked on missing approved equations · Layer 3 specified M/T/λ implementation remains APPROVED and unchanged · No complete real-historical or end-to-end simulation yet.
+ 
+ This document is a complete, honest snapshot of the project: what it's
+ for, how it's structured, what's been built, what actually works today
+@@ -23,10 +23,7 @@
+   optionally blended with curated historical priors for iconic teams.
+ - **Reproducible.** Same seed + same code path = bit-for-bit same
+   simulated match, forever.
+-- **Calibratable.** Every football-domain constant lives in a
+-  `ParameterSet` object, not hardcoded in formulas, so a future
+-  calibration pass can tune the model against real historical results
+-  without touching engine code.
++- **Calibratable.** Existing calibration parameters and anchors come from the immutable `ParameterSet`. Layer 3 exposes the explicitly supplied creation coefficients and FormFactor clamp bounds in a separate immutable `Layer3Coefficients`, because the existing ParameterSet has no fields for them and Layer 0 changes are prohibited. No hidden coefficients are introduced.
+ - **Extensible without touching engine code.** Adding team #41, #101, or
+   #501 should require editing JSON data files only — never Python.
+ - **Anti-double-counting.** Every football phenomenon (press quality,
+@@ -76,22 +73,22 @@
+ 
+ ---
+ 
+-## 2. The 8-layer build plan (locked)
+-
+-The implementation is being built strictly in this order. Each layer is
+-a hard prerequisite for the next; no layer skips ahead into the next
+-one's territory.
+-
+-| Layer | Name | Status |
++## 2. The 8-layer build plan and authorized isolation
++
++The canonical Layer 3 name is **Matchup + λ Engine**. FormationEngine remains entirely in Layer 2. The 2026-09-08 final authorization permits isolated Layer 3 implementation using manually constructed upstream test fixtures while Layer 2 remains incomplete; this is not an end-to-end integration claim.
++
++| Layer | Name | Current status |
+ |---|---|---|
+-| 0 | Project Skeleton + Base Types | ✅ **Done** |
+-| 1 | Data Layer + JSON Schemas | ✅ **Done** |
+-| 2 | Team Model | 🟡 **Contracts + plumbing done; 3 derivation formulas intentionally unimplemented** |
+-| 3 | Formation + Matchup Engine | ⬜ Not started |
+-| 4 | λ + Probability | ⬜ Not started |
+-| 5 | Full Simulation | ⬜ Not started |
+-| 6 | Q/R Events + Attribution | ⬜ Not started |
+-| 7 | Calibration Implementation | ⬜ Not started |
++| 0 | Project Skeleton + Base Types | Approved E-12 migration applied; unrelated contracts unchanged |
++| 1 | Data Layer + JSON Schemas | Snapshot-quality type/weight metadata added; existing loader/schemas retained; normalized seed data absent |
++| 2 | Team Model | FormationEngine six-rule derivation implemented; Module 2/3 derivation specifications still absent |
++| 3 | **Matchup + λ Engine** | **Specified M/T/λ formulas implemented; explicit Module 5 policy and Module 6 helper gaps remain** |
++| 4 | Probability models (legacy roadmap label: λ + Probability) | Not implemented; λ is Module 7 in Layer 3 and must not be duplicated here |
++| 5 | Full Simulation | Not implemented; future orchestrator only |
++| 6 | Q/R Events + Attribution | Not implemented |
++| 7 | Calibration Implementation | Not implemented |
++
++See `docs/LAYER3_SPEC_AND_GAPS.md` for the implemented equations, interfaces, exact missing dependencies, and fixture provenance.
+ 
+ ---
+ 
+@@ -112,11 +109,7 @@
+   randomness anywhere in the engine. Seeds are derived deterministically
+   from `(home_id, away_id, match_date, match_id)`, so any historical or
+   hypothetical match can be replayed exactly.
+-- **`ParameterSet`, not hardcoded constants.** Every calibration-
+-  sensitive number (baseline goals, home advantage, Dixon-Coles ρ, role
+-  weights, etc.) lives in one `ParameterSet` object with documented T.12
+-  bounds, so Layer 7 calibration can tune the model without touching any
+-  formula code.
++- **Explicit configuration, not hidden constants.** Existing priors use `ParameterSet` with its existing bounds. The authorized creation coefficients (0.6/0.4 and 0.7/0.3) and form bounds (0.85/1.15) are named in immutable Layer-3-local `Layer3Coefficients`; this introduces no Layer 0 field changes.
+ - **Single-path dependency rules (anti-double-counting).** Each football
+   phenomenon has exactly one route into λ — e.g. Press quality → M only,
+   High line → T only, Possession → CreationRealization only, Home
+@@ -148,7 +141,7 @@
+ ├── __init__.py                 # public API surface — exports everything below
+ ├── core/
+ │   ├── enums.py                 # MatchState, PlayerRole, HistoricalTier,
+-│   │                             # FormationStructuralType, SegmentId,
++│   │                             # SegmentId,
+ │   │                             # SplittingEventType, NonSplittingEventType
+ │   ├── constants.py              # Section 44/T.12 default calibration priors
+ │   │                             # + T.12 parameter bounds + role weight tables
+@@ -304,117 +297,102 @@
+ No Python file changes. `load_all()` has no hardcoded team list anywhere
+ — it discovers everything from JSON at call time.
+ 
+-### Current seed dataset — honest disclosure
+-
+-**3 TeamSeasons** (`barcelona_2010_11`, `ajax_1994_95`,
+-`genericfc_2019_20`), **33 PlayerSeasons** (11-player rosters each), **5
+-standard formations** (4-3-3, 4-4-2, 4-2-3-1, 3-4-3, 3-5-2), covering
+-Tier 1 / Tier 2 / Tier 3 historical-prior paths.
+-
+-**Every single attribute value in the seed dataset is
+-`status: PLACEHOLDER`, `confidence: 0.0`, `source: null`.** Real club
+-and season names were used deliberately (per an explicit decision) so
+-the data *shape* matches production, but no real historical player
+-stats have been researched or entered. `production_ready_team_ids()`
+-correctly returns an empty set against this dataset — this is verified
+-by a dedicated test. The target of ~40 teams (and eventually hundreds)
+-is a data-population task, not a code task, and hasn't been done yet —
+-see "Known limitations."
+-
+----
+-
+-## 6. Layer 2 — Team Model (🟡 Contracts + plumbing done, formulas open)
+-
+-**Goal (per architecture, Section O.2):** Turn a roster of 11
+-PlayerSeasons plus a chosen Formation into the three objects a match
+-needs before it can even reach the Matchup Engine:
+-
+-```
+-Module 1 (Formation Engine):
+-    (List[PlayerSeason], Formation) → StructuralFeatures
+-
+-Module 2 (Team Dimension Engine):
+-    (List[PlayerSeason], StructuralFeatures) → TeamDimensions
+-
+-Module 3 (Team Identity Engine):
+-    (List[PlayerSeason], StructuralFeatures, HistoricalPrior|None) → TeamIdentity
+-```
+-
+-### The key decision that shaped this layer
+-
+-The architecture document locks the **input/output contract** and the
+-**dependency graph** for all three modules — but it does **not** specify
+-an explicit mathematical formula for any of the three derivations. After
+-checking, we deliberately chose **not** to invent formulas ourselves
+-(even clearly-labeled ones), because doing so would mean introducing new
+-football-modeling math into the engine that hasn't been designed or
+-reviewed. Instead:
+-
+-> Build the contracts, wiring, and validation completely.
+-> Leave the three actual formulas as `NotImplementedError`, each with a
+-> `TODO(SPEC-NEEDED, ...)` marker pinpointing exactly what's missing.
+-
+-### Structure
+-
+-```
+-football_engine/team_model/
++### Current seed dataset — availability disclosure
++
++The earlier authoring overview described three team seasons, 33 player-season placeholders, and five standard formations covering historical-prior tiers. **Those `data/normalized/*.json` files were not supplied in this repository snapshot.** They must not be represented as a locally loaded or verified dataset.
++
++The local repository contains JSON schemas and temporary test fixtures only. The six existing seed-integrity tests currently fail at the missing `data/normalized/players/player_seasons.json`. No fake seed files were created to make those tests pass. The required companion files are teams/team_seasons.json, formations/formations.json, and historical_priors/historical_priors.json.
++
++Formation data authored before the explicit side/depth contract must be updated by its author with valid geometry for every slot. The existing provenance/PLACEHOLDER exclusion system remains unchanged.
++
++---
++
++## 6. Layer 2 — FormationEngine implemented; two derivations still blocked
++
++**Implemented in two separate checkpoints:**
++
++1. **Step A — E-12 migration:** removed the misnamed FormationStructuralType enum and StructuralFeatures.formation_type; legacy/unknown fields now fail explicitly. HistoricalSnapshotQuality and its read-only canonical calibration-weight registry live in Layer 1. Old fixture labels were not converted into quality evidence.
++2. **Step B — FormationEngine:** implemented exactly W/H/C/P/U/Ts from explicit side/depth and role occupancy, after Step A tests passed. The public derive(players, formation) input contract is retained; players are read only for id/role validation.
++
++### Current status
++
++| Component | Current state |
++|---|---|
++| E-12 | **CLOSED** on explicit migrated contracts and construction/derivation test evidence |
++| FormationEngine | **Implemented:** six approved numeric features and descriptive formation_name; no classifier, player-quality input, randomness, or λ |
++| TeamDimensionEngine | **Blocked:** no approved aggregation/role-weight/structural-dependence equations for attack, creation, defense, goalkeeping |
++| TeamIdentityEngine | **Blocked:** no approved pre-prior equations for its eight identity outputs |
++| Historical-prior blends | Existing implementation and wiring retained unchanged |
++| TeamModelBuilder | Now passes Module 1 and reaches the genuine Module 2 specification gap; it does not build a fake complete model |
++
++### Approved and implemented FormationEngine mathematics
++
++For the ten non-GK slots, K=floor(N²/4)=25; connectivity excludes only opposite LEFT/RIGHT pairs:
++
++- W = (left + right outfield slots)/N.
++- H = 0.5, the named, disclosed V1 baseline prior—not inferred line height.
++- C = (back slots + midfield DM slots)/N.
++- P = connected middle/front pairs / K.
++- U = connected back/middle pairs / K.
++- Ts = front slots × non-front outfield slots / K.
++
++The manual standard geometry produces **(.8, .5, .5, .28, .32, .84)**. This is real code execution against explicit test geometry, not a verified historical reconstruction. V3 fields remain inert; no new modeling coefficients were invented.
++
++### Why Layer 2 is not yet entirely complete
++
++The repository defines the Module 2/3 shapes and prior blending, but not the numerical mapping from PlayerSeason abilities/tendencies to the four dimensions and eight identity values. Attribution/scorer/assist weights are not an approved substitute. These derivations require canonical equations or an explicitly approved new mathematical design; their source files remain unchanged and raise clear specification-gap errors.
++
++### Structural transport and real-data limits
++
++F-1(b) is unchanged: future Layer 5 passes TeamModel.identity and TeamModel.structural_features separately to Module 5. No overload of TeamIdentity or TeamRuntimeState was introduced.
++
++Formation Structure ≠ Snapshot Quality ≠ Historical Tier. Snapshot-quality metadata has no runtime strength/identity/λ path. No inferred quality field was added to historical records whose snapshot granularity is not specified.
++
++Full historical data and the two remaining derivations are still missing; end-to-end model reconstruction is not complete.
++
++Documents: [E-12 decision](docs/E12_ARCHITECTURE_DECISION.md), [FormationEngine V1 spec](docs/FORMATION_ENGINE_V1_SPEC.md), [current implementation report](docs/LAYER2_E12_FORMATION_REPORT.md).
++
++---
++
++## 7. Layer 3 — Matchup + λ Engine
++
++**Implemented:** the specified M/T/λ formulas from the 2026-09-08 canonical authorization, plus explicit typed dependency boundaries. This is not a fully autonomous Layer 3 pipeline until its missing helpers are supplied.
++
++```text
++football_engine/matchup/
+ ├── __init__.py
+-├── formation_engine.py         # Module 1 — validates squad size (11),
+-│                               # duplicate ids, and that the role
+-│                               # multiset matches the formation's
+-│                               # position pool exactly — then raises
+-│                               # NotImplementedError
+-├── team_dimension_engine.py    # Module 2 — same input validation
+-│                               # discipline, then NotImplementedError
+-├── team_identity_engine.py     # Module 3 — same input validation,
+-│                               # THEN calls the already-working
+-│                               # Section 30 blend (see below), but the
+-│                               # pre-prior derivation step itself is
+-│                               # NotImplementedError
+-└── team_model_builder.py       # Orchestrator: calls Module 1 → Module 2
+-                                # → Module 3 in the exact locked order,
+-                                # applies both historical-prior blends —
+-                                # pure wiring, zero new formulas
+-```
+-
+-### What genuinely works right now (not a stub)
+-
+-`TeamIdentityEngine.derive()` and `TeamModelBuilder.build()` both
+-correctly call the **already-implemented** Section 30 hybrid blend
+-functions from Layer 1. If you feed a real (already-derived)
+-`TeamDimensions`/`TeamIdentity` directly into
+-`apply_historical_prior_to_dimensions()` /
+-`apply_historical_prior_to_identity()`, the blend math runs today and is
+-tested. The only missing piece is the step *before* the blend — turning
+-raw player attributes into that "derived" value in the first place.
+-
+-### The three open formulas (exactly what's missing)
+-
+-| # | Formula | File |
+-|---|---|---|
+-| 1 | `(PlayerSeason[11], Formation) → StructuralFeatures` — how do 11 players in a given formation produce width/line-height/defensive-cover/press-structure/build-up-structure/transition-structure feature values (0–1 each), plus a Type A/B/C classification? | `formation_engine.py` |
+-| 2 | `(PlayerSeason[11], StructuralFeatures) → TeamDimensions` — how do individual `attack_ability`/`creation_ability`/`defense_ability`/`gk_ability` scores combine (weighted? by role? modified by structural features how?) into four team-level 0–100 scores? | `team_dimension_engine.py` |
+-| 3 | `(PlayerSeason[11], StructuralFeatures) → TeamIdentity` (pre-prior) — how do individual tendency/pace attributes combine into team-level possession/press/transition tendency, tempo, risk tolerance, compactness, build-up control, attack pace? | `team_identity_engine.py` |
+-
+-Each engine's `derive()` method does real, useful validation before
+-hitting the wall: exact squad size (11), no duplicate player ids, and
+-(for Formation Engine specifically) that the supplied players' role
+-counts exactly match what the formation's position pool requires. Only
+-after all of that passes does it raise `NotImplementedError` with a
+-message pointing at the exact missing formula.
+-
+-### Why this matters for what comes next
+-
+-Calling `TeamModelBuilder().build(players, formation, prior)` today
+-**always** raises `NotImplementedError` — this is the *correct*,
+-intended behavior, not a bug. Layer 3 (Formation + Matchup Engine)
+-cannot meaningfully start until these three formulas are designed,
+-reviewed, and locked, because Layer 3's Matchup Engine consumes
+-`TeamDimensions`/`TeamIdentity` as input.
+-
+----
+-
+-## 7. Cross-cutting engineering practices used throughout
++├── configuration.py       # named creation coefficients and FormFactor bounds
++├── dependencies.py        # required directional helper values; tactical policy protocol
++├── errors.py              # explicit specification-gap/input errors
++├── _validation.py         # numerical domain checks, no epsilon or hidden clamp
++├── tactical_profile.py    # Module 5: separate identity/structure/state policy boundary
++├── matchup_engine.py      # Module 6: exact independent M/T equations in both directions
++└── lambda_calculator.py   # Module 7: exact base λ, venue, standalone/tournament Form
++```
++
++- Module 5 delegates to an explicitly supplied TacticalProfilePolicy and validates its final TacticalProfile. Exact state adjustments and the one-time P/U/Ts composition were not supplied, so no default/neutral policy is invented—even for NORMAL.
++- Module 6 implements GK factor, relative strength, stable sigmoid/possession, creation realization/factor, adjusted base, press/width/tempo interactions, M, space behind defense, and T. Three helper outputs are explicit, independently supplied dependencies per direction: PressDisruption_M, WidthMismatch, PressTransitionOpportunity_T.
++- Module 7 implements `baseline*M + transition_weight*T`, then venue multiplier and Form exactly once. Standalone Form is exactly 1.0; tournament Form is read from TeamRuntimeState. The provided RPI-to-Form clamp is implemented as a scalar helper; RPI derivation itself remains external/unspecified.
++- There is no RNG, probability model, event generation, FormationEngine duplication, generic tactical multiplier, V2 red-card multiplier, or duration scaling.
++- Possession uses the existing `possession_tendency_final` field. The literal supplied formula is evaluated separately in both directions; no unapproved complementary-share normalization is added.
++- Tests hand-build valid upstream objects and final tactical/helper inputs. A Module 5→6→7 fixture chain is tested, but **Layer 2→Layer 3 integration remains pending**.
++
++### Remaining helper-spec gaps
++
++1. PressDisruption_M: exact equation, domain, and permitted signal ownership.
++2. WidthMismatch: exact equation and domain.
++3. PressTransitionOpportunity_T: independent exact equation and permitted inputs.
++4. Exact field-by-field MatchState→TacticalProfile adjustments.
++5. Exact one-time structural P/U/Ts + identity baseline composition.
++6. RecentPerformanceIndex derivation (not needed when a valid tournament form_factor is already supplied).
++
++The original raw architecture-example inputs are also absent. **PossessionShare(B) = 0.231; CreationRealization(B) = 0.6 + 0.4 × 0.231 = 0.6924 ≈ 0.692, not 0.231.** Three downstream links are verified from the provided rounded intermediates: 0.6924 creation realization, 0.730719 adjusted base, and 1.24285 base λ. A full canonical-example replay is **not** claimed.
++
++Detailed equations/interfaces and scope: `docs/LAYER3_SPEC_AND_GAPS.md`. Actual results, failed-test reasons, and file-change audit: `docs/LAYER3_IMPLEMENTATION_REPORT.md` and `verification/`.
++
++---
++
++## 8. Cross-cutting engineering practices used throughout
+ 
+ - **Pydantic everywhere for data**, frozen (`ConfigDict(frozen=True)`)
+   wherever the architecture says "immutable," mutable
+@@ -430,86 +408,56 @@
+   `TeamIdentityEngineError` in Layer 2; `DataLayerError` and its
+   subclasses in Layer 1) so failures are debuggable by type, not just by
+   string-matching an error message.
+-- **Static verification discipline where dynamic testing isn't
+-  possible.** The authoring sandbox used to build this project has no
+-  network access and cannot install `pydantic`, so `pytest` has never
+-  actually been executed against this code. To compensate, every
+-  revision has been checked with: full-project `ast.parse` syntax
+-  checks, an automated cross-module import resolver (confirming every
+-  `from football_engine.x import Y` actually resolves to a real `Y`
+-  defined or re-exported in `x`), field-by-field verification that every
+-  Pydantic model constructor call uses real field names, and AST
+-  constant-extraction to confirm `pytest.raises(..., match=...)` regexes
+-  actually match the literal exception message strings in the source.
+-  This is disclosed explicitly rather than silently assumed to be
+-  equivalent to a real test run.
+-
+----
+-
+-## 8. Test suites
+-
+-| Layer | File | Test count | Covers |
+-|---|---|---|---|
+-| 1 | `tests/test_data_layer.py` | 32 | Valid/invalid loading for all 4 record types; duplicate-id rejection; missing/duplicate references; invalid formation assignment; Tier 3 `alpha==1.0`; repository lookups; full seed dataset integrity (all teams load, no dup ids, every roster resolves, schema versions valid); PLACEHOLDER exclusion from `.all()` and from `production_ready_team_ids()`; data-only extensibility demonstration |
+-| 2 | `tests/test_team_model.py` | 26 | Input/output contract validation for all 3 engines; valid input reaching the documented `NotImplementedError` (not failing validation); deterministic-failure checks; dependency-boundary checks (no `Formation` import in Modules 2/3, no RNG/randomness import anywhere in `team_model/`, no `TeamRuntimeState`/`MatchRuntime` import — matching the locked `RANDOMNESS=NO`/`CAN_CHANGE_STATE=NO` contracts); orchestration order (`TeamModelBuilder` hits Module 1 before 2/3); isolated tests of the already-working historical-prior blend |
+-
+-Run with:
++- **Actual runtime verification.** Python/Pydantic imports and assertions now run under the existing local pytest-compatible harness. This is not the full pytest distribution. Its missing `pytest.raises(...).value` compatibility feature was repaired without changing existing tests; collection errors now count as failures and failed runs exit nonzero. Syntax/import checks supplement, rather than replace, runtime execution.
++
++---
++
++## 9. Test suites — current actual execution
++
++| Scope / checkpoint | Passed | Failed | Total |
++|---|---:|---:|---:|
++| Pre-migration repository baseline | 172 | 6 | 178 |
++| Step A — E-12 migration checkpoint | 184 | 6 | 190 |
++| **Current repository-wide result (after Step B)** | **223** | **6** | **229** |
++| E-12 dedicated contract tests | 12 | 0 | 12 |
++| FormationEngine V1 dedicated tests | 39 | 0 | 39 |
++| **Layer 3-specific health** | **112** | **0** | **112** |
++
++**223/229 is repository-wide; 112/112 remains the Layer 3-specific result.** The previous 172/178 was an earlier repository-wide checkpoint, never a Layer 3 pass rate. The six current failures are unchanged data-layer seed tests: DatasetFileError at missing data/normalized/players/player_seasons.json. No seed data, identity, or team strength was fabricated to obtain green.
++
++Existing contract assertions that depended on the removed field or on FormationEngine raising NotImplementedError were explicitly migrated. No unrelated test was disabled or weakened. Module 2/3 missing-spec tests passing does not mean their derivations exist. Layer 3 production code and mathematical tests remain unchanged.
++
++Run from the repository root:
++
+ ```bash
+-pip install -r requirements.txt
+-pytest
+-```
+-
+-(Has not been executed in the authoring environment — see practices
+-note above. Please run it yourself and treat that as the real
+-pass/fail signal.)
+-
+----
+-
+-## 9. Known limitations — stated plainly, nothing hidden
+-
+-- **Layer 0 Architecture Contract Tests don't exist yet** (same-seed
+-  reproducibility, Goals ≤ Shots, post-sample-can't-mutate-λ, etc.).
+-  They were out of scope for the Layer 1/2 work done so far and remain
+-  a natural next step whenever picked up.
+-- **`TeamRuntimeState` field ownership** (only the future Layer 5 "State
+-  Updater" may write mutable fields) is documented convention, not
+-  code-enforced yet — enforcement needs the Layer 5 orchestrator, which
+-  doesn't exist.
+-- **The seed dataset is 100% placeholder fixture data**, not real
+-  historical statistics — see Layer 1 section above. No ingestion
+-  pipeline exists to pull real data from FBref/Transfermarkt/StatsBomb/
+-  etc.; building one requires (a) a decided methodology for mapping raw
+-  provider stats onto the engine's 0–100/0–1 attribute scales, and (b)
+-  care around what can and can't be reproduced from those sources
+-  without infringing copyright. Neither has been done — inventing either
+-  without review would risk producing numbers indistinguishable from
+-  real researched values.
+-- **Layer 2's three derivation formulas are unspecified by design**, not
+-  merely unfinished — see Section 6 above. This blocks any real
+-  simulation output; it does not block Layer 2's contracts, tests, or
+-  wiring, all of which are complete and exercised.
+-- **No code in this project has ever actually been executed** in the
+-  authoring environment (no network access to install `pydantic`). All
+-  correctness claims beyond "syntactically valid Python" rest on the
+-  static-verification methods described in Section 7, not on a real
+-  interpreter run. Running `pytest` yourself is the first real
+-  executable confirmation this codebase will have received.
+-
+----
+-
+-## 10. What's next
+-
+-1. **Design and lock the three Layer 2 formulas** (Formation →
+-   StructuralFeatures, PlayerSeason+StructuralFeatures → TeamDimensions,
+-   → TeamIdentity pre-prior) — required before Layer 3 can meaningfully
+-   begin.
+-2. Optionally: write the Layer 0 Architecture Contract Tests that were
+-   flagged as a gap early on.
+-3. Optionally: begin designing a real data-ingestion methodology so the
+-   seed dataset can eventually be replaced with genuine historical data,
+-   team by team, without ever touching engine code.
+-4. Once Layer 2's formulas are locked and implemented: **Layer 3 —
+-   Formation + Matchup Engine** (Modules 6/7 — turning `TeamDimensions`
+-   + `TeamIdentity` + `TacticalProfile` into the M/T pair and then into
+-   λ), per the already-locked M/T formulas and single-path dependency
+-   rules described in Section 3.
++python3 run_tests_shim.py --json test-results.json
++```
++
++Execution uses the existing limited pytest-compatible harness, not the real pytest distribution. The earlier shim .value compatibility repair is unchanged. Failed suite runs exit nonzero; no tests are skipped or xfailed to hide the six missing-data failures.
++
++Current results, stage patches, and file-change audit: verification/layer2/. Older verification records describe their historical delivery checkpoints, not the current migrated schema.
++
++---
++
++## 10. Known limitations — stated plainly
++
++- **Layer 2 remains partly incomplete.** E-12 is migrated and FormationEngine works; TeamDimensionEngine and TeamIdentityEngine still lack approved derivation equations. Their explicit gaps are not filled with defaults or fixture data.
++- **Layer 3 missing helper equations remain explicit.** Module 5 needs its approved composition/state policy. Module 6 needs three independent named helper outputs per direction. Defaults, inferred formations, and fabricated tactical multipliers are not supplied.
++- **The canonical-example replay is partial.** Only three links can be reproduced from the provided rounded intermediate outputs. Raw dimensions/tactics and canonical helpers are still needed for a complete replay.
++- **Normalized seed data is absent.** The six existing seed tests fail transparently; no synthetic production dataset was invented. Data-layer tests using temporary fixtures do execute.
++- **No end-to-end game exists yet.** Layer 2→3 integration, probability/sampling, the Layer 5 runtime loop, events/attribution, and calibration remain pending.
++- **State write ownership remains orchestration discipline.** The eventual Layer 5 state updater is not implemented; Layer 3 only reads its limited runtime inputs.
++- **Global Layer 0 architecture tests are not a completed suite.** New Layer 3 tests cover its own purity/import/anti-double-counting boundaries, not every future whole-engine invariant.
++- **No real historical ingestion or calibration has been performed.** Fixtures are labeled test inputs, not researched historical estimates.
++- **Verification used a limited local pytest-compatible harness, not the full pytest distribution.** Its scope and actual results are documented; no unsupported runner features are used by the new tests.
++
++---
++
++## 11. What's next — the two missing Layer 2 derivations
++
++1. Supply canonical or explicitly approve new mathematical specifications for TeamDimensionEngine and TeamIdentityEngine. Specify role/player contribution weights and normalization, the eight identity mappings, and any structural ownership without double-counting.
++2. Implement those approved equations and preserve the already-working historical-prior blend and Module 1→2→3 orchestration. Do not reuse attribution weights or manufacture default team outputs.
++3. Supply/validate real historical normalized data and formation geometry, then test actual Layer 2 reconstruction rather than only synthetic fixtures.
++4. Formally resolve the remaining Layer 3 helper/state-policy equations without guesses, preserving existing interfaces and M/T ownership.
++5. Validate real Layer 2→3 integration and the complete canonical example, then implement probability models and the orchestrator-only simulation loop.
++6. Continue to events/attribution, tournament-state evolution, calibration, and UI only within their later approved scopes.

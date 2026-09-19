@@ -1,0 +1,77 @@
+{
+  "metadata": {
+    "dataset_version": "2026.09.0",
+    "schema_version": "1.0",
+    "description": "Standard football formations for testing and gameplay"
+  },
+  "formations": [
+    {
+      "name": "4-3-3",
+      "position_pool": [
+        {"slot_id": "GK", "role": "GK", "side": "center", "depth": "back"},
+        {"slot_id": "LB", "role": "FB", "side": "left", "depth": "back"},
+        {"slot_id": "LCB", "role": "CB", "side": "left", "depth": "back"},
+        {"slot_id": "RCB", "role": "CB", "side": "right", "depth": "back"},
+        {"slot_id": "RB", "role": "FB", "side": "right", "depth": "back"},
+        {"slot_id": "CM1", "role": "CM", "side": "left", "depth": "mid"},
+        {"slot_id": "CDM", "role": "DM", "side": "center", "depth": "mid"},
+        {"slot_id": "CM2", "role": "CM", "side": "right", "depth": "mid"},
+        {"slot_id": "LW", "role": "WM", "side": "left", "depth": "front"},
+        {"slot_id": "ST", "role": "FW", "side": "center", "depth": "front"},
+        {"slot_id": "RW", "role": "WM", "side": "right", "depth": "front"}
+      ],
+      "notes": "Classic Barcelona 2010/11 formation"
+    },
+    {
+      "name": "4-4-2",
+      "position_pool": [
+        {"slot_id": "GK", "role": "GK", "side": "center", "depth": "back"},
+        {"slot_id": "LB", "role": "FB", "side": "left", "depth": "back"},
+        {"slot_id": "LCB", "role": "CB", "side": "left", "depth": "back"},
+        {"slot_id": "RCB", "role": "CB", "side": "right", "depth": "back"},
+        {"slot_id": "RB", "role": "FB", "side": "right", "depth": "back"},
+        {"slot_id": "LM", "role": "WM", "side": "left", "depth": "mid"},
+        {"slot_id": "LCM", "role": "CM", "side": "left", "depth": "mid"},
+        {"slot_id": "RCM", "role": "CM", "side": "right", "depth": "mid"},
+        {"slot_id": "RM", "role": "WM", "side": "right", "depth": "mid"},
+        {"slot_id": "LS", "role": "FW", "side": "left", "depth": "front"},
+        {"slot_id": "RS", "role": "FW", "side": "right", "depth": "front"}
+      ],
+      "notes": "Classic 4-4-2 flat formation"
+    },
+    {
+      "name": "4-2-3-1",
+      "position_pool": [
+        {"slot_id": "GK", "role": "GK", "side": "center", "depth": "back"},
+        {"slot_id": "LB", "role": "FB", "side": "left", "depth": "back"},
+        {"slot_id": "LCB", "role": "CB", "side": "left", "depth": "back"},
+        {"slot_id": "RCB", "role": "CB", "side": "right", "depth": "back"},
+        {"slot_id": "RB", "role": "FB", "side": "right", "depth": "back"},
+        {"slot_id": "DM1", "role": "DM", "side": "left", "depth": "mid"},
+        {"slot_id": "DM2", "role": "DM", "side": "right", "depth": "mid"},
+        {"slot_id": "LAM", "role": "AM", "side": "left", "depth": "mid"},
+        {"slot_id": "CAM", "role": "AM", "side": "center", "depth": "mid"},
+        {"slot_id": "RAM", "role": "AM", "side": "right", "depth": "mid"},
+        {"slot_id": "ST", "role": "FW", "side": "center", "depth": "front"}
+      ],
+      "notes": "Chelsea 2011/12 double pivot with three attacking mids"
+    },
+    {
+      "name": "3-5-2",
+      "position_pool": [
+        {"slot_id": "GK", "role": "GK", "side": "center", "depth": "back"},
+        {"slot_id": "LCB", "role": "CB", "side": "left", "depth": "back"},
+        {"slot_id": "CB", "role": "CB", "side": "center", "depth": "back"},
+        {"slot_id": "RCB", "role": "CB", "side": "right", "depth": "back"},
+        {"slot_id": "LWB", "role": "FB", "side": "left", "depth": "mid"},
+        {"slot_id": "CM1", "role": "CM", "side": "left", "depth": "mid"},
+        {"slot_id": "CDM", "role": "DM", "side": "center", "depth": "mid"},
+        {"slot_id": "CM2", "role": "CM", "side": "right", "depth": "mid"},
+        {"slot_id": "RWB", "role": "FB", "side": "right", "depth": "mid"},
+        {"slot_id": "LS", "role": "FW", "side": "left", "depth": "front"},
+        {"slot_id": "RS", "role": "FW", "side": "right", "depth": "front"}
+      ],
+      "notes": "Three at the back with wing-backs"
+    }
+  ]
+}

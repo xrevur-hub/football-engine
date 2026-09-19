@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://football-engine.local/schemas/formation.schema.json",
+  "title": "FormationDataset",
+  "description": "On-disk shape of data/normalized/formations/formations.json. AUTHORITY NOTE: hand-maintained mirror of football_engine.data_layer.schemas.FormationDataset/FormationRecord for external tooling only — Pydantic (schemas.py) is authoritative at load time.",
+  "type": "object",
+  "required": ["metadata", "formations"],
+  "properties": {
+    "metadata": { "$ref": "player_season.schema.json#/$defs/DatasetMetadata" },
+    "formations": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/FormationRecord" }
+    }
+  },
+  "$defs": {
+    "PositionSlotRecord": {
+      "type": "object",
+      "description": "side/depth are additive Layer 0/core contract fields (conversation record — Option 3 decision, 2026-09-08): explicit structural geometry, required for every slot, never inferred from slot_id.",
+      "required": ["slot_id", "role", "side", "depth"],
+      "properties": {
+        "slot_id": { "type": "string", "minLength": 1, "example": "LCB" },
+        "role": { "type": "string", "enum": ["GK", "CB", "FB", "DM", "CM", "WM", "AM", "FW"] },
+        "side": { "type": "string", "enum": ["left", "center", "right"] },
+        "depth": { "type": "string", "enum": ["back", "mid", "front"] }
+      }
+    },
+    "FormationRecord": {
+      "type": "object",
+      "required": ["name", "position_pool"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "example": "4-3-3" },
+        "position_pool": {
+          "type": "array",
+          "minItems": 11,
+          "maxItems": 11,
+          "items": { "$ref": "#/$defs/PositionSlotRecord" },
+          "description": "Exactly 11 slots, unique slot_id values."
+        },
+        "notes": { "type": ["string", "null"] }
+      }
+    }
+  }
+}

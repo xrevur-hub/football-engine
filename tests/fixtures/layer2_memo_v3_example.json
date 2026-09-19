@@ -1,0 +1,342 @@
+{
+  "provenance": "Synthetic 11-player arithmetic/contract fixture; NOT real historical data",
+  "players": [
+    {
+      "id": "memo_p00",
+      "name": "Synthetic GK 0",
+      "season": "synthetic-v3",
+      "role": "GK",
+      "attack_ability": 10,
+      "creation_ability": 30,
+      "defense_ability": 35,
+      "gk_ability": 85,
+      "shot_tendency": 0.02,
+      "press_tendency": 0.1,
+      "transition_tendency": 0.15,
+      "pace": 0.3,
+      "discipline_score": 0.5,
+      "impact_score": 0.5
+    },
+    {
+      "id": "memo_p01",
+      "name": "Synthetic CB 1",
+      "season": "synthetic-v3",
+      "role": "CB",
+      "attack_ability": 20,
+      "creation_ability": 35,
+      "defense_ability": 84,
+      "gk_ability": 0,
+      "shot_tendency": 0.1,
+      "press_tendency": 0.4,
+      "transition_tendency": 0.2,
+      "pace": 0.45,
+      "discipline_score": 0.5,
+      "impact_score": 0.5
+    },
+    {
+      "id": "memo_p02",
+      "name": "Synthetic CB 2",
+      "season": "synthetic-v3",
+      "role": "CB",
+      "attack_ability": 25,
+      "creation_ability": 40,
+      "defense_ability": 82,
+      "gk_ability": 0,
+      "shot_tendency": 0.12,
+      "press_tendency": 0.45,
+      "transition_tendency": 0.25,
+      "pace": 0.5,
+      "discipline_score": 0.5,
+      "impact_score": 0.5
+    },
+    {
+      "id": "memo_p03",
+      "name": "Synthetic FB 3",
+      "season": "synthetic-v3",
+      "role": "FB",
+      "attack_ability": 45,
+      "creation_ability": 65,
+      "defense_ability": 72,
+      "gk_ability": 0,
+      "shot_tendency": 0.3,
+      "press_tendency": 0.65,
+      "transition_tendency": 0.5,
+      "pace": 0.75,
+      "discipline_score": 0.5,
+      "impact_score": 0.5
+    },
+    {
+      "id": "memo_p04",
+      "name": "Synthetic FB 4",
+      "season": "synthetic-v3",
+      "role": "FB",
+      "attack_ability": 50,
+      "creation_ability": 60,
+      "defense_ability": 70,
+      "gk_ability": 0,
+      "shot_tendency": 0.35,
+      "press_tendency": 0.6,
+      "transition_tendency": 0.55,
+      "pace": 0.8,
+      "discipline_score": 0.5,
+      "impact_score": 0.5
+    },
+    {
+      "id": "memo_p05",
+      "name": "Synthetic DM 5",
+      "season": "synthetic-v3",
+      "role": "DM",
+      "attack_ability": 35,
+      "creation_ability": 70,
+      "defense_ability": 78,
+      "gk_ability": 0,
+      "shot_tendency": 0.2,
+      "press_tendency": 0.7,
+      "transition_tendency": 0.3,
+      "pace": 0.55,
+      "discipline_score": 0.5,
+      "impact_score": 0.5
+    },
+    {
+      "id": "memo_p06",
+      "name": "Synthetic CM 6",
+      "season": "synthetic-v3",
+      "role": "CM",
+      "attack_ability": 60,
+      "creation_ability": 80,
+      "defense_ability": 65,
+      "gk_ability": 0,
+      "shot_tendency": 0.45,
+      "press_tendency": 0.65,
+      "transition_tendency": 0.45,
+      "pace": 0.65,
+      "discipline_score": 0.5,
+      "impact_score": 0.5
+    },
+    {
+      "id": "memo_p07",
+      "name": "Synthetic AM 7",
+      "season": "synthetic-v3",
+      "role": "AM",
+      "attack_ability": 75,
+      "creation_ability": 90,
+      "defense_ability": 40,
+      "gk_ability": 0,
+      "shot_tendency": 0.6,
+      "press_tendency": 0.5,
+      "transition_tendency": 0.55,
+      "pace": 0.7,
+      "discipline_score": 0.5,
+      "impact_score": 0.5
+    },
+    {
+      "id": "memo_p08",
+      "name": "Synthetic WM 8",
+      "season": "synthetic-v3",
+      "role": "WM",
+      "attack_ability": 82,
+      "creation_ability": 78,
+      "defense_ability": 38,
+      "gk_ability": 0,
+      "shot_tendency": 0.7,
+      "press_tendency": 0.55,
+      "transition_tendency": 0.75,
+      "pace": 0.9,
+      "discipline_score": 0.5,
+      "impact_score": 0.5
+    },
+    {
+      "id": "memo_p09",
+      "name": "Synthetic FW 9",
+      "season": "synthetic-v3",
+      "role": "FW",
+      "attack_ability": 90,
+      "creation_ability": 68,
+      "defense_ability": 25,
+      "gk_ability": 0,
+      "shot_tendency": 0.9,
+      "press_tendency": 0.4,
+      "transition_tendency": 0.7,
+      "pace": 0.85,
+      "discipline_score": 0.5,
+      "impact_score": 0.5
+    },
+    {
+      "id": "memo_p10",
+      "name": "Synthetic FW 10",
+      "season": "synthetic-v3",
+      "role": "FW",
+      "attack_ability": 86,
+      "creation_ability": 72,
+      "defense_ability": 30,
+      "gk_ability": 0,
+      "shot_tendency": 0.85,
+      "press_tendency": 0.45,
+      "transition_tendency": 0.8,
+      "pace": 0.95,
+      "discipline_score": 0.5,
+      "impact_score": 0.5
+    }
+  ],
+  "formation": {
+    "name": "Synthetic 4-3-3 (all role types)",
+    "position_pool": [
+      {
+        "slot_id": "memo_slot_00",
+        "role": "GK",
+        "side": "center",
+        "depth": "back"
+      },
+      {
+        "slot_id": "memo_slot_01",
+        "role": "CB",
+        "side": "left",
+        "depth": "back"
+      },
+      {
+        "slot_id": "memo_slot_02",
+        "role": "CB",
+        "side": "right",
+        "depth": "back"
+      },
+      {
+        "slot_id": "memo_slot_03",
+        "role": "FB",
+        "side": "left",
+        "depth": "back"
+      },
+      {
+        "slot_id": "memo_slot_04",
+        "role": "FB",
+        "side": "right",
+        "depth": "back"
+      },
+      {
+        "slot_id": "memo_slot_05",
+        "role": "DM",
+        "side": "center",
+        "depth": "mid"
+      },
+      {
+        "slot_id": "memo_slot_06",
+        "role": "CM",
+        "side": "left",
+        "depth": "mid"
+      },
+      {
+        "slot_id": "memo_slot_07",
+        "role": "AM",
+        "side": "right",
+        "depth": "mid"
+      },
+      {
+        "slot_id": "memo_slot_08",
+        "role": "WM",
+        "side": "left",
+        "depth": "front"
+      },
+      {
+        "slot_id": "memo_slot_09",
+        "role": "FW",
+        "side": "center",
+        "depth": "front"
+      },
+      {
+        "slot_id": "memo_slot_10",
+        "role": "FW",
+        "side": "right",
+        "depth": "front"
+      }
+    ]
+  },
+  "explicit_pre_prior_possession": 0.62,
+  "prior": {
+    "tier": 1,
+    "alpha": 0.55,
+    "identity_priors": {
+      "possession_tendency": 0.95,
+      "press_tendency": 0.9,
+      "transition_tendency": 0.25,
+      "tempo": 0.7,
+      "risk_tolerance": 0.5,
+      "compactness": 0.75
+    },
+    "dimension_adjustment": {
+      "creation": 0.03
+    }
+  },
+  "expected_structure": {
+    "width_feature": 0.8,
+    "line_height_feature": 0.5,
+    "defensive_cover_feature": 0.5,
+    "press_structure_feature": 0.28,
+    "build_up_structure_feature": 0.32,
+    "transition_structure_feature": 0.84
+  },
+  "expected_dimensions": {
+    "attack": 77.35443037974683,
+    "creation": 74.11111111111111,
+    "defense": 73.93406593406593,
+    "goalkeeping": 85.0
+  },
+  "expected_pre_prior_identity": {
+    "press_tendency": 0.5660493827160494,
+    "transition_tendency": 0.5979452054794521,
+    "tempo": 0.7114035087719298,
+    "risk_tolerance": 0.6764615384615384,
+    "attack_pace_factor": 0.8513888888888889,
+    "possession_tendency": 0.62,
+    "compactness": 0.5,
+    "build_up_control_score": 0.32
+  },
+  "expected_final_dimensions": {
+    "attack": 77.35443037974683,
+    "creation": 75.46111111111111,
+    "defense": 73.93406593406593,
+    "goalkeeping": 85.0
+  },
+  "expected_final_identity": {
+    "press_tendency": 0.7163271604938272,
+    "transition_tendency": 0.4413698630136986,
+    "tempo": 0.7062719298245614,
+    "risk_tolerance": 0.5970538461538462,
+    "attack_pace_factor": 0.8513888888888889,
+    "possession_tendency": 0.7685,
+    "compactness": 0.6125,
+    "build_up_control_score": 0.32
+  },
+  "exact_fraction_reference": {
+    "dimensions": {
+      "attack": "6111/79",
+      "creation": "667/9",
+      "defense": "6728/91",
+      "goalkeeping": "85"
+    },
+    "identity": {
+      "press_tendency": "917/1620",
+      "transition_tendency": "873/1460",
+      "tempo": "811/1140",
+      "risk_tolerance": "4397/6500",
+      "attack_pace_factor": "613/720",
+      "possession_tendency": "31/50",
+      "compactness": "1/2",
+      "build_up_control_score": "8/25"
+    },
+    "final_dimensions": {
+      "attack": "6111/79",
+      "creation": "13583/180",
+      "defense": "6728/91",
+      "goalkeeping": "85"
+    },
+    "final_identity": {
+      "press_tendency": "23209/32400",
+      "transition_tendency": "1611/3650",
+      "tempo": "16103/22800",
+      "risk_tolerance": "77617/130000",
+      "attack_pace_factor": "613/720",
+      "possession_tendency": "1537/2000",
+      "compactness": "49/80",
+      "build_up_control_score": "8/25"
+    }
+  }
+}

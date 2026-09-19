@@ -1,0 +1,38 @@
+{
+  "source": "User FINAL AUTHORIZATION, 2026-09-08, Architecture Example Regression",
+  "provenance": "Quoted rounded intermediate outputs only; original raw example inputs were not supplied and are absent from the repository.",
+  "raw_inputs_available": false,
+  "full_regression_reproduced": false,
+  "direction": "B -> A",
+  "reported_outputs": {
+    "base_relative_strength": 1.089,
+    "possession_share": 0.231,
+    "creation_realization": 0.692,
+    "creation_factor": 0.671,
+    "adjusted_base": 0.731,
+    "i_press": 0.856,
+    "i_tempo": 1.0825,
+    "m": 0.677,
+    "space_behind_defense": 0.51,
+    "t": 0.598,
+    "lambda_base": 1.243
+  },
+  "missing_canonical_equations": [
+    "PressDisruption_M(A -> B)",
+    "WidthMismatch(B, A)",
+    "PressTransitionOpportunity_T(A -> B)",
+    "Exact MatchState -> TacticalProfile adjustments and P/U/Ts baseline composition, if starting upstream of final tactics"
+  ],
+  "missing_original_inputs": [
+    "Original TeamDimensions for A and B, including B.attack/B.creation and A.defense/A.goalkeeping",
+    "Original final TacticalProfiles for A and B, including possession/build-up/press, tempo, line/cover, transition tendency and pace",
+    "Original helper outputs or their canonical defining equations"
+  ],
+  "verified_links_only": [
+    "Reported possession_share -> creation_realization",
+    "Reported base_relative_strength and creation_factor -> adjusted_base",
+    "Reported M and T -> lambda_base"
+  ],
+  "rounding_tolerance": 0.0005,
+  "rounding_note": "Half of one 0.001 reporting unit; numerical test tolerance only, not a modeling coefficient."
+}

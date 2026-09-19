@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://football-engine.local/schemas/historical_prior.schema.json",
+  "title": "HistoricalPriorDataset",
+  "description": "On-disk shape of data/normalized/historical_priors/historical_priors.json. AUTHORITY NOTE: hand-maintained mirror of football_engine.data_layer.schemas.HistoricalPriorDataset/HistoricalPriorRecord for external tooling only — Pydantic (schemas.py) is authoritative at load time.",
+  "type": "object",
+  "required": ["metadata", "priors"],
+  "properties": {
+    "metadata": { "$ref": "player_season.schema.json#/$defs/DatasetMetadata" },
+    "priors": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/HistoricalPriorRecord" }
+    }
+  },
+  "$defs": {
+    "IdentityPriorsRecord": {
+      "type": "object",
+      "properties": {
+        "possession_tendency": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "press_tendency": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "transition_tendency": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "tempo": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "risk_tolerance": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "compactness": { "type": ["number", "null"], "minimum": 0, "maximum": 1 }
+      }
+    },
+    "DimensionAdjustmentRecord": {
+      "type": "object",
+      "properties": {
+        "attack": { "type": "number", "default": 0.0 },
+        "creation": { "type": "number", "default": 0.0 },
+        "defense": { "type": "number", "default": 0.0 },
+        "goalkeeping": { "type": "number", "default": 0.0 }
+      }
+    },
+    "HistoricalPriorRecord": {
+      "type": "object",
+      "required": ["team_season_id", "tier", "alpha", "metadata"],
+      "properties": {
+        "team_season_id": { "type": "string", "minLength": 1, "description": "Must match a TeamSeasonRecord.id" },
+        "tier": { "type": "integer", "enum": [1, 2, 3] },
+        "alpha": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Tier 1: ~0.5-0.6, Tier 2: ~0.75-0.85, Tier 3: must equal 1.0"
+        },
+        "identity_priors": { "$ref": "#/$defs/IdentityPriorsRecord" },
+        "dimension_adjustment": { "$ref": "#/$defs/DimensionAdjustmentRecord" },
+        "metadata": { "$ref": "player_season.schema.json#/$defs/SourceMetadata" }
+      }
+    }
+  }
+}

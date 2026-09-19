@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://football-engine.local/schemas/player_season.schema.json",
+  "title": "PlayerSeasonDataset",
+  "description": "On-disk shape of data/normalized/players/player_seasons.json. AUTHORITY NOTE: this file is a hand-maintained mirror of football_engine.data_layer.schemas.PlayerSeasonDataset/PlayerSeasonRecord for external tooling (editors, CI lint) only. Pydantic is the actual validation authority at load time; if this file and schemas.py ever disagree, schemas.py wins. Regenerate this file from PlayerSeasonDataset.model_json_schema() once pydantic is available in the authoring environment, rather than hand-editing both independently long-term.",
+  "type": "object",
+  "required": ["metadata", "players"],
+  "properties": {
+    "metadata": { "$ref": "#/$defs/DatasetMetadata" },
+    "players": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/PlayerSeasonRecord" }
+    }
+  },
+  "$defs": {
+    "DatasetMetadata": {
+      "type": "object",
+      "required": ["dataset_version", "schema_version"],
+      "properties": {
+        "dataset_version": { "type": "string", "example": "2026.09.0" },
+        "schema_version": { "type": "string", "enum": ["1.0"] },
+        "generated_at": { "type": ["string", "null"], "format": "date-time" },
+        "description": { "type": ["string", "null"] }
+      }
+    },
+    "SourceMetadata": {
+      "type": "object",
+      "required": ["status", "confidence"],
+      "description": "If status=PLACEHOLDER: source must be null and confidence must be 0.0. Otherwise source is required.",
+      "properties": {
+        "status": { "type": "string", "enum": ["PLACEHOLDER", "IMPORTED", "CURATED"] },
+        "source": { "type": ["string", "null"] },
+        "retrieved_at": { "type": ["string", "null"], "format": "date-time" },
+        "confidence": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "manual_override": { "type": "boolean", "default": false },
+        "notes": { "type": ["string", "null"] }
+      }
+    },
+    "PlayerSeasonRecord": {
+      "type": "object",
+      "required": [
+        "id", "name", "season", "role",
+        "attack_ability", "creation_ability", "defense_ability",
+        "metadata"
+      ],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "example": "messi_2010_11" },
+        "name": { "type": "string", "minLength": 1 },
+        "season": { "type": "string", "pattern": "^[0-9]{4}/[0-9]{2}$", "example": "2010/11" },
+        "role": { "type": "string", "enum": ["GK", "CB", "FB", "DM", "CM", "WM", "AM", "FW"] },
+        "attack_ability": { "type": "number", "minimum": 0, "maximum": 100 },
+        "creation_ability": { "type": "number", "minimum": 0, "maximum": 100 },
+        "defense_ability": { "type": "number", "minimum": 0, "maximum": 100 },
+        "gk_ability": { "type": "number", "minimum": 0, "maximum": 100, "default": 0.0 },
+        "shot_tendency": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.5 },
+        "press_tendency": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.5 },
+        "transition_tendency": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.5 },
+        "pace": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.5 },
+        "discipline_score": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.5 },
+        "impact_score": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.5 },
+        "metadata": { "$ref": "#/$defs/SourceMetadata" }
+      }
+    }
+  }
+}

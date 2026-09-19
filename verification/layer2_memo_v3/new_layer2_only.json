@@ -1,0 +1,300 @@
+{
+  "runner": "local pytest-compatible harness (not real pytest)",
+  "python": "3.13.14",
+  "shim_path": "/vercel/sandbox/data/football_project/tools/pytest_shim/pytest.py",
+  "modules": [
+    "tests.test_team_dimension_engine_v3",
+    "tests.test_team_identity_engine_v3",
+    "tests.test_layer2_pipeline_and_audit_v3"
+  ],
+  "passed": 57,
+  "failed": 0,
+  "total": 57,
+  "results": [
+    {
+      "name": "tests.test_team_dimension_engine_v3.test_all_valid_structural_values_and_metadata_are_dimension_inert",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_dimension_engine_v3.test_common_weight_scale_cancels",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_dimension_engine_v3.test_constant_zero_midpoint_and_maximum_abilities",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_dimension_engine_v3.test_corrupted_nonfinite_or_out_of_range_consumed_abilities_rejected",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_dimension_engine_v3.test_dimension_output_is_immutable",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_dimension_engine_v3.test_dimension_weight_mapping_and_rows_are_immutable",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_dimension_engine_v3.test_dimension_weight_values_match_supplied_memo",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_dimension_engine_v3.test_dimensions_are_finite_and_convex_over_positive_contributors",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_dimension_engine_v3.test_each_ability_has_only_its_corresponding_dimension_effect",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_dimension_engine_v3.test_gk_attack_creation_defense_have_zero_dimension_weight",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_dimension_engine_v3.test_golden_dimensions_match_independent_fraction_reference",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_dimension_engine_v3.test_identity_and_attribution_attributes_do_not_change_dimensions",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_dimension_engine_v3.test_invalid_member_ids_roles_and_duplicates_rejected",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_dimension_engine_v3.test_only_the_selected_gk_ability_controls_goalkeeping",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_dimension_engine_v3.test_player_order_is_exactly_invariant",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_dimension_engine_v3.test_real_geometry_change_with_same_players_leaves_d1_unchanged",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_dimension_engine_v3.test_repeated_execution_does_not_cache_or_mutate_inputs",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_dimension_engine_v3.test_wrong_or_corrupted_structure_is_rejected",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_dimension_engine_v3.test_wrong_selection_types_and_counts_rejected",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_dimension_engine_v3.test_zero_and_multiple_goalkeepers_are_rejected",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_dimension_engine_v3.test_zero_or_invalid_weight_denominator_is_not_replaced_by_default",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_identity_engine_v3.test_cb_pace_changes_tempo_but_not_attack_pace",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_identity_engine_v3.test_exact_pre_prior_identity_matches_independent_reference",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_identity_engine_v3.test_existing_prior_blend_matches_all_six_fields_and_two_passthroughs",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_identity_engine_v3.test_fb_pace_changes_both_scopes_as_table_requires",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_identity_engine_v3.test_gk_pace_is_included_in_tempo_but_not_other_means",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_identity_engine_v3.test_identity_output_and_inputs_are_immutable",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_identity_engine_v3.test_identity_weight_tables_and_all_eight_roles",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_identity_engine_v3.test_identity_weight_tables_are_immutable",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_identity_engine_v3.test_invalid_noncallable_source_is_rejected",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_identity_engine_v3.test_invalid_numeric_player_fields_rejected_without_source_fallback",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_identity_engine_v3.test_invalid_prior_numeric_values_rejected_before_blend",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_identity_engine_v3.test_invalid_source_outputs_are_not_coerced_or_clamped",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_identity_engine_v3.test_missing_source_is_named_specification_gap_not_default",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_identity_engine_v3.test_none_tier3_and_partial_priors_preserve_existing_behavior",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_identity_engine_v3.test_only_c_and_u_have_local_structural_effects",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_identity_engine_v3.test_player_abilities_and_attribution_metadata_do_not_feed_identity",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_identity_engine_v3.test_player_order_and_repeated_calculation_are_exactly_invariant",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_identity_engine_v3.test_press_transition_and_shot_changes_affect_only_their_local_component",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_identity_engine_v3.test_prior_even_at_alpha_zero_does_not_replace_missing_source",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_identity_engine_v3.test_same_engine_queries_distinct_rosters_not_a_cached_value",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_identity_engine_v3.test_source_exceptions_propagate_without_fallback",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_identity_engine_v3.test_source_not_called_for_invalid_input_or_zero_denominator",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_identity_engine_v3.test_source_receives_only_sorted_immutable_ids_once",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_identity_engine_v3.test_source_values_at_both_boundaries_are_valid_not_missing",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_team_identity_engine_v3.test_zero_midpoint_and_one_tendencies_are_convex_and_finite",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_layer2_pipeline_and_audit_v3.test_bundle_is_frozen_and_contains_only_the_existing_three_models",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_layer2_pipeline_and_audit_v3.test_corrected_partial_log_sensitivity_with_helpers_held_fixed",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_layer2_pipeline_and_audit_v3.test_current_u_and_press_paths_change_share_not_supplied_press_helper",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_layer2_pipeline_and_audit_v3.test_default_builder_still_refuses_to_fabricate_missing_possession",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_layer2_pipeline_and_audit_v3.test_formation_failure_precedes_all_source_queries",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_layer2_pipeline_and_audit_v3.test_new_layer2_production_has_no_forbidden_runtime_or_io_dependencies",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_layer2_pipeline_and_audit_v3.test_real_formation_dimension_identity_pipeline_without_prior",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_layer2_pipeline_and_audit_v3.test_real_pipeline_matches_existing_prior_blends_exactly_once",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_layer2_pipeline_and_audit_v3.test_supplied_test_policy_transports_real_layer2_outputs_without_new_math",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_layer2_pipeline_and_audit_v3.test_tactical_policy_gap_is_not_silently_closed_by_layer2_progress",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "name": "tests.test_layer2_pipeline_and_audit_v3.test_weight_parameter_count_respects_fixed_zeros_and_scale_invariance",
+      "status": "PASS",
+      "error": null
+    }
+  ]
+}

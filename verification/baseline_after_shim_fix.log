@@ -1,0 +1,155 @@
+
+=== RESULTS: 60 passed, 6 failed, 66 total ===
+
+FAIL: tests.test_data_layer.test_seed_dataset_every_roster_resolves
+DatasetFileError: Dataset file not found: "/vercel/sandbox/data/football_project/data/normalized/players/player_seasons.json"
+Traceback (most recent call last):
+  File "/vercel/sandbox/data/football_project/run_tests_shim.py", line 66, in _run_one
+    thunk()
+    ~~~~~^^
+  File "/vercel/sandbox/data/football_project/run_tests_shim.py", line 61, in <lambda>
+    _run_one(full_name, lambda f=obj: call_with_fixtures(f), results)
+                                      ~~~~~~~~~~~~~~~~~~^^^
+  File "/vercel/sandbox/data/football_project/run_tests_shim.py", line 47, in call_with_fixtures
+    func(**kwargs)
+    ~~~~^^^^^^^^^^
+football_engine.data_layer.exceptions.DatasetFileError: Dataset file not found: "/vercel/sandbox/data/football_project/data/normalized/players/player_seasons.json"
+
+------------------------------------------------------------
+FAIL: tests.test_data_layer.test_seed_dataset_has_zero_production_ready_teams
+DatasetFileError: Dataset file not found: "/vercel/sandbox/data/football_project/data/normalized/players/player_seasons.json"
+Traceback (most recent call last):
+  File "/vercel/sandbox/data/football_project/run_tests_shim.py", line 66, in _run_one
+    thunk()
+    ~~~~~^^
+  File "/vercel/sandbox/data/football_project/run_tests_shim.py", line 61, in <lambda>
+    _run_one(full_name, lambda f=obj: call_with_fixtures(f), results)
+                                      ~~~~~~~~~~~~~~~~~~^^^
+  File "/vercel/sandbox/data/football_project/run_tests_shim.py", line 47, in call_with_fixtures
+    func(**kwargs)
+    ~~~~^^^^^^^^^^
+football_engine.data_layer.exceptions.DatasetFileError: Dataset file not found: "/vercel/sandbox/data/football_project/data/normalized/players/player_seasons.json"
+
+------------------------------------------------------------
+FAIL: tests.test_data_layer.test_seed_dataset_loads_completely
+DatasetFileError: Dataset file not found: "/vercel/sandbox/data/football_project/data/normalized/players/player_seasons.json"
+Traceback (most recent call last):
+  File "/vercel/sandbox/data/football_project/run_tests_shim.py", line 66, in _run_one
+    thunk()
+    ~~~~~^^
+  File "/vercel/sandbox/data/football_project/run_tests_shim.py", line 61, in <lambda>
+    _run_one(full_name, lambda f=obj: call_with_fixtures(f), results)
+                                      ~~~~~~~~~~~~~~~~~~^^^
+  File "/vercel/sandbox/data/football_project/run_tests_shim.py", line 47, in call_with_fixtures
+    func(**kwargs)
+    ~~~~^^^^^^^^^^
+football_engine.data_layer.exceptions.DatasetFileError: Dataset file not found: "/vercel/sandbox/data/football_project/data/normalized/players/player_seasons.json"
+
+------------------------------------------------------------
+FAIL: tests.test_data_layer.test_seed_dataset_no_duplicate_team_ids
+DatasetFileError: Dataset file not found: "/vercel/sandbox/data/football_project/data/normalized/players/player_seasons.json"
+Traceback (most recent call last):
+  File "/vercel/sandbox/data/football_project/run_tests_shim.py", line 66, in _run_one
+    thunk()
+    ~~~~~^^
+  File "/vercel/sandbox/data/football_project/run_tests_shim.py", line 61, in <lambda>
+    _run_one(full_name, lambda f=obj: call_with_fixtures(f), results)
+                                      ~~~~~~~~~~~~~~~~~~^^^
+  File "/vercel/sandbox/data/football_project/run_tests_shim.py", line 47, in call_with_fixtures
+    func(**kwargs)
+    ~~~~^^^^^^^^^^
+football_engine.data_layer.exceptions.DatasetFileError: Dataset file not found: "/vercel/sandbox/data/football_project/data/normalized/players/player_seasons.json"
+
+------------------------------------------------------------
+FAIL: tests.test_data_layer.test_seed_dataset_schema_versions_are_supported
+DatasetFileError: Dataset file not found: "/vercel/sandbox/data/football_project/data/normalized/players/player_seasons.json"
+Traceback (most recent call last):
+  File "/vercel/sandbox/data/football_project/run_tests_shim.py", line 66, in _run_one
+    thunk()
+    ~~~~~^^
+  File "/vercel/sandbox/data/football_project/run_tests_shim.py", line 61, in <lambda>
+    _run_one(full_name, lambda f=obj: call_with_fixtures(f), results)
+                                      ~~~~~~~~~~~~~~~~~~^^^
+  File "/vercel/sandbox/data/football_project/run_tests_shim.py", line 47, in call_with_fixtures
+    func(**kwargs)
+    ~~~~^^^^^^^^^^
+football_engine.data_layer.exceptions.DatasetFileError: Dataset file not found: "/vercel/sandbox/data/football_project/data/normalized/players/player_seasons.json"
+
+------------------------------------------------------------
+FAIL: tests.test_data_layer.test_seed_dataset_tier_coverage
+DatasetFileError: Dataset file not found: "/vercel/sandbox/data/football_project/data/normalized/players/player_seasons.json"
+Traceback (most recent call last):
+  File "/vercel/sandbox/data/football_project/run_tests_shim.py", line 66, in _run_one
+    thunk()
+    ~~~~~^^
+  File "/vercel/sandbox/data/football_project/run_tests_shim.py", line 61, in <lambda>
+    _run_one(full_name, lambda f=obj: call_with_fixtures(f), results)
+                                      ~~~~~~~~~~~~~~~~~~^^^
+  File "/vercel/sandbox/data/football_project/run_tests_shim.py", line 47, in call_with_fixtures
+    func(**kwargs)
+    ~~~~^^^^^^^^^^
+football_engine.data_layer.exceptions.DatasetFileError: Dataset file not found: "/vercel/sandbox/data/football_project/data/normalized/players/player_seasons.json"
+
+------------------------------------------------------------
+
+Passed tests:
+  PASS: tests.test_data_layer.test_duplicate_player_id_rejected
+  PASS: tests.test_data_layer.test_duplicate_roster_entry_rejected
+  PASS: tests.test_data_layer.test_formation_duplicate_slot_id_rejected
+  PASS: tests.test_data_layer.test_formation_wrong_slot_count_rejected
+  PASS: tests.test_data_layer.test_gk_ability_role_mismatch_rejected
+  PASS: tests.test_data_layer.test_historical_prior_unknown_team_rejected
+  PASS: tests.test_data_layer.test_historical_prior_valid_loads
+  PASS: tests.test_data_layer.test_invalid_default_formation_reference_rejected
+  PASS: tests.test_data_layer.test_invalid_player_attribute_rejected
+  PASS: tests.test_data_layer.test_invalid_season_format_rejected
+  PASS: tests.test_data_layer.test_malformed_json_raises_dataset_file_error
+  PASS: tests.test_data_layer.test_missing_file_raises_dataset_file_error
+  PASS: tests.test_data_layer.test_missing_roster_reference_rejected
+  PASS: tests.test_data_layer.test_new_team_can_be_added_via_data_only
+  PASS: tests.test_data_layer.test_non_placeholder_requires_source
+  PASS: tests.test_data_layer.test_placeholder_metadata_requires_confidence_zero_and_null_source
+  PASS: tests.test_data_layer.test_player_repository_excludes_placeholders_by_default
+  PASS: tests.test_data_layer.test_production_ready_requires_team_and_roster_both_non_placeholder
+  PASS: tests.test_data_layer.test_repository_lookup_works
+  PASS: tests.test_data_layer.test_team_repository_excludes_placeholders_by_default
+  PASS: tests.test_data_layer.test_tier3_alpha_must_be_one
+  PASS: tests.test_data_layer.test_tier3_alpha_one_is_accepted
+  PASS: tests.test_data_layer.test_unsupported_schema_version_rejected
+  PASS: tests.test_data_layer.test_valid_formation_loads
+  PASS: tests.test_data_layer.test_valid_player_season_loads
+  PASS: tests.test_data_layer.test_valid_team_season_loads
+  PASS: tests.test_team_model.TestDependencyBoundaries.test_no_module_in_team_model_mutates_runtime_state
+  PASS: tests.test_team_model.TestDependencyBoundaries.test_no_module_in_team_model_uses_randomness
+  PASS: tests.test_team_model.TestDependencyBoundaries.test_team_dimension_engine_module_has_no_formation_import
+  PASS: tests.test_team_model.TestDependencyBoundaries.test_team_identity_engine_module_has_no_formation_import
+  PASS: tests.test_team_model.TestFormationEngineContract.test_deterministic_failure
+  PASS: tests.test_team_model.TestFormationEngineContract.test_duplicate_player_id_rejected
+  PASS: tests.test_team_model.TestFormationEngineContract.test_role_count_mismatch_rejected
+  PASS: tests.test_team_model.TestFormationEngineContract.test_valid_input_reaches_not_implemented
+  PASS: tests.test_team_model.TestFormationEngineContract.test_wrong_squad_size_rejected_before_not_implemented
+  PASS: tests.test_team_model.TestHistoricalPriorBlendWiring.test_dimensions_blend_is_noop_for_tier3_or_none
+  PASS: tests.test_team_model.TestHistoricalPriorBlendWiring.test_identity_blend_applies_tier1_prior
+  PASS: tests.test_team_model.TestHistoricalPriorBlendWiring.test_identity_blend_is_noop_for_none
+  PASS: tests.test_team_model.TestTeamDimensionEngineContract.test_dependency_boundary_no_formation_object_required
+  PASS: tests.test_team_model.TestTeamDimensionEngineContract.test_deterministic_failure
+  PASS: tests.test_team_model.TestTeamDimensionEngineContract.test_duplicate_player_id_rejected
+  PASS: tests.test_team_model.TestTeamDimensionEngineContract.test_valid_input_reaches_not_implemented
+  PASS: tests.test_team_model.TestTeamDimensionEngineContract.test_wrong_squad_size_rejected
+  PASS: tests.test_team_model.TestTeamIdentityEngineContract.test_deterministic_failure
+  PASS: tests.test_team_model.TestTeamIdentityEngineContract.test_duplicate_player_id_rejected
+  PASS: tests.test_team_model.TestTeamIdentityEngineContract.test_none_historical_prior_is_accepted_shape
+  PASS: tests.test_team_model.TestTeamIdentityEngineContract.test_valid_input_reaches_not_implemented
+  PASS: tests.test_team_model.TestTeamIdentityEngineContract.test_wrong_squad_size_rejected
+  PASS: tests.test_team_model.TestTeamModelBuilderOrchestration.test_build_accepts_optional_historical_prior
+  PASS: tests.test_team_model.TestTeamModelBuilderOrchestration.test_build_calls_formation_engine_first
+  PASS: tests.test_team_model.TestTeamModelBuilderOrchestration.test_build_propagates_not_implemented_from_formation_engine
+  PASS: tests.test_team_model.TestTeamModelBuilderOrchestration.test_team_model_dataclass_shape
+  PASS: tests.test_formation_slot_geometry.TestEveryFormationSlotHasExplicitSideDepth.test_standard_formation_slots_all_have_side_and_depth
+  PASS: tests.test_formation_slot_geometry.TestFormationEngineDoesNotParseSlotId.test_source_does_not_string_match_on_slot_id
+  PASS: tests.test_formation_slot_geometry.TestFormationEngineDoesNotParseSlotId.test_validation_behavior_identical_regardless_of_slot_id_spelling
+  PASS: tests.test_formation_slot_geometry.TestInvalidOrMissingSideDepthIsRejected.test_invalid_depth_value_is_rejected
+  PASS: tests.test_formation_slot_geometry.TestInvalidOrMissingSideDepthIsRejected.test_invalid_side_value_is_rejected
+  PASS: tests.test_formation_slot_geometry.TestInvalidOrMissingSideDepthIsRejected.test_missing_depth_is_rejected
+  PASS: tests.test_formation_slot_geometry.TestInvalidOrMissingSideDepthIsRejected.test_missing_side_is_rejected
+  PASS: tests.test_formation_slot_geometry.TestSlotIdRenamingDoesNotAlterStructuralSemantics.test_renaming_slot_id_preserves_side_and_depth

@@ -1,0 +1,22 @@
+{
+  "decision": "E-12",
+  "issue_status": "OPEN",
+  "architecture_status": "APPROVED",
+  "implementation_authorized": false,
+  "formal_record": "docs/E12_ARCHITECTURE_DECISION.md",
+  "separate_future_steps": [
+    "A: minimal schema/ownership migration",
+    "B: six-rule FormationEngine implementation"
+  ],
+  "production_code_changes": 0,
+  "schema_changes": 0,
+  "test_or_fixture_changes": 0,
+  "tests_rerun": false,
+  "unchanged_source_schema_test_files": 54,
+  "modified_documentation": [
+    "PROJECT_OVERVIEW.md",
+    "docs/LAYER3_IMPLEMENTATION_REPORT.md",
+    "docs/LAYER3_SPEC_AND_GAPS.md",
+    "verification/README.md"
+  ]
+}

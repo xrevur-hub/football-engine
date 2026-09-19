@@ -1,0 +1,473 @@
+--- a/football_engine/core/enums.py
++++ b/football_engine/core/enums.py
+@@ -6,7 +6,8 @@
+ them (TeamRuntimeState.state, PlayerSeason.role, etc.).
+ 
+ Architecture reference: Section P.3 (MatchState enum), Section R.3/R.4
+-(role tables), Section 5 (formation Type A/B/C).
++(role tables). E-12 removes the misnamed formation enum; snapshot quality
++is separately owned by football_engine.data_layer.snapshot_quality.
+ """
+ 
+ from __future__ import annotations
+@@ -42,19 +43,6 @@
+     WM = "WM"
+     AM = "AM"
+     FW = "FW"
+-
+-
+-class FormationStructuralType(str, Enum):
+-    """
+-    Formation Engine structural classification (Section 5).
+-
+-    V1 uses a reduced 6-8 context rule set; the Type A/B/C classification
+-    itself is part of core architecture and is not a V1/V2 simplification.
+-    """
+-
+-    TYPE_A = "TYPE_A"
+-    TYPE_B = "TYPE_B"
+-    TYPE_C = "TYPE_C"
+ 
+ 
+ class HistoricalTier(int, Enum):
+--- a/football_engine/core/formation.py
++++ b/football_engine/core/formation.py
+@@ -1,11 +1,10 @@
+ """
+ Formation — the template/input side of the Formation Engine (Module 1).
+ 
+-Architecture reference: Section 5.
+-
+-    "Formation فقط یک نام مثل 4-3-3 نیست؛ یک ساختار است. Formation Engine
+-    بر پایه Position Pool، Context Rules، Structural Features، Type A/B/C
+-    کار می‌کند."
++Architecture reference: Section 5; approved E-12 semantic correction.
++Formation is an explicit Position Pool, not merely a name such as 4-3-3.
++Context rules produce StructuralFeatures. Historical snapshot-quality classes
++are not formation classes and are owned separately by Layer 1.
+ 
+ This module models the *template* (Position Pool + name) that is fed into
+ the Formation Engine along with 11 selected PlayerSeasons; the Formation
+--- a/football_engine/core/team_dimensions.py
++++ b/football_engine/core/team_dimensions.py
+@@ -18,22 +18,20 @@
+ 
+ from pydantic import BaseModel, ConfigDict, Field
+ 
+-from football_engine.core.enums import FormationStructuralType
+-
+ 
+ class StructuralFeatures(BaseModel):
+     """
+     Module 1 output — Formation Engine.
+ 
+-    V1 uses a reduced 6-8 context rule subset (N.6); the full 15-feature /
+-    Type A/B/C model is V2 (N.7). All fields are present in the schema now
+-    (Layer 0 principle: contracts exist before formulas), several are
+-    simply unused/defaulted in V1 calculation code.
++    V1's six active features are geometry/role-occupancy signals. E-12
++    explicitly removes the legacy formation_type field: historical snapshot
++    quality is Layer 1 metadata, never a structural classifier or input here.
++    Unknown fields are rejected so old payloads cannot silently masquerade as
++    migrated data. The two inactive V3 fields retain their existing contract.
+     """
+ 
+-    model_config = ConfigDict(frozen=True)
++    model_config = ConfigDict(frozen=True, extra="forbid")
+ 
+-    formation_type: FormationStructuralType
+     formation_name: str = Field(..., description='e.g. "4-3-3"')
+ 
+     width_feature: float = Field(0.5, ge=0, le=1)
+--- a/football_engine/data_layer/__init__.py
++++ b/football_engine/data_layer/__init__.py
+@@ -52,7 +52,11 @@
+     TeamSeasonRecord,
+ )
+ 
++from football_engine.data_layer.snapshot_quality import HistoricalSnapshotQuality, SNAPSHOT_QUALITY_CALIBRATION_WEIGHTS
++
+ __all__ = [
++    "HistoricalSnapshotQuality",
++    "SNAPSHOT_QUALITY_CALIBRATION_WEIGHTS",
+     # exceptions
+     "DataLayerError",
+     "DatasetFileError",
+--- a/football_engine/data_layer/snapshot_quality.py
++++ b/football_engine/data_layer/snapshot_quality.py
+@@ -0,0 +1,29 @@
++"""Historical snapshot-quality metadata — Layer 1 ownership (E-12 Step A).
++
++Full / Partial / Minimal Snapshot is not formation structure or HistoricalTier.
++These weights are the user-supplied canonical calibration metadata, not runtime
++strength/identity/lambda modifiers. This module does not classify records,
++convert legacy formation_type values, or assign a quality default.
++
++The exact historical record granularity and completeness predicates have not
++been supplied. Do not add a guessed quality field to player/team records or
++infer quality from fixture labels, confidence, alpha, or HistoricalTier.
++"""
++
++from enum import Enum
++from types import MappingProxyType
++from typing import Mapping
++
++
++class HistoricalSnapshotQuality(str, Enum):
++    TYPE_A = "TYPE_A"  # Full Snapshot
++    TYPE_B = "TYPE_B"  # Partial Snapshot
++    TYPE_C = "TYPE_C"  # Minimal Snapshot
++
++
++# Read-only canonical metadata for future calibration consumers, never λ.
++SNAPSHOT_QUALITY_CALIBRATION_WEIGHTS: Mapping[HistoricalSnapshotQuality, float] = MappingProxyType({
++    HistoricalSnapshotQuality.TYPE_A: 1.0,
++    HistoricalSnapshotQuality.TYPE_B: 0.5,
++    HistoricalSnapshotQuality.TYPE_C: 0.2,
++})
+--- a/football_engine/team_model/formation_engine.py
++++ b/football_engine/team_model/formation_engine.py
+@@ -1,52 +1,9 @@
+-"""
+-Formation Engine — Module 1 (Layer 2).
++"""Module 1 — FormationEngine, after E-12 contract migration (Step A).
+ 
+-Architecture reference: Section 4, Section 5, Section O.2 (Module 1
+-contract), Section N.6/N.7/N.8 (V1 reduced context-rule subset vs V2/V3
+-full feature set).
+-
+-Locked contract (Section O.2):
+-
+-    INPUT:              List[PlayerSeason] (11 players) + Formation (template)
+-    OUTPUT:             StructuralFeatures
+-    IMMUTABLE?          YES
+-    RUNTIME?            NO
+-    CAN_CHANGE_λ?       INDIRECT (via TeamDimensions/TeamIdentity downstream)
+-    CAN_CHANGE_STATE?   NO
+-    RANDOMNESS?         NO
+-
+-============================================================================
+-EXPLICIT SCOPE DECISION (see conversation record — "Option 3"):
+-============================================================================
+-The architecture document locks this module's INPUT/OUTPUT contract and
+-its position in the dependency graph (Formation -> StructuralFeatures ->
+-TeamDimensions/TeamIdentity -> ... -> λ), but does NOT specify an exact
+-mathematical derivation for how 11 PlayerSeasons + a Formation template
+-produce the six V1 StructuralFeatures values (width_feature,
+-line_height_feature, defensive_cover_feature, press_structure_feature,
+-build_up_structure_feature, transition_structure_feature) or the two
+-V3-scoped fields.
+-
+-Per explicit instruction, this module implements ONLY the contract and
+-plumbing:
+-  - the callable signature or engine class shape,
+-  - Formation/PlayerSeason input validation (11 players, all requested
+-    roles satisfiable against the position pool, etc. — this is
+-    input-shape validation, not "derivation logic"),
+-  - a NotImplementedError raised at the exact point the missing formula
+-    would be applied.
+-
+-TODO(SPEC-NEEDED, Formation -> StructuralFeatures derivation):
+-    No formula exists yet for turning (List[PlayerSeason], Formation)
+-    into StructuralFeatures.width_feature / line_height_feature /
+-    defensive_cover_feature / press_structure_feature /
+-    build_up_structure_feature / transition_structure_feature (V1,
+-    Section N.6's "reduced 6-8 context rule subset") nor for
+-    formation_type (Type A/B/C classification, Section 5) nor for the
+-    V3-scoped cb_pairing_quality / fullback_exposure (Section N.8).
+-    This must be designed and locked before FormationEngine.derive()
+-    can be implemented. See NotImplementedError message below for the
+-    exact insertion point.
++The approved target has no formation classifier or snapshot-quality input.
++This checkpoint changes only contract references, not the six-rule derivation.
++The W/H/C/P/U/Ts implementation is deliberately deferred to separate Step B.
++Validation and the public (PlayerSeason[11], Formation) signature are retained.
+ """
+ 
+ from __future__ import annotations
+@@ -142,12 +99,7 @@
+         _validate_input_shape(players, formation)
+ 
+         raise NotImplementedError(
+-            "FormationEngine.derive(): input shape is valid, but the "
+-            "Formation -> StructuralFeatures derivation formula (Section 5 / "
+-            "N.6 context rules, formation_type Type A/B/C classification, "
+-            "width/line_height/defensive_cover/press_structure/"
+-            "build_up_structure/transition_structure feature values) has not "
+-            "been specified in the locked architecture. See "
+-            "TODO(SPEC-NEEDED, Formation -> StructuralFeatures derivation) "
+-            "in football_engine/team_model/formation_engine.py."
++            "FormationEngine.derive(): input shape is valid; the approved "
++            "Formation -> StructuralFeatures six-rule derivation awaits "
++            "separate Step B implementation after E-12 contract migration."
+         )
+--- a/tests/layer3_helpers.py
++++ b/tests/layer3_helpers.py
+@@ -1,14 +1,14 @@
+ """MANUAL TEST-ONLY upstream objects; never outputs of Layer 2 derive().
+ 
+ These fictional numbers are unit-test inputs, NOT historical estimates or
+-canonical-example raw data. The required legacy formation_type is always an
+-explicit caller-supplied enum literal; it carries no formation semantics.
++canonical-example raw data. E-12 removes the misassigned quality field;
++structural fixtures contain no historical snapshot-quality labels.
+ Nothing in production imports this file, and no fixture computes Layer 2 math.
+ """
+ 
+ from __future__ import annotations
+ 
+-from football_engine.core.enums import FormationStructuralType, MatchState, PlayerRole
++from football_engine.core.enums import MatchState, PlayerRole
+ from football_engine.core.formation import Formation, PositionSlot, SlotDepth, SlotSide
+ from football_engine.core.tactical_profile import TacticalProfile
+ from football_engine.core.team_dimensions import StructuralFeatures, TeamDimensions
+@@ -38,9 +38,8 @@
+     return TeamIdentity(**values)
+ 
+ 
+-def make_structure(legacy_type: FormationStructuralType, **overrides) -> StructuralFeatures:
++def make_structure(**overrides) -> StructuralFeatures:
+     values = dict(
+-        formation_type=legacy_type,
+         formation_name="MANUAL_TEST_STRUCTURE_NOT_A_CLASSIFICATION",
+         width_feature=0.60,
+         line_height_feature=0.50,
+--- a/tests/team_model_helpers.py
++++ b/tests/team_model_helpers.py
+@@ -84,9 +84,7 @@
+ 
+ 
+ def make_structural_features(**overrides) -> StructuralFeatures:
+-    from football_engine.core.enums import FormationStructuralType
+-
+-    base = dict(formation_type=FormationStructuralType.TYPE_A, formation_name="4-3-3")
++    base = dict(formation_name="4-3-3")
+     base.update(overrides)
+     return StructuralFeatures(**base)
+ 
+--- a/tests/test_e12_contract_migration.py
++++ b/tests/test_e12_contract_migration.py
+@@ -0,0 +1,94 @@
++"""Step A checks: explicit schema separation, without FormationEngine math."""
++
++import ast
++from pathlib import Path
++
++import pytest
++from pydantic import ValidationError
++
++from football_engine.core import enums
++from football_engine.core.enums import HistoricalTier
++from football_engine.core.team_dimensions import StructuralFeatures, TeamDimensions
++from football_engine.core.team_identity import TeamIdentity
++from football_engine.data_layer.snapshot_quality import HistoricalSnapshotQuality, SNAPSHOT_QUALITY_CALIBRATION_WEIGHTS
++
++
++class TestE12ContractMigration:
++    def test_misnamed_enum_is_removed_not_aliased(self):
++        assert not hasattr(enums, "FormationStructuralType")
++        assert not hasattr(enums, "HistoricalSnapshotQuality")
++
++    def test_structural_features_construct_without_any_quality(self):
++        features = StructuralFeatures(formation_name="explicit_geometry_only")
++        assert "formation_type" not in features.model_dump()
++        assert "snapshot_quality" not in features.model_dump()
++        assert "formation_type" not in StructuralFeatures.model_fields
++
++    def test_legacy_field_is_rejected_for_every_label(self):
++        for label in ("TYPE_A", "TYPE_B", "TYPE_C", None):
++            with pytest.raises(ValidationError, match="formation_type"):
++                StructuralFeatures(formation_name="test", formation_type=label)
++
++    def test_unknown_or_quality_fields_cannot_be_silently_ignored(self):
++        for field in ("snapshot_quality", "historical_snapshot_quality", "quality", "unknown"):
++            with pytest.raises(ValidationError):
++                StructuralFeatures(formation_name="test", **{field: "TYPE_A"})
++
++    def test_serialized_schema_forbids_extra_fields(self):
++        schema = StructuralFeatures.model_json_schema()
++        assert schema["additionalProperties"] is False
++        assert "formation_type" not in schema["properties"]
++        assert schema["required"] == ["formation_name"]
++
++    def test_v1_fields_and_inactive_v3_fields_are_preserved(self):
++        assert set(StructuralFeatures.model_fields) == {
++            "formation_name", "width_feature", "line_height_feature",
++            "defensive_cover_feature", "press_structure_feature",
++            "build_up_structure_feature", "transition_structure_feature",
++            "cb_pairing_quality", "fullback_exposure",
++        }
++        features = StructuralFeatures(formation_name="test")
++        assert features.cb_pairing_quality == 0.5
++        assert features.fullback_exposure == 0.5
++
++    def test_structural_features_remain_frozen_and_bounded(self):
++        features = StructuralFeatures(formation_name="test")
++        with pytest.raises(ValidationError):
++            features.width_feature = 0.9
++        with pytest.raises(ValidationError):
++            StructuralFeatures(formation_name="test", width_feature=1.1)
++
++    def test_historical_quality_is_owned_by_layer1(self):
++        assert HistoricalSnapshotQuality.__module__ == "football_engine.data_layer.snapshot_quality"
++        assert {item.value for item in HistoricalSnapshotQuality} == {"TYPE_A", "TYPE_B", "TYPE_C"}
++
++    def test_calibration_weight_mapping_is_exact_and_read_only(self):
++        assert SNAPSHOT_QUALITY_CALIBRATION_WEIGHTS[HistoricalSnapshotQuality.TYPE_A] == 1.0
++        assert SNAPSHOT_QUALITY_CALIBRATION_WEIGHTS[HistoricalSnapshotQuality.TYPE_B] == 0.5
++        assert SNAPSHOT_QUALITY_CALIBRATION_WEIGHTS[HistoricalSnapshotQuality.TYPE_C] == 0.2
++        with pytest.raises(TypeError):
++            SNAPSHOT_QUALITY_CALIBRATION_WEIGHTS[HistoricalSnapshotQuality.TYPE_A] = 0.2
++
++    def test_no_quality_default_or_unknown_quality_is_invented(self):
++        with pytest.raises(TypeError):
++            HistoricalSnapshotQuality()
++        for value in ("UNKNOWN", "4-3-3", 1, None):
++            with pytest.raises(ValueError):
++                HistoricalSnapshotQuality(value)
++
++    def test_historical_tier_remains_independent_and_unchanged(self):
++        assert [(tier.name, tier.value) for tier in HistoricalTier] == [("TIER_1", 1), ("TIER_2", 2), ("TIER_3", 3)]
++        assert HistoricalTier.TIER_1 != HistoricalSnapshotQuality.TYPE_A
++        assert "snapshot_quality" not in TeamIdentity.model_fields
++        assert "snapshot_quality" not in TeamDimensions.model_fields
++
++    def test_core_and_runtime_engines_do_not_import_quality_metadata(self):
++        root = Path(__file__).resolve().parents[1]
++        for folder in ("core", "team_model", "matchup"):
++            for path in (root / "football_engine" / folder).glob("*.py"):
++                tree = ast.parse(path.read_text())
++                for node in ast.walk(tree):
++                    if isinstance(node, ast.ImportFrom):
++                        assert node.module != "football_engine.data_layer.snapshot_quality", path.name
++                    if isinstance(node, ast.Name):
++                        assert node.id not in {"HistoricalSnapshotQuality", "SNAPSHOT_QUALITY_CALIBRATION_WEIGHTS"}, path.name
+--- a/tests/test_layer3_pipeline.py
++++ b/tests/test_layer3_pipeline.py
+@@ -9,7 +9,6 @@
+ 
+ import pytest
+ 
+-from football_engine.core.enums import FormationStructuralType
+ from football_engine.core.parameters import ParameterSet
+ from football_engine.matchup import (
+     DirectionalMatchupHelpers,
+@@ -24,8 +23,8 @@
+     parameters = parameters or ParameterSet()
+     home = make_runtime(True, form_factor=home_form)
+     away = make_runtime(False, form_factor=away_form)
+-    home_structure = make_structure(FormationStructuralType.TYPE_B)
+-    away_structure = make_structure(FormationStructuralType.TYPE_C)
++    home_structure = make_structure()
++    away_structure = make_structure()
+     home_final_fixture = make_tactical()
+     away_final_fixture = make_tactical()
+     home_tactics = TacticalProfileGenerator(lambda **inputs: home_final_fixture).generate(
+--- a/tests/test_layer3_tactical.py
++++ b/tests/test_layer3_tactical.py
+@@ -1,11 +1,11 @@
+ """Module 5 contract tests using explicit final-profile fixtures, not policies
+-claimed to be canonical. E-12 remains untouched; enum literals are test-only.
++claimed to be canonical. E-12 migration rejects the removed legacy field explicitly.
+ """
+ 
+ import pytest
+ from pydantic import ValidationError
+ 
+-from football_engine.core.enums import FormationStructuralType, MatchState
++from football_engine.core.enums import MatchState
+ from football_engine.core.tactical_profile import TacticalProfile
+ from football_engine.matchup.errors import Layer3InputError, SpecificationGapError
+ from football_engine.matchup.tactical_profile import TacticalProfileGenerator
+@@ -17,15 +17,15 @@
+         generator = TacticalProfileGenerator()
+         for state in MatchState:
+             with pytest.raises(SpecificationGapError, match="MatchState -> TacticalProfile"):
+-                generator.generate(make_identity(), make_structure(FormationStructuralType.TYPE_B), state)
++                generator.generate(make_identity(), make_structure(), state)
+ 
+     def test_missing_baseline_composition_is_explicit(self):
+         with pytest.raises(SpecificationGapError, match="P/U/Ts ownership"):
+-            TacticalProfileGenerator().generate(make_identity(), make_structure(FormationStructuralType.TYPE_C), MatchState.NORMAL)
++            TacticalProfileGenerator().generate(make_identity(), make_structure(), MatchState.NORMAL)
+ 
+     def test_policy_receives_identity_structure_and_state_separately(self):
+         identity = make_identity()
+-        structure = make_structure(FormationStructuralType.TYPE_B)
++        structure = make_structure()
+         expected = make_tactical()
+         received = []  # test-only call recorder, never a production mutation
+ 
+@@ -43,7 +43,7 @@
+     def test_all_nine_profile_fields_are_retained(self):
+         explicit = make_tactical()
+         generator = TacticalProfileGenerator(lambda **inputs: explicit)
+-        actual = generator.generate(make_identity(), make_structure(FormationStructuralType.TYPE_B), MatchState.NORMAL)
++        actual = generator.generate(make_identity(), make_structure(), MatchState.NORMAL)
+         assert actual.model_dump() == explicit.model_dump()
+         assert set(actual.model_dump()) == {
+             "press_final", "line_final", "width_final", "build_up_control_score",
+@@ -61,21 +61,21 @@
+         }
+         generator = TacticalProfileGenerator(lambda **inputs: fixtures[inputs["state"]])
+         for state, expected in fixtures.items():
+-            assert generator.generate(make_identity(), make_structure(FormationStructuralType.TYPE_C), state) == expected
++            assert generator.generate(make_identity(), make_structure(), state) == expected
+ 
+     def test_wrong_policy_return_type_rejected(self):
+         generator = TacticalProfileGenerator(lambda **inputs: {})
+         with pytest.raises(Layer3InputError, match="must return a TacticalProfile"):
+-            generator.generate(make_identity(), make_structure(FormationStructuralType.TYPE_B), MatchState.NORMAL)
++            generator.generate(make_identity(), make_structure(), MatchState.NORMAL)
+ 
+     def test_policy_output_is_validated_even_after_model_construct(self):
+         invalid = TacticalProfile.model_construct(**{**make_tactical().model_dump(), "line_final": 9.0})
+         with pytest.raises(ValidationError):
+-            TacticalProfileGenerator(lambda **inputs: invalid).generate(make_identity(), make_structure(FormationStructuralType.TYPE_B), MatchState.NORMAL)
++            TacticalProfileGenerator(lambda **inputs: invalid).generate(make_identity(), make_structure(), MatchState.NORMAL)
+ 
+     def test_invalid_boundary_input_types_rejected(self):
+         identity = make_identity()
+-        structure = make_structure(FormationStructuralType.TYPE_C)
++        structure = make_structure()
+         generator = TacticalProfileGenerator(lambda **inputs: make_tactical())
+         for args in (({}, structure, MatchState.NORMAL), (identity, {}, MatchState.NORMAL), (identity, structure, "NORMAL")):
+             with pytest.raises(Layer3InputError):
+@@ -83,7 +83,7 @@
+ 
+     def test_input_immutability_and_deterministic_repetition(self):
+         identity = make_identity()
+-        structure = make_structure(FormationStructuralType.TYPE_B)
++        structure = make_structure()
+         original = [identity.model_dump(), structure.model_dump()]
+         explicit = make_tactical()
+         generator = TacticalProfileGenerator(lambda **inputs: explicit)
+@@ -91,11 +91,14 @@
+             assert generator.generate(identity, structure, MatchState.NORMAL) == explicit
+         assert [identity.model_dump(), structure.model_dump()] == original
+ 
+-    def test_legacy_type_and_formation_name_have_no_generator_effect(self):
++    def test_legacy_type_rejected_and_name_is_only_metadata(self):
++        # Explicit breaking-contract migration, not silently ignored metadata.
++        with pytest.raises(ValidationError, match="formation_type"):
++            make_structure(formation_type="TYPE_A")
+         explicit = make_tactical()
+         generator = TacticalProfileGenerator(lambda **inputs: explicit)
+-        for legacy_type in FormationStructuralType:
+-            structure = make_structure(legacy_type, formation_name="changed_arbitrary_name")
++        for name in ("changed_arbitrary_name", "another_descriptive_name"):
++            structure = make_structure(formation_name=name)
+             assert generator.generate(make_identity(), structure, MatchState.NORMAL) == explicit
+ 
+     def test_identity_schema_is_not_overloaded_with_structural_fields(self):
+--- a/tests/test_team_model.py
++++ b/tests/test_team_model.py
+@@ -141,7 +141,7 @@
+         boundary."""
+         engine = TeamDimensionEngine()
+         squad = make_standard_squad()
+-        features = StructuralFeatures(formation_type="TYPE_B", formation_name="not-a-real-formation-object")
++        features = StructuralFeatures(formation_name="not-a-real-formation-object")
+         with pytest.raises(NotImplementedError):
+             engine.derive(squad, features)
+ 

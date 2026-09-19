@@ -1,0 +1,1123 @@
+--- a/PROJECT_OVERVIEW.md
++++ b/PROJECT_OVERVIEW.md
+@@ -1,6 +1,6 @@
+ # Football Match Simulation Engine — Project Overview
+ 
+-**Status snapshot:** Layer 0/1 contracts retained · **Layer 2 is the next completion priority; derivations remain incomplete** · **Layer 3 — Matchup + λ Engine: current implementation APPROVED; specified M/T/λ formulas implemented, helper/state-policy gaps explicit** · Layers 4–7 not implemented. No end-to-end match simulation yet.
++**Status snapshot:** **E-12 migration CLOSED; FormationEngine V1 implemented** · Layer 2 TeamDimensionEngine/TeamIdentityEngine derivations still blocked on missing approved equations · Layer 3 specified M/T/λ implementation remains APPROVED and unchanged · No complete real-historical or end-to-end simulation yet.
+ 
+ This document is a complete, honest snapshot of the project: what it's
+ for, how it's structured, what's been built, what actually works today
+@@ -79,9 +79,9 @@
+ 
+ | Layer | Name | Current status |
+ |---|---|---|
+-| 0 | Project Skeleton + Base Types | Existing contracts retained; no changes in this Layer 3 implementation |
+-| 1 | Data Layer + JSON Schemas | Existing implementation retained; normalized seed files are absent from this snapshot |
+-| 2 | Team Model | Contracts/plumbing present; three derivations still unimplemented |
++| 0 | Project Skeleton + Base Types | Approved E-12 migration applied; unrelated contracts unchanged |
++| 1 | Data Layer + JSON Schemas | Snapshot-quality type/weight metadata added; existing loader/schemas retained; normalized seed data absent |
++| 2 | Team Model | FormationEngine six-rule derivation implemented; Module 2/3 derivation specifications still absent |
+ | 3 | **Matchup + λ Engine** | **Specified M/T/λ formulas implemented; explicit Module 5 policy and Module 6 helper gaps remain** |
+ | 4 | Probability models (legacy roadmap label: λ + Probability) | Not implemented; λ is Module 7 in Layer 3 and must not be duplicated here |
+ | 5 | Full Simulation | Not implemented; future orchestrator only |
+@@ -141,7 +141,7 @@
+ ├── __init__.py                 # public API surface — exports everything below
+ ├── core/
+ │   ├── enums.py                 # MatchState, PlayerRole, HistoricalTier,
+-│   │                             # FormationStructuralType, SegmentId,
++│   │                             # SegmentId,
+ │   │                             # SplittingEventType, NonSplittingEventType
+ │   ├── constants.py              # Section 44/T.12 default calibration priors
+ │   │                             # + T.12 parameter bounds + role weight tables
+@@ -307,88 +307,50 @@
+ 
+ ---
+ 
+-## 6. Layer 2 — Team Model (contracts/plumbing present; derivations incomplete)
+-
+-**Goal (per architecture, Section O.2):** Turn a roster of 11
+-PlayerSeasons plus a chosen Formation into the three objects a match
+-needs before it can even reach the Matchup Engine:
+-
+-```
+-Module 1 (Formation Engine):
+-    (List[PlayerSeason], Formation) → StructuralFeatures
+-
+-Module 2 (Team Dimension Engine):
+-    (List[PlayerSeason], StructuralFeatures) → TeamDimensions
+-
+-Module 3 (Team Identity Engine):
+-    (List[PlayerSeason], StructuralFeatures, HistoricalPrior|None) → TeamIdentity
+-```
+-
+-### The key decision that shaped this layer
+-
+-The architecture document locks the **input/output contract** and the
+-**dependency graph** for all three modules — but it does **not** specify
+-an explicit mathematical formula for any of the three derivations. After
+-checking, we deliberately chose **not** to invent formulas ourselves
+-(even clearly-labeled ones), because doing so would mean introducing new
+-football-modeling math into the engine that hasn't been designed or
+-reviewed. Instead:
+-
+-> Build the contracts, wiring, and validation completely.
+-> Leave the three actual formulas as `NotImplementedError`, each with a
+-> `TODO(SPEC-NEEDED, ...)` marker pinpointing exactly what's missing.
+-
+-### Structure
+-
+-```
+-football_engine/team_model/
+-├── __init__.py
+-├── formation_engine.py         # Module 1 — validates squad size (11),
+-│                               # duplicate ids, and that the role
+-│                               # multiset matches the formation's
+-│                               # position pool exactly — then raises
+-│                               # NotImplementedError
+-├── team_dimension_engine.py    # Module 2 — same input validation
+-│                               # discipline, then NotImplementedError
+-├── team_identity_engine.py     # Module 3 — same input validation,
+-│                               # THEN calls the already-working
+-│                               # Section 30 blend (see below), but the
+-│                               # pre-prior derivation step itself is
+-│                               # NotImplementedError
+-└── team_model_builder.py       # Orchestrator: calls Module 1 → Module 2
+-                                # → Module 3 in the exact locked order,
+-                                # applies both historical-prior blends —
+-                                # pure wiring, zero new formulas
+-```
+-
+-### What genuinely works right now (not a stub)
+-
+-`TeamIdentityEngine.derive()` and `TeamModelBuilder.build()` both
+-correctly call the **already-implemented** Section 30 hybrid blend
+-functions from Layer 1. If you feed a real (already-derived)
+-`TeamDimensions`/`TeamIdentity` directly into
+-`apply_historical_prior_to_dimensions()` /
+-`apply_historical_prior_to_identity()`, the blend math runs today and is
+-tested. The only missing piece is the step *before* the blend — turning
+-raw player attributes into that "derived" value in the first place.
+-
+-### Current derivation status
+-
+-| Module | Current state |
++## 6. Layer 2 — FormationEngine implemented; two derivations still blocked
++
++**Implemented in two separate checkpoints:**
++
++1. **Step A — E-12 migration:** removed the misnamed FormationStructuralType enum and StructuralFeatures.formation_type; legacy/unknown fields now fail explicitly. HistoricalSnapshotQuality and its read-only canonical calibration-weight registry live in Layer 1. Old fixture labels were not converted into quality evidence.
++2. **Step B — FormationEngine:** implemented exactly W/H/C/P/U/Ts from explicit side/depth and role occupancy, after Step A tests passed. The public derive(players, formation) input contract is retained; players are read only for id/role validation.
++
++### Current status
++
++| Component | Current state |
+ |---|---|
+-| 1 — FormationEngine | V1 W/H/C/P/U/Ts mathematics was approved in the conversation, but implementation is not part of this Layer 3 task; derive() remains unchanged and raises NotImplementedError |
+-| 2 — TeamDimensionEngine | Exact player-ability aggregation and structural ownership still await a separate approved design; unchanged |
+-| 3 — TeamIdentityEngine | Exact pre-prior tendency derivation/composition still awaits a separate approved design; unchanged |
+-
+-**E-12: OPEN — architecture APPROVED; implementation NOT AUTHORIZED.** Formation Structure, Snapshot Quality, and Historical Tier are separate concepts. TYPE_A/B/C canonically describe Full/Partial/Minimal Historical Snapshot Quality with weights 1.0/0.5/0.2; they are not formation classes or runtime λ modifiers. The approved target removes `FormationStructuralType` and `StructuralFeatures.formation_type`, and introduces `HistoricalSnapshotQuality` in Layer 1 for calibration consumption. None of that migration has been implemented. Legacy fixture labels must not be converted automatically into snapshot-quality claims.
+-
+-Formal decision: [E-12 — Type Semantic/Schema Mismatch](docs/E12_ARCHITECTURE_DECISION.md). Implementation must be split into **Step A: minimal Layer 0/1 schema/ownership migration**, followed by **Step B: the six-rule FormationEngine**, only after explicit authorization. Older Layer 0/2 comments do not override this approved semantic separation.
+-
+-### Integration boundary
+-
+-`TeamModelBuilder.build(...)` still raises at Module 1 for a valid roster/formation. Real Layer 2 outputs cannot yet drive a match. The final authorization explicitly permits testing Layer 3 in isolation with manual upstream fixtures instead of implementing or altering Layer 2.
+-
+-`TeamModel` already carries structural_features, dimensions, and identity. The approved F-1(b) transport keeps those objects separate: future Layer 5 passes identity + StructuralFeatures + MatchState to Module 5 explicitly, without extending or overloading TeamIdentity/TeamRuntimeState.
++| E-12 | **CLOSED** on explicit migrated contracts and construction/derivation test evidence |
++| FormationEngine | **Implemented:** six approved numeric features and descriptive formation_name; no classifier, player-quality input, randomness, or λ |
++| TeamDimensionEngine | **Blocked:** no approved aggregation/role-weight/structural-dependence equations for attack, creation, defense, goalkeeping |
++| TeamIdentityEngine | **Blocked:** no approved pre-prior equations for its eight identity outputs |
++| Historical-prior blends | Existing implementation and wiring retained unchanged |
++| TeamModelBuilder | Now passes Module 1 and reaches the genuine Module 2 specification gap; it does not build a fake complete model |
++
++### Approved and implemented FormationEngine mathematics
++
++For the ten non-GK slots, K=floor(N²/4)=25; connectivity excludes only opposite LEFT/RIGHT pairs:
++
++- W = (left + right outfield slots)/N.
++- H = 0.5, the named, disclosed V1 baseline prior—not inferred line height.
++- C = (back slots + midfield DM slots)/N.
++- P = connected middle/front pairs / K.
++- U = connected back/middle pairs / K.
++- Ts = front slots × non-front outfield slots / K.
++
++The manual standard geometry produces **(.8, .5, .5, .28, .32, .84)**. This is real code execution against explicit test geometry, not a verified historical reconstruction. V3 fields remain inert; no new modeling coefficients were invented.
++
++### Why Layer 2 is not yet entirely complete
++
++The repository defines the Module 2/3 shapes and prior blending, but not the numerical mapping from PlayerSeason abilities/tendencies to the four dimensions and eight identity values. Attribution/scorer/assist weights are not an approved substitute. These derivations require canonical equations or an explicitly approved new mathematical design; their source files remain unchanged and raise clear specification-gap errors.
++
++### Structural transport and real-data limits
++
++F-1(b) is unchanged: future Layer 5 passes TeamModel.identity and TeamModel.structural_features separately to Module 5. No overload of TeamIdentity or TeamRuntimeState was introduced.
++
++Formation Structure ≠ Snapshot Quality ≠ Historical Tier. Snapshot-quality metadata has no runtime strength/identity/λ path. No inferred quality field was added to historical records whose snapshot granularity is not specified.
++
++Full historical data and the two remaining derivations are still missing; end-to-end model reconstruction is not complete.
++
++Documents: [E-12 decision](docs/E12_ARCHITECTURE_DECISION.md), [FormationEngine V1 spec](docs/FORMATION_ENGINE_V1_SPEC.md), [current implementation report](docs/LAYER2_E12_FORMATION_REPORT.md).
+ 
+ ---
+ 
+@@ -450,23 +412,20 @@
+ 
+ ---
+ 
+-## 9. Test suites — actual execution
+-
+-| Layer | File | Executed tests | Result |
+-|---|---|---:|---|
+-| 1 | `tests/test_data_layer.py` | 32 | 26 pass / 6 missing-seed failures |
+-| 0/2 geometry | `tests/test_formation_slot_geometry.py` | 8 | 8 pass; unchanged geometry tests |
+-| 3 | `tests/test_layer3_architecture_reference.py` | 5 | 5 pass; isolated manual upstream fixtures |
+-| 3 | `tests/test_layer3_boundaries.py` | 23 | 23 pass; isolated manual upstream fixtures |
+-| 3 | `tests/test_layer3_lambda.py` | 26 | 26 pass; isolated manual upstream fixtures |
+-| 3 | `tests/test_layer3_matchup.py` | 43 | 43 pass; isolated manual upstream fixtures |
+-| 3 | `tests/test_layer3_pipeline.py` | 4 | 4 pass; isolated manual upstream fixtures |
+-| 3 | `tests/test_layer3_tactical.py` | 11 | 11 pass; isolated manual upstream fixtures |
+-| 2 | `tests/test_team_model.py` | 26 | 26 pass; unchanged contract/plumbing tests |
+-
+-**Repository-wide result: 172/178 — 172 passed, 6 failed. This is NOT the Layer 3 pass rate.** **Layer 3-specific test-health/acceptance result: 112/112 — 112 passed, 0 failed.** The six repository failures belong to unchanged seed-data tests, not Layer 3. No tests were skipped or xfailed to obtain green. Cases expecting an explicit specification-gap error test the boundary; they do not prove the missing mathematical helper exists. These are the last verified run's results; the subsequent approval correction is documentation-only.
+-
+-The unchanged original suite totals **66 tests: 60 passed, 6 missing-data failures** after the shim compatibility repair. At the start of this task, the actual baseline was 59 passed / 7 failed: the seventh was the shim's missing `.value` property, not an engine or test defect.
++## 9. Test suites — current actual execution
++
++| Scope / checkpoint | Passed | Failed | Total |
++|---|---:|---:|---:|
++| Pre-migration repository baseline | 172 | 6 | 178 |
++| Step A — E-12 migration checkpoint | 184 | 6 | 190 |
++| **Current repository-wide result (after Step B)** | **223** | **6** | **229** |
++| E-12 dedicated contract tests | 12 | 0 | 12 |
++| FormationEngine V1 dedicated tests | 39 | 0 | 39 |
++| **Layer 3-specific health** | **112** | **0** | **112** |
++
++**223/229 is repository-wide; 112/112 remains the Layer 3-specific result.** The previous 172/178 was an earlier repository-wide checkpoint, never a Layer 3 pass rate. The six current failures are unchanged data-layer seed tests: DatasetFileError at missing data/normalized/players/player_seasons.json. No seed data, identity, or team strength was fabricated to obtain green.
++
++Existing contract assertions that depended on the removed field or on FormationEngine raising NotImplementedError were explicitly migrated. No unrelated test was disabled or weakened. Module 2/3 missing-spec tests passing does not mean their derivations exist. Layer 3 production code and mathematical tests remain unchanged.
+ 
+ Run from the repository root:
+ 
+@@ -474,13 +433,15 @@
+ python3 run_tests_shim.py --json test-results.json
+ ```
+ 
+-The shim is bundled at `tools/pytest_shim/pytest.py` for reproducibility. Python and Pydantic are required; no real-pytest installation is needed for this command. The six failures are all `DatasetFileError` for the absent normalized seed data, first at `data/normalized/players/player_seasons.json`. The runner correctly returns a nonzero status while those files are absent. Existing tests were not rewritten, disabled, or replaced.
++Execution uses the existing limited pytest-compatible harness, not the real pytest distribution. The earlier shim .value compatibility repair is unchanged. Failed suite runs exit nonzero; no tests are skipped or xfailed to hide the six missing-data failures.
++
++Current results, stage patches, and file-change audit: verification/layer2/. Older verification records describe their historical delivery checkpoints, not the current migrated schema.
+ 
+ ---
+ 
+ ## 10. Known limitations — stated plainly
+ 
+-- **Layer 2 remains incomplete.** No Layer 2 derivation or formula was implemented/modified in this Layer 3 task. E-12 remains a separate legacy semantic/schema issue; no Layer 0 changes were made to solve it.
++- **Layer 2 remains partly incomplete.** E-12 is migrated and FormationEngine works; TeamDimensionEngine and TeamIdentityEngine still lack approved derivation equations. Their explicit gaps are not filled with defaults or fixture data.
+ - **Layer 3 missing helper equations remain explicit.** Module 5 needs its approved composition/state policy. Module 6 needs three independent named helper outputs per direction. Defaults, inferred formations, and fabricated tactical multipliers are not supplied.
+ - **The canonical-example replay is partial.** Only three links can be reproduced from the provided rounded intermediate outputs. Raw dimensions/tactics and canonical helpers are still needed for a complete replay.
+ - **Normalized seed data is absent.** The six existing seed tests fail transparently; no synthetic production dataset was invented. Data-layer tests using temporary fixtures do execute.
+@@ -492,14 +453,11 @@
+ 
+ ---
+ 
+-## 11. What's next — Layer 2 first
+-
+-**Review decision (2026-09-08): the current Layer 3 implementation is APPROVED. Do not guess any new Layer 3 formula.** Formal specification-gap resolution remains required, but completing Layer 2 now takes priority. This is a sequencing decision, not authorization to change Layer 0 or invent Layer 2 mathematics.
+-
+-1. E-12's architectural resolution is now approved and formally recorded, but E-12 remains OPEN. Await explicit implementation permission; the first real change must be **Step A: minimal schema/ownership migration** in Layer 0/1, with its own contract-test evidence. Do not automatically translate legacy formation_type fixtures into HistoricalSnapshotQuality.
+-2. After Step A is verified and implementation is authorized, perform **Step B: the already-approved six-rule FormationEngine** as a separate commit/conceptual change set. Then separately design/approve and implement TeamDimensionEngine and TeamIdentityEngine. This delivery order does not add a new mathematical dependency between the two latter engines.
+-3. Supply and validate historical PlayerSeason inputs and formations with explicit geometry/provenance. Manual fixtures or PLACEHOLDER records do not establish real historical validity. Generate real StructuralFeatures, TeamDimensions, and TeamIdentity from those inputs and verify Layer 2.
+-4. Formally resolve the remaining Module 5 composition/state and Module 6 helper specifications without inventing equations; preserve existing Layer 3 interfaces and single-path ownership.
+-5. Connect actual Layer 2 outputs to Layer 3, then validate the full canonical example and the integrated pipeline using original raw inputs. The 112/112 fixture-based result alone does not establish this integration.
+-6. Implement probability models in Layer 4 and the orchestrator-only simulation loop in Layer 5; do not duplicate FormationEngine or the Layer 3 λ calculation.
+-7. Continue to Q/R events/attribution and calibration only within their separately approved scopes.
++## 11. What's next — the two missing Layer 2 derivations
++
++1. Supply canonical or explicitly approve new mathematical specifications for TeamDimensionEngine and TeamIdentityEngine. Specify role/player contribution weights and normalization, the eight identity mappings, and any structural ownership without double-counting.
++2. Implement those approved equations and preserve the already-working historical-prior blend and Module 1→2→3 orchestration. Do not reuse attribution weights or manufacture default team outputs.
++3. Supply/validate real historical normalized data and formation geometry, then test actual Layer 2 reconstruction rather than only synthetic fixtures.
++4. Formally resolve the remaining Layer 3 helper/state-policy equations without guesses, preserving existing interfaces and M/T ownership.
++5. Validate real Layer 2→3 integration and the complete canonical example, then implement probability models and the orchestrator-only simulation loop.
++6. Continue to events/attribution, tournament-state evolution, calibration, and UI only within their later approved scopes.
+--- a/docs/E12_ARCHITECTURE_DECISION.md
++++ b/docs/E12_ARCHITECTURE_DECISION.md
+@@ -2,9 +2,11 @@
+ 
+ **Formal architecture decision record — 2026-09-08**
+ 
+-**Issue status: OPEN. Architecture: APPROVED. Implementation: NOT AUTHORIZED.**
++**Current issue status: CLOSED — implemented and verified. Architecture: APPROVED.**
+ 
+-Authority: the user's explicit architecture approval in this project conversation on 2026-09-08. This record documents that approval; it is not permission to modify production code, tests, schemas, or Layer 0/1 models now.
++Execution update: the subsequent user request to complete Layer 2 was used to execute the already-approved Step A/Step B scope. The original architecture approval alone did not trigger implementation; the stages were tested separately. See [the delivery report](LAYER2_E12_FORMATION_REPORT.md).
++
++Authority: the user's architecture approval and subsequent request to complete Layer 2 in this project conversation on 2026-09-08. Implementation was limited to the approved E-12 migration and the already-approved FormationEngine mathematics; missing Module 2/3 formulas were not invented.
+ 
+ ## 1. Decision register
+ 
+@@ -14,8 +16,8 @@
+ | Target ownership | APPROVED |
+ | Target separation | APPROVED |
+ | Migration principle | APPROVED |
+-| Implementation | Pending explicit authorization |
+-| Overall issue | OPEN; not closed by this document |
++| Implementation | Step A migration and Step B FormationEngine implemented and separately verified |
++| Overall issue | CLOSED on code and test evidence; not merely on architecture approval |
+ 
+ ## 2. Fundamental separation
+ 
+@@ -89,7 +91,7 @@
+ 
+ Any legacy input/serialization handling, necessary fixture/import updates, and resulting contract break must be explicit and auditable after authorization. Historical Tier, historical-prior blending, and unrelated schemas are not redesign targets.
+ 
+-## 6. Two separately auditable implementation steps — neither authorized now
++## 6. Two separately auditable implementation steps — executed separately
+ 
+ Use two distinct commits when version control is available, or two distinct conceptual change sets. Do not merge contract migration and football formulas into one unreviewable step.
+ 
+@@ -115,7 +117,7 @@
+ 3. Do not introduce an A/B/C formation classifier or a new Layer 3 equation.
+ 4. Report formula-test results separately from the preceding migration evidence.
+ 
+-This separation identifies whether a failure comes from schema/ownership migration or from the FormationEngine mathematics. No actual commit, source migration, or formula implementation is performed by creating this record.
++The separation was preserved: Step A passed 184/190 repository tests before Step B math was added; Step B passed 223/229. Each checkpoint has a separate patch and hash snapshot. The only six failures at both stages are missing seed data. No actual Git commits are claimed; these are two auditable conceptual change sets.
+ 
+ ## 7. Closure criterion
+ 
+@@ -123,10 +125,13 @@
+ 
+ Closure requires evidence from the authorized migration and the relevant construction/derivation tests; architecture approval or this document alone is insufficient. Do not mark E-12 CLOSED merely because its semantic diagnosis is now understood.
+ 
+-## 8. Current boundaries and next action
++## 8. Current closure evidence and remaining boundaries
+ 
+-- E-12 remains **OPEN, architecture approved, implementation not yet authorized**.
+-- The next real implementation action, only after explicit permission, is **Step A: minimal Layer 0/1 contract/ownership migration**. FormationEngine implementation follows as Step B, not concurrently.
+-- The current Layer 3 implementation remains APPROVED within its existing scope. Its remaining helper equations require formal specification, not guesses.
+-- Layer 2 closure remains the next project priority. Real historical-input validation must not be claimed from manual/PLACEHOLDER fixtures alone.
+-- No code, tests, models, schemas, or test fixtures are changed by this architecture-recording task. No new test run is claimed.
++- E-12 is **CLOSED for the approved semantic/schema mismatch**: the misnamed core enum/field are removed, the structural schema rejects legacy/unknown fields, and HistoricalSnapshotQuality is separately defined/exported in Layer 1.
++- **12/12 migration tests** verify explicit separation, strict serialization, preserved structural fields, independent HistoricalTier, and the exact immutable quality-weight registry.
++- **39/39 FormationEngine tests** verify actual structure generation from geometry/roles, including no player-quality reads or snapshot-quality dependency.
++- Actual manual-layout output: W=.8, H=.5, C=.5, P=.28, U=.32, Ts=.84, plus descriptive formation_name; no formation_type is required or returned.
++- Quality classification predicates, snapshot-record granularity, and calibration objective usage remain outside this migration. No automatic quality classification or runtime quality weighting was added.
++- Layer 3 production equations are unchanged and its migrated fixture-based suite passes **112/112**.
++- **Layer 2 is not entirely complete:** approved numerical specifications for TeamDimensionEngine and TeamIdentityEngine are still absent. Their explicit errors remain; no fallback/fixture values are inserted into production.
++- Real historical normalized data and full end-to-end validation remain pending.
+--- a/docs/FORMATION_ENGINE_V1_SPEC.md
++++ b/docs/FORMATION_ENGINE_V1_SPEC.md
+@@ -0,0 +1,55 @@
++# FormationEngine V1 — implemented definition of record
++
++The six rules were explicitly approved by the user. Implementation followed a separate, verified E-12 schema/ownership migration. No new football equation was invented.
++
++## Contract
++
++- Exactly 11 distinct PlayerSeason objects and one Formation with 11 unique PositionSlot identifiers.
++- Matching player/slot role multisets; exactly one GK on both sides.
++- Explicit SlotSide/SlotDepth enums; identifiers and formation names are not parsed.
++- PlayerSeason fields are read only for id/role validation, not abilities, tendencies, pace, quality, names, or seasons.
++- Output: StructuralFeatures with descriptive formation_name and six numeric features in [0,1]. No formation_type or snapshot-quality dependency. Legacy/unknown output fields are explicitly rejected by the core model.
++- No randomness, opponent data, I/O, runtime state, mutation, or λ.
++- V3 cb_pairing_quality/fullback_exposure remain uncomputed and inert at their existing defaults.
++
++## Notation
++
++O = non-GK slots; N = 10. B/M/F are the BACK/MID/FRONT subsets of O. n_L/n_C/n_R count outfield sides. D consists of DM-role slots in M.
++
++A pair is connected unless its sides are opposite LEFT/RIGHT. CENTER connects to every side; same-side pairs connect. E(X,Y) counts all connected pairs in X × Y.
++
++K = floor(N²/4) = 25 is the maximum cross-partition pair count, not a calibrated coefficient or a layout-specific edge-density denominator.
++
++## Approved formulas
++
++| Rule | Formula | Output |
++|---|---|---|
++| W | (n_L + n_R) / N | width_feature |
++| H | h0 = 0.5 | line_height_feature |
++| C | (back-slot count + midfield-DM count) / N | defensive_cover_feature |
++| P | E(M,F) / K | press_structure_feature |
++| U | E(B,M) / K | build_up_structure_feature |
++| Ts | front-slot count × (N - front-slot count) / K | transition_structure_feature |
++
++H is the disclosed V1 baseline prior, not line height inferred from depth bands. Its only authorized V1 value is named V1_LINE_HEIGHT_BASELINE_PRIOR in the engine module; no unrelated Layer 0 ParameterSet field was added. A new value or tactical-height input requires separate approval.
++
++A DM in BACK counts once, not twice; a DM in FRONT adds no midfield cover. Empty bands produce zero connected pairs. Ts is zero at both 0 and 10 front slots and maximal at 5, as the approved structural pair-count rule requires. No corrective clamp or feature-to-feature dependency was introduced.
++
++## Verified manual-layout example
++
++The standard test geometry has four back, three middle (including one DM), three front, eight wide outfield slots, seven middle/front connected pairs, and eight back/middle connected pairs.
++
++- W = 8/10 = 0.8
++- H = 0.5
++- C = (4+1)/10 = 0.5
++- P = 7/25 = 0.28
++- U = 8/25 = 0.32
++- Ts = 3×7/25 = 0.84
++
++This is explicitly authored test geometry, not a verified historical reconstruction.
++
++## Tests and remaining Layer 2 limits
++
++39 dedicated tests verify exact rules, zero/max/edge cases, all 66 depth-count partitions under three lateral layouts, normalization, geometry/role dependence, identifier/name irrelevance, player-attribute non-access, determinism, immutability, and input/dependency guards.
++
++Existing geometry tests now compare actual StructuralFeatures rather than placeholder errors. TeamModelBuilder passes Module 1 and reaches the genuine missing Module 2 derivation. TeamDimensionEngine and TeamIdentityEngine remain unimplemented because their approved numerical derivation equations were not supplied. The existing prior-blend functions were not redesigned.
+--- a/docs/LAYER2_E12_FORMATION_REPORT.md
++++ b/docs/LAYER2_E12_FORMATION_REPORT.md
+@@ -0,0 +1,89 @@
++# Layer 2 delivery — E-12 migration and FormationEngine V1
++
++Date: 2026-09-08. The user's request to complete Layer 2 was used to execute the previously approved E-12 architecture migration and FormationEngine mathematics as separate checkpoints.
++
++**Actual result: E-12 and FormationEngine are implemented. Layer 2 is NOT entirely complete: TeamDimensionEngine and TeamIdentityEngine still lack approved numerical derivation specifications.** Missing equations were not replaced with guesses or fixture defaults.
++
++## Step A — explicit contract migration
++
++- Removed FormationStructuralType from core/enums.py, without an alias.
++- Removed StructuralFeatures.formation_type from core/team_dimensions.py; configured explicit extra-field rejection. Legacy payloads now fail validation instead of being silently accepted.
++- Preserved formation_name, the six active bounded fields, immutability, and both inert V3 fields. TeamDimensions itself is unchanged.
++- Corrected only the obsolete ownership docstring in core/formation.py; its behavior is unchanged.
++- Added HistoricalSnapshotQuality and the immutable canonical calibration-weight registry in data_layer/snapshot_quality.py, exported by Layer 1: TYPE_A Full Snapshot → 1.0; TYPE_B Partial Snapshot → 0.5; TYPE_C Minimal Snapshot → 0.2.
++- No legacy fixture type was converted into snapshot-quality evidence. No default quality, classifier, HistoricalTier mapping, or runtime/λ quality multiplier was created.
++- Exact snapshot-record granularity and completeness predicates remain unspecified. No guessed quality field was attached to existing player/team records and no calibration optimizer was added.
++- Migrated only affected fixture/import/contract assertions. Layer 3 production equations were not modified.
++
++Step A alone: **184 passed, 6 failed, 190 total**, including **12/12 migration tests** and **112/112 Layer 3 tests**. The same six seed files/data-related tests failed before this work. FormationEngine was still a mathematical stub at this checkpoint.
++
++A separate snapshot, hash record, and patch were recorded before Step B. These are auditable conceptual change sets, not claimed Git commits in a repository without Git history.
++
++## Step B — six approved FormationEngine rules
++
++For N=10 non-GK slots and K=floor(N²/4)=25:
++
++- W = (left + right outfield slots)/N.
++- H = 0.5, the explicitly named V1 baseline prior.
++- C = (back slots + midfield DM slots)/N.
++- P = connected middle/front pairs/K.
++- U = connected back/middle pairs/K.
++- Ts = front slots × non-front outfield slots/K.
++
++Connectivity excludes only opposite LEFT/RIGHT pairs. The engine reads only explicit geometry/role occupancy for features, and player id/role for input validation. No ability/tendency/pace/quality, role-weight table, formation-name parsing, opponent/runtime/RNG/I/O/λ logic was introduced.
++
++Exactly-one-GK and unique-slot checks are enforced at the engine boundary without unrelated loader changes. The public derive(players, formation) signature is retained. See FORMATION_ENGINE_V1_SPEC.md for the full definitions, normalization, boundaries, and dependency rules.
++
++The existing manual test geometry now produces actual **W=.8, H=.5, C=.5, P=.28, U=.32, Ts=.84**, plus descriptive formation_name; no formation_type is required or returned. This is code execution, not a historical accuracy claim.
++
++## What still prevents complete Layer 2 implementation
++
++The repository explicitly marks the derivation specification as missing in:
++
++- football_engine/team_model/team_dimension_engine.py: module specification and derive().
++- football_engine/team_model/team_identity_engine.py: module specification and _derive_pre_prior_identity().
++
++| Engine | Equations still required |
++|---|---|
++| TeamDimensionEngine | Player/role contributions, weights, normalization, and any structural dependence for attack, creation, defense, goalkeeping |
++| TeamIdentityEngine | Pre-prior possession_tendency, press_tendency, transition_tendency, tempo, risk_tolerance, compactness, build_up_control_score, attack_pace_factor mappings |
++
++ROLE_ATTACK_WEIGHT and ROLE_CREATION_WEIGHT are scorer/assist attribution tables, not approved dimension-aggregation weights; they were not reused. Some identity outputs lack a corresponding direct PlayerSeason input field, so a generic average would itself invent a new model.
++
++The existing historical-prior blending is already implemented and unchanged. Both missing-engine source files are unchanged. The builder now passes Module 1 and reaches the explicit Module 2 gap; no default TeamDimensions/TeamIdentity or fake complete model is returned.
++
++To finish these engines under the existing no-invented-equations constraint, supply the canonical derivations or explicitly approve a newly designed mathematical specification. Implementation is not blocked by E-12 anymore; it is blocked by these actual missing equations. Real historical normalized data is also absent, preventing real-data/end-to-end validation independently of the code gaps.
++
++## Current executed test results
++
++| Scope / checkpoint | Passed | Failed | Total |
++|---|---:|---:|---:|
++| Pre-task repository baseline | 172 | 6 | 178 |
++| Step A checkpoint | 184 | 6 | 190 |
++| Current repository-wide, after Step B | **223** | **6** | **229** |
++| Dedicated E-12 migration tests | **12** | **0** | **12** |
++| New FormationEngine V1 tests | **39** | **0** | **39** |
++| Layer 3-specific health after migration | **112** | **0** | **112** |
++
++The previous **172/178 was repository-wide**, never a Layer 3 rate. The current repository-wide result is **223/229**, and a separate Layer 3-only rerun also returned **112/112**, exit status 0. Existing tests expecting Module 2/3 specification errors pass as contract tests, not evidence of completed derivations.
++
++The existing local pytest-compatible harness was used, not the full pytest distribution. No tests were skipped/xfail or unrelated assertions weakened. The full run correctly exits nonzero for these six unchanged tests in tests/test_data_layer.py:
++
++- test_seed_dataset_every_roster_resolves
++- test_seed_dataset_has_zero_production_ready_teams
++- test_seed_dataset_loads_completely
++- test_seed_dataset_no_duplicate_team_ids
++- test_seed_dataset_schema_versions_are_supported
++- test_seed_dataset_tier_coverage
++
++Each raises DatasetFileError first at missing data/normalized/players/player_seasons.json. No normalized historical seed data was supplied or fabricated.
++
++## Audit and delivery scope
++
++- Layer 0 behavior changes are confined to removing the misplaced enum/field and rejecting unknown structural fields. core/formation.py has only a documentation correction. Other core models, historical-prior blends, ParameterSet, runtime contracts, and RNG remain unchanged.
++- Layer 1 has the new quality type/weight registry and exports. Existing loader, repository, record models, and JSON schemas are unchanged.
++- Layer 2 has the actual FormationEngine implementation and updated package/builder status documentation. Modules 2/3 remain genuine explicit gaps.
++- Existing affected fixtures/contract tests were migrated and two dedicated test modules added. Layer 3 production code and mathematical tests are unchanged.
++- E-12 is CLOSED on the new contracts and quality-free actual derivation, not merely on documentation approval. Unspecified snapshot classification/data-population/calibration details remain separate later work.
++- PROJECT_OVERVIEW.md and the E-12 decision now distinguish completed migration/formation work from incomplete Layer 2. Earlier Layer 3 delivery records remain historical, with an explicit scope note.
++- Current logs, separate Step A/B patches, checkpoint hashes, and source-change audit are in verification/layer2/. The packaged filename deliberately does not claim layer2_complete.
+--- a/docs/LAYER3_IMPLEMENTATION_REPORT.md
++++ b/docs/LAYER3_IMPLEMENTATION_REPORT.md
+@@ -1,4 +1,6 @@
+ # Layer 3 Implementation Report
++
++**Historical Layer 3 delivery record.** Subsequent Layer 2 work migrated E-12 and implemented FormationEngine; see [the current report](LAYER2_E12_FORMATION_REPORT.md). This report's original 172/178 repository result and unchanged-core assertions describe the earlier Layer 3 delivery only. Current repository result: 223/229; Layer 3 remains 112/112 after explicit fixture migration, with its production math unchanged.
+ 
+ Date: 2026-09-08. Scope: **Matchup + λ Engine**, Modules 5/6/7, under the user's final authorization.
+ 
+--- a/docs/LAYER3_SPEC_AND_GAPS.md
++++ b/docs/LAYER3_SPEC_AND_GAPS.md
+@@ -19,7 +19,7 @@
+ - Layer 0 models and Layer 2 code are unchanged. No structural fields were added to `TeamIdentity` or `TeamRuntimeState`.
+ - F-1(b): the future Layer 5 caller passes `TeamModel.identity` and `TeamModel.structural_features` explicitly to Module 5; Layer 3 never needs to import the Layer 2 builder.
+ - No probability model, Dixon-Coles, Poisson, RNG, event generator, attribution, historical-quality weighting, or runtime state updater is implemented here.
+-- E-12 remains **OPEN**; its target architecture is now **APPROVED**, but implementation is **NOT AUTHORIZED**. See [the formal E-12 decision](E12_ARCHITECTURE_DECISION.md). Formation Structure ≠ Snapshot Quality ≠ Historical Tier. TYPE_A/B/C mean Full/Partial/Minimal Snapshot with weights 1.0/0.5/0.2, NOT formation classes. No Layer 3 production expression reads those labels or applies those weights. Existing test enum literals only satisfy the still-unchanged required field; they must not be migrated automatically into quality evidence. The future contract/ownership migration (Step A) must be separate from FormationEngine implementation (Step B); neither is performed here.
++- E-12 is now migrated and CLOSED; see the formal decision and current Layer 2 report. StructuralFeatures has no formation_type field and rejects legacy extras. Layer 3 production formulas/interfaces are unchanged; affected fixtures were explicitly migrated without mapping old labels into quality evidence. Layer 3 still passes 112/112. Snapshot-quality metadata remains independently owned by Layer 1 and is not consumed by Layer 3.
+ 
+ ## 2. Public interfaces
+ 
+--- a/football_engine/team_model/__init__.py
++++ b/football_engine/team_model/__init__.py
+@@ -1,20 +1,9 @@
+-"""
+-football_engine.team_model — Layer 2: Team Model.
++"""Layer 2 — Team Model.
+ 
+-Wires the locked Module 1 (Formation Engine) -> Module 2 (Team Dimension
+-Engine) / Module 3 (Team Identity Engine) dependency graph.
+-
+-STATUS: contracts and plumbing only. All three derivation formulas
+-(Formation -> StructuralFeatures, PlayerSeason+StructuralFeatures ->
+-TeamDimensions, PlayerSeason+StructuralFeatures -> pre-prior
+-TeamIdentity) are unspecified in the locked architecture and are marked
+-with NotImplementedError + TODO(SPEC-NEEDED) in their respective
+-modules. See each module's docstring for exactly what is missing.
+-
+-The already-locked Section 30 historical-prior blend
+-(apply_historical_prior_to_dimensions / apply_historical_prior_to_identity,
+-both in football_engine.core.team_season) IS wired in and does not raise
+-NotImplementedError — only the pre-prior derivation steps do.
++Module 1 now implements the approved W/H/C/P/U/Ts derivation after E-12.
++Modules 2/3 retain explicit specification gaps for their numerical derivations;
++no attribution weights or default identities are substituted for those rules.
++The existing Section 30 historical-prior blends and builder ordering remain.
+ """
+ 
+ from __future__ import annotations
+--- a/football_engine/team_model/formation_engine.py
++++ b/football_engine/team_model/formation_engine.py
+@@ -1,105 +1,119 @@
+-"""Module 1 — FormationEngine, after E-12 contract migration (Step A).
++"""Module 1 — FormationEngine V1 (Layer 2), approved W/H/C/P/U/Ts rules.
+ 
+-The approved target has no formation classifier or snapshot-quality input.
+-This checkpoint changes only contract references, not the six-rule derivation.
+-The W/H/C/P/U/Ts implementation is deliberately deferred to separate Step B.
+-Validation and the public (PlayerSeason[11], Formation) signature are retained.
++E-12: no formation classifier or snapshot-quality dependency. PlayerSeason
++objects are consumed ONLY for squad/role validation, never ability, tendency,
++pace, or quality. The calculation reads explicit template geometry and roles.
++
++For ten outfield slots O, with B/M/F depth groups and side counts n_L/n_C/n_R:
++    W  = (n_L + n_R) / N
++    H  = h0 = 0.5 (disclosed V1 baseline prior, NOT inferred tactical height)
++    C  = (|B| + number of DM slots in M) / N
++    P  = E(M, F) / K
++    U  = E(B, M) / K
++    Ts = |F| * (N - |F|) / K
++where K = floor(N*N/4) = 25, and E counts all cross-group slot pairs EXCEPT
++opposite LEFT/RIGHT pairs. CENTER connects to every side. Pair normalisation
++is combinatorial, not a calibrated coefficient. No feature-to-feature chain,
++corrective clamp, opponent data, runtime state, mutation, I/O, or randomness.
++
++The public two-input derive(players, formation) interface is preserved. The
++formation name is descriptive output metadata; slot IDs are identity-only.
+ """
+ 
+ from __future__ import annotations
+ 
++from collections import Counter
++from typing import Final
++
+ from football_engine.core.enums import PlayerRole
+-from football_engine.core.formation import Formation
++from football_engine.core.formation import Formation, PositionSlot, SlotDepth, SlotSide
+ from football_engine.core.player_season import PlayerSeason
+ from football_engine.core.team_dimensions import StructuralFeatures
+ 
+-REQUIRED_SQUAD_SIZE = 11
++REQUIRED_SQUAD_SIZE: Final[int] = 11
++# The only numeric FormationEngine V1 calibration prior. Keeping its name and
++# provenance here avoids a bare literal or an unrelated Layer 0 ParameterSet
++# modification. A different tactical-height input/prior needs new approval.
++V1_LINE_HEIGHT_BASELINE_PRIOR: Final[float] = 0.5
+ 
+ 
+ class FormationEngineError(ValueError):
+-    """Raised for invalid FormationEngine input (wrong squad size, role mismatch, etc.)."""
++    """Invalid squad/template shape, role occupancy, or explicit geometry."""
+ 
+ 
+ def _validate_input_shape(players: list[PlayerSeason], formation: Formation) -> None:
+-    """
+-    Input-shape validation only — NOT derivation logic.
++    if not isinstance(players, (list, tuple)) or len(players) != REQUIRED_SQUAD_SIZE:
++        raise FormationEngineError("FormationEngine requires exactly 11 PlayerSeasons")
++    if not all(isinstance(player, PlayerSeason) for player in players):
++        raise FormationEngineError("Every squad entry must be a PlayerSeason")
++    if not isinstance(formation, Formation):
++        raise FormationEngineError("formation must be a Formation")
++    if len(formation.position_pool) != REQUIRED_SQUAD_SIZE:
++        raise FormationEngineError("Formation position_pool must contain exactly 11 slots")
+ 
+-    Checks that the call is even well-formed enough to attempt a
+-    derivation: exactly 11 players, no duplicate player ids, and a
+-    role multiset that can plausibly fill the formation's position pool
+-    (same count of each PlayerRole required as available). This does
+-    not decide *which* player goes in *which* slot (that assignment
+-    problem, and everything about how the assignment maps to
+-    StructuralFeatures, is part of the missing Module 1 formula, not
+-    input validation).
+-    """
+-    if len(players) != REQUIRED_SQUAD_SIZE:
+-        raise FormationEngineError(
+-            f"FormationEngine requires exactly {REQUIRED_SQUAD_SIZE} PlayerSeasons, got {len(players)}"
+-        )
++    player_ids = [player.id for player in players]
++    if len(set(player_ids)) != REQUIRED_SQUAD_SIZE:
++        raise FormationEngineError("FormationEngine received duplicate PlayerSeason id(s)")
+ 
+-    player_ids = [p.id for p in players]
+-    if len(set(player_ids)) != len(player_ids):
+-        dupes = {pid for pid in player_ids if player_ids.count(pid) > 1}
+-        raise FormationEngineError(f"FormationEngine received duplicate PlayerSeason id(s): {sorted(dupes)}")
++    for slot in formation.position_pool:
++        if not isinstance(slot, PositionSlot):
++            raise FormationEngineError("Every formation slot must be a PositionSlot")
++        if not isinstance(slot.side, SlotSide) or not isinstance(slot.depth, SlotDepth):
++            raise FormationEngineError("Every slot must have explicit valid SlotSide/SlotDepth geometry")
++        if not isinstance(slot.role, PlayerRole):
++            raise FormationEngineError("Every slot must have a valid PlayerRole")
++    slot_ids = [slot.slot_id for slot in formation.position_pool]
++    if len(set(slot_ids)) != REQUIRED_SQUAD_SIZE:
++        raise FormationEngineError("Formation position_pool contains duplicate slot_id values")
+ 
+-    if len(formation.position_pool) != REQUIRED_SQUAD_SIZE:
+-        # Formation itself already enforces this via min_length/max_length=11
+-        # (formation.py), but we re-check here defensively since this
+-        # function's contract promises "exactly 11 vs 11" regardless of
+-        # how the Formation object was constructed.
+-        raise FormationEngineError(
+-            f"Formation '{formation.name}' position_pool has "
+-            f"{len(formation.position_pool)} slots, expected {REQUIRED_SQUAD_SIZE}"
+-        )
+-
+-    required_roles: dict[PlayerRole, int] = {}
+-    for slot in formation.position_pool:
+-        required_roles[slot.role] = required_roles.get(slot.role, 0) + 1
+-
+-    available_roles: dict[PlayerRole, int] = {}
+-    for player in players:
+-        available_roles[player.role] = available_roles.get(player.role, 0) + 1
+-
++    required_roles = Counter(slot.role for slot in formation.position_pool)
++    available_roles = Counter(player.role for player in players)
+     if required_roles != available_roles:
+         raise FormationEngineError(
+-            f"Formation '{formation.name}' requires role counts {required_roles}, "
+-            f"but the supplied 11 PlayerSeasons have role counts {available_roles}. "
+-            "FormationEngine does not do partial/best-effort slotting."
++            f"Formation requires role counts {dict(required_roles)}, "
++            f"but the supplied players have role counts {dict(available_roles)}"
+         )
++    if required_roles[PlayerRole.GK] != 1 or available_roles[PlayerRole.GK] != 1:
++        raise FormationEngineError("FormationEngine requires exactly one GK in both squad and template")
++
++
++def _connection_count(
++    first_group: tuple[PositionSlot, ...],
++    second_group: tuple[PositionSlot, ...],
++) -> int:
++    """Binary lateral adjacency only; no distance, ability, or role multipliers."""
++    return sum(
++        1
++        for first in first_group
++        for second in second_group
++        if not (
++            (first.side is SlotSide.LEFT and second.side is SlotSide.RIGHT)
++            or (first.side is SlotSide.RIGHT and second.side is SlotSide.LEFT)
++        )
++    )
+ 
+ 
+ class FormationEngine:
+-    """
+-    Module 1 — Formation Engine.
+-
+-    Usage (once the derivation formula is specified and implemented):
+-
+-        engine = FormationEngine()
+-        structural_features = engine.derive(players, formation)
+-
+-    Currently `derive()` validates its inputs and then raises
+-    NotImplementedError at the exact point the missing formula belongs —
+-    see the TODO(SPEC-NEEDED) block in the module docstring.
+-    """
++    """Deterministic, stateless formation-structure derivation; no snapshot type."""
+ 
+     def derive(self, players: list[PlayerSeason], formation: Formation) -> StructuralFeatures:
+-        """
+-        Module 1 contract: (List[PlayerSeason], Formation) -> StructuralFeatures.
++        _validate_input_shape(players, formation)
++        outfield = tuple(slot for slot in formation.position_pool if slot.role is not PlayerRole.GK)
++        n = len(outfield)  # Exactly 10 by the checked squad and GK preconditions.
++        normalizer = (n * n) // 4
++        back = tuple(slot for slot in outfield if slot.depth is SlotDepth.BACK)
++        middle = tuple(slot for slot in outfield if slot.depth is SlotDepth.MID)
++        front = tuple(slot for slot in outfield if slot.depth is SlotDepth.FRONT)
++        wide_count = sum(slot.side is not SlotSide.CENTER for slot in outfield)
++        middle_dm_count = sum(slot.role is PlayerRole.DM for slot in middle)
++        front_count = len(front)
+ 
+-        Raises:
+-            FormationEngineError: if the input shape itself is invalid
+-                (wrong squad size, duplicate ids, role-count mismatch
+-                against the formation's position pool).
+-            NotImplementedError: always, once input validation passes —
+-                the actual Formation -> StructuralFeatures derivation
+-                formula has not been specified yet (see module docstring
+-                TODO(SPEC-NEEDED)).
+-        """
+-        _validate_input_shape(players, formation)
+-
+-        raise NotImplementedError(
+-            "FormationEngine.derive(): input shape is valid; the approved "
+-            "Formation -> StructuralFeatures six-rule derivation awaits "
+-            "separate Step B implementation after E-12 contract migration."
++        return StructuralFeatures(
++            formation_name=formation.name,
++            width_feature=wide_count / n,
++            line_height_feature=V1_LINE_HEIGHT_BASELINE_PRIOR,
++            defensive_cover_feature=(len(back) + middle_dm_count) / n,
++            press_structure_feature=_connection_count(middle, front) / normalizer,
++            build_up_structure_feature=_connection_count(back, middle) / normalizer,
++            transition_structure_feature=front_count * (n - front_count) / normalizer,
+         )
+--- a/football_engine/team_model/team_model_builder.py
++++ b/football_engine/team_model/team_model_builder.py
+@@ -96,11 +96,9 @@
+             FormationEngineError / TeamDimensionEngineError /
+                 TeamIdentityEngineError: on invalid input shape (wrong
+                 squad size, duplicate ids, role-count mismatch).
+-            NotImplementedError: propagated from whichever Module 1/2/3
+-                engine's derivation formula is still unspecified (see
+-                each engine module's TODO(SPEC-NEEDED) block). Today this
+-                will always be raised, since none of the three
+-                derivation formulas exist yet.
++            NotImplementedError: the next unspecified derivation is Module 2
++                (TeamDimensions); Module 1's six-rule derivation now succeeds.
++                Module 3 also remains unspecified. No fallback model is built.
+         """
+         structural_features = self._formation_engine.derive(players, formation)
+ 
+--- a/tests/test_formation_engine_v1.py
++++ b/tests/test_formation_engine_v1.py
+@@ -0,0 +1,281 @@
++"""Step B: approved geometry/role-only FormationEngine mathematics.
++
++Layouts are explicit synthetic test geometry, not historical reconstructions.
++No snapshot-quality labels or inferred football coefficients are test inputs.
++"""
++
++import ast
++import math
++from pathlib import Path
++from unittest.mock import patch
++
++import pytest
++
++from football_engine.core.enums import PlayerRole
++from football_engine.core.formation import Formation, PositionSlot, SlotDepth, SlotSide
++from football_engine.core.player_season import PlayerSeason
++from football_engine.core.team_dimensions import StructuralFeatures
++from football_engine.team_model.formation_engine import FormationEngine, FormationEngineError, V1_LINE_HEIGHT_BASELINE_PRIOR
++from tests.team_model_helpers import make_standard_formation, make_standard_squad, make_test_player
++
++
++B, M, F = SlotDepth.BACK, SlotDepth.MID, SlotDepth.FRONT
++L, C, R = SlotSide.LEFT, SlotSide.CENTER, SlotSide.RIGHT
++FEATURES = (
++    "width_feature", "line_height_feature", "defensive_cover_feature",
++    "press_structure_feature", "build_up_structure_feature", "transition_structure_feature",
++)
++
++
++def explicit_layout(depths, sides=None, roles=None):
++    assert len(depths) == 10
++    sides = [C] * 10 if sides is None else sides
++    roles = [PlayerRole.CM] * 10 if roles is None else roles
++    assert len(sides) == len(roles) == 10
++    slots = [PositionSlot(slot_id="opaque_keeper", role=PlayerRole.GK, side=C, depth=B)]
++    slots += [PositionSlot(slot_id=f"opaque_{i}", role=role, side=side, depth=depth)
++              for i, (depth, side, role) in enumerate(zip(depths, sides, roles))]
++    formation = Formation(name="explicit_synthetic_geometry", position_pool=slots)
++    players = [make_test_player(f"id_{i}", slot.role) for i, slot in enumerate(slots)]
++    return players, formation
++
++
++def calculate(depths, sides=None, roles=None):
++    return FormationEngine().derive(*explicit_layout(depths, sides, roles))
++
++
++class TestFormationV1SixRules:
++    def test_standard_layout_all_six_exact_values(self):
++        output = FormationEngine().derive(make_standard_squad(), make_standard_formation())
++        expected = (0.8, 0.5, 0.5, 7 / 25, 8 / 25, 21 / 25)
++        for field, value in zip(FEATURES, expected):
++            assert getattr(output, field) == pytest.approx(value), field
++        assert isinstance(output, StructuralFeatures)
++        assert output.formation_name == "4-3-3"
++
++    def test_width_zero_for_all_center_outfield(self):
++        assert calculate([B] * 4 + [M] * 3 + [F] * 3).width_feature == 0.0
++
++    def test_width_uses_ten_outfield_slots_not_eleven_players(self):
++        assert calculate([M] * 10, [L] * 5 + [R] * 5).width_feature == 1.0
++
++    def test_width_counts_both_sides_equally(self):
++        left = calculate([M] * 10, [L] * 4 + [C] * 6)
++        right = calculate([M] * 10, [R] * 4 + [C] * 6)
++        assert left.width_feature == right.width_feature == 0.4
++
++    def test_line_height_is_disclosed_half_prior_not_inferred(self):
++        assert V1_LINE_HEIGHT_BASELINE_PRIOR == 0.5
++        for depths in ([B] * 10, [M] * 10, [F] * 10):
++            assert calculate(depths).line_height_feature == 0.5
++
++    def test_defensive_cover_is_back_plus_mid_dm(self):
++        roles = [PlayerRole.CM] * 10
++        roles[4] = PlayerRole.DM
++        result = calculate([B] * 4 + [M] * 3 + [F] * 3, roles=roles)
++        assert result.defensive_cover_feature == 0.5
++
++    def test_dm_already_in_back_is_not_counted_twice(self):
++        roles = [PlayerRole.CM] * 10
++        roles[0] = PlayerRole.DM
++        result = calculate([B] * 4 + [M] * 3 + [F] * 3, roles=roles)
++        assert result.defensive_cover_feature == 0.4
++
++    def test_front_dm_does_not_add_cover(self):
++        roles = [PlayerRole.CM] * 10
++        roles[9] = PlayerRole.DM
++        result = calculate([B] * 4 + [M] * 3 + [F] * 3, roles=roles)
++        assert result.defensive_cover_feature == 0.4
++
++    def test_back_band_counts_occupancy_not_a_role_quality_weight(self):
++        assert calculate([B] + [F] * 9, roles=[PlayerRole.FW] * 10).defensive_cover_feature == 0.1
++
++    def test_role_dm_changes_cover_only(self):
++        depths = [B] * 4 + [M] * 3 + [F] * 3
++        baseline = calculate(depths)
++        roles = [PlayerRole.CM] * 10
++        roles[4] = PlayerRole.DM
++        changed = calculate(depths, roles=roles)
++        assert changed.defensive_cover_feature == pytest.approx(baseline.defensive_cover_feature + 0.1)
++        for field in FEATURES:
++            if field != "defensive_cover_feature":
++                assert getattr(changed, field) == getattr(baseline, field)
++
++    def test_full_back_occupancy_has_cover_one(self):
++        assert calculate([B] * 10).defensive_cover_feature == 1.0
++
++    def test_press_connectivity_attains_one_for_five_plus_five(self):
++        assert calculate([M] * 5 + [F] * 5).press_structure_feature == 1.0
++
++    def test_press_excludes_opposite_left_right_pairs(self):
++        assert calculate([M] * 5 + [F] * 5, [L] * 5 + [R] * 5).press_structure_feature == 0.0
++
++    def test_press_center_connects_to_either_side(self):
++        for side in (L, C, R):
++            result = calculate([M] * 5 + [F] * 5, [side] * 5 + [C] * 5)
++            assert result.press_structure_feature == 1.0
++
++    def test_press_same_side_is_connected(self):
++        assert calculate([M] * 5 + [F] * 5, [L] * 10).press_structure_feature == 1.0
++
++    def test_press_mixed_side_edge_count(self):
++        result = calculate([B] * 3 + [M] * 3 + [F] * 4, [C] * 3 + [L, C, R] + [L, L, C, R])
++        assert result.press_structure_feature == pytest.approx(9 / 25)
++
++    def test_press_uses_global_combinatorial_normalizer_not_local_density(self):
++        assert calculate([M] * 2 + [F] * 8).press_structure_feature == pytest.approx(16 / 25)
++
++    def test_build_up_attains_one_for_five_plus_five(self):
++        assert calculate([B] * 5 + [M] * 5).build_up_structure_feature == 1.0
++
++    def test_build_up_excludes_opposite_sides(self):
++        assert calculate([B] * 5 + [M] * 5, [L] * 5 + [R] * 5).build_up_structure_feature == 0.0
++
++    def test_build_up_exact_mixed_edge_count(self):
++        result = calculate([B] * 2 + [M] * 3 + [F] * 5, [L, R] + [L, C, R] + [C] * 5)
++        assert result.build_up_structure_feature == pytest.approx(4 / 25)
++
++    def test_build_up_normalizer_is_twenty_five(self):
++        assert calculate([B] * 4 + [M] * 6).build_up_structure_feature == pytest.approx(24 / 25)
++
++    def test_empty_middle_has_zero_press_and_build_up(self):
++        result = calculate([B] * 5 + [F] * 5)
++        assert result.press_structure_feature == 0.0
++        assert result.build_up_structure_feature == 0.0
++
++    def test_transition_exact_front_complement_product(self):
++        for front_count in range(11):
++            result = calculate([M] * (10 - front_count) + [F] * front_count)
++            assert result.transition_structure_feature == pytest.approx(front_count * (10 - front_count) / 25)
++
++    def test_transition_ignores_lateral_connectivity(self):
++        center = calculate([M] * 5 + [F] * 5)
++        opposed = calculate([M] * 5 + [F] * 5, [L] * 5 + [R] * 5)
++        assert center.transition_structure_feature == opposed.transition_structure_feature == 1.0
++        assert center.press_structure_feature != opposed.press_structure_feature
++
++    def test_all_features_bounded_across_all_depth_count_partitions(self):
++        # 66 integer depth partitions, each exercised under three lateral layouts.
++        for back_count in range(11):
++            for mid_count in range(11 - back_count):
++                front_count = 10 - back_count - mid_count
++                depths = [B] * back_count + [M] * mid_count + [F] * front_count
++                for sides in ([C] * 10, [L, R] * 5, [L, C, R, C, L, C, R, C, L, R]):
++                    result = calculate(depths, sides)
++                    for field in FEATURES:
++                        value = getattr(result, field)
++                        assert math.isfinite(value) and 0.0 <= value <= 1.0
++
++
++class TestFormationV1PurityAndValidation:
++    def test_player_order_does_not_assign_players_to_slots(self):
++        players, formation = make_standard_squad(), make_standard_formation()
++        engine = FormationEngine()
++        assert engine.derive(players, formation) == engine.derive(list(reversed(players)), formation)
++
++    def test_template_order_does_not_change_features(self):
++        players, formation = make_standard_squad(), make_standard_formation()
++        reversed_template = Formation(name=formation.name, position_pool=list(reversed(formation.position_pool)))
++        assert FormationEngine().derive(players, formation) == FormationEngine().derive(players, reversed_template)
++
++    def test_arbitrary_identifier_renaming_preserves_complete_output(self):
++        players, formation = make_standard_squad(), make_standard_formation()
++        slots = [PositionSlot(slot_id=f"not_a_position_{i}", role=s.role, side=s.side, depth=s.depth) for i, s in enumerate(formation.position_pool)]
++        renamed = Formation(name=formation.name, position_pool=slots)
++        assert FormationEngine().derive(players, formation) == FormationEngine().derive(players, renamed)
++
++    def test_formation_name_is_descriptive_only(self):
++        players, formation = make_standard_squad(), make_standard_formation()
++        renamed = Formation(name="not_a_football_shape", position_pool=formation.position_pool)
++        a = FormationEngine().derive(players, formation)
++        b = FormationEngine().derive(players, renamed)
++        assert a.model_dump(exclude={"formation_name"}) == b.model_dump(exclude={"formation_name"})
++        assert b.formation_name == "not_a_football_shape"
++
++    def test_gk_geometry_is_excluded_from_every_feature(self):
++        players, formation = make_standard_squad(), make_standard_formation()
++        slots = list(formation.position_pool)
++        slots[0] = PositionSlot(slot_id=slots[0].slot_id, role=PlayerRole.GK, side=R, depth=F)
++        changed = Formation(name=formation.name, position_pool=slots)
++        assert FormationEngine().derive(players, formation) == FormationEngine().derive(players, changed)
++
++    def test_all_player_abilities_tendencies_pace_and_quality_are_irrelevant(self):
++        players, formation = make_standard_squad(), make_standard_formation()
++        changed = [player.model_copy(update={
++            "name": "different_name", "season": "1990/91", "attack_ability": 100.0,
++            "creation_ability": 0.0, "defense_ability": 100.0, "gk_ability": 100.0,
++            "shot_tendency": 0.0, "press_tendency": 1.0, "transition_tendency": 0.0,
++            "pace": 1.0, "discipline_score": 0.0, "impact_score": 1.0,
++        }) for player in players]
++        assert FormationEngine().derive(players, formation) == FormationEngine().derive(changed, formation)
++
++    def test_player_nonvalidation_attributes_are_not_even_read(self):
++        players, formation = make_standard_squad(), make_standard_formation()
++        forbidden = set(PlayerSeason.model_fields) - {"id", "role"}
++        original = PlayerSeason.__getattribute__
++        def guarded(player, name):
++            assert name not in forbidden, f"FormationEngine read forbidden PlayerSeason.{name}"
++            return original(player, name)
++        with patch.object(PlayerSeason, "__getattribute__", guarded):
++            assert isinstance(FormationEngine().derive(players, formation), StructuralFeatures)
++
++    def test_input_immutability_and_repeated_determinism(self):
++        players, formation = make_standard_squad(), make_standard_formation()
++        before = ([p.model_dump() for p in players], formation.model_dump())
++        engine = FormationEngine()
++        expected = engine.derive(players, formation)
++        for _ in range(20):
++            assert engine.derive(players, formation) == expected
++        assert ([p.model_dump() for p in players], formation.model_dump()) == before
++        assert vars(engine) == {}
++
++    def test_duplicate_slot_ids_are_rejected_at_engine_boundary(self):
++        players, formation = make_standard_squad(), make_standard_formation()
++        slots = list(formation.position_pool)
++        slots[1] = slots[1].model_copy(update={"slot_id": slots[0].slot_id})
++        with pytest.raises(FormationEngineError, match="duplicate slot_id"):
++            FormationEngine().derive(players, Formation(name="duplicate", position_pool=slots))
++
++    def test_exactly_one_gk_is_required_even_with_matching_roles(self):
++        for keeper_count in (0, 2):
++            players, formation = explicit_layout([M] * 10)
++            slots = list(formation.position_pool)
++            if keeper_count == 0:
++                slots[0] = slots[0].model_copy(update={"role": PlayerRole.CM})
++            else:
++                slots[1] = slots[1].model_copy(update={"role": PlayerRole.GK})
++            players = [make_test_player(f"id_{i}", slot.role) for i, slot in enumerate(slots)]
++            with pytest.raises(FormationEngineError, match="exactly one GK"):
++                FormationEngine().derive(players, Formation(name="invalid_keeper_count", position_pool=slots))
++
++    def test_non_player_input_is_rejected(self):
++        players = make_standard_squad()
++        players[1] = object()
++        with pytest.raises(FormationEngineError, match="PlayerSeason"):
++            FormationEngine().derive(players, make_standard_formation())
++
++    def test_bypassed_invalid_geometry_is_rejected_without_inference(self):
++        players, formation = make_standard_squad(), make_standard_formation()
++        slots = list(formation.position_pool)
++        slots[1] = slots[1].model_copy(update={"side": "north"})
++        invalid = Formation.model_construct(name="invalid", position_pool=slots)
++        with pytest.raises(FormationEngineError, match="geometry"):
++            FormationEngine().derive(players, invalid)
++
++    def test_no_quality_classification_and_v3_remains_inert(self):
++        result = FormationEngine().derive(make_standard_squad(), make_standard_formation())
++        assert set(result.model_dump()) == set(FEATURES) | {"formation_name", "cb_pairing_quality", "fullback_exposure"}
++        assert result.cb_pairing_quality == result.fullback_exposure == 0.5
++
++    def test_no_rng_runtime_matchup_probability_or_io_dependency(self):
++        source = Path(__file__).resolve().parents[1] / 'football_engine/team_model/formation_engine.py'
++        tree = ast.parse(source.read_text())
++        forbidden_prefixes = ('random', 'secrets', 'football_engine.rng', 'football_engine.matchup', 'football_engine.probability', 'football_engine.data_layer', 'football_engine.core.team_runtime_state', 'football_engine.core.match_runtime')
++        for node in ast.walk(tree):
++            imports = [a.name for a in node.names] if isinstance(node, ast.Import) else [node.module or ''] if isinstance(node, ast.ImportFrom) else []
++            for module in imports:
++                assert not any(module == p or module.startswith(p + '.') for p in forbidden_prefixes)
++            if isinstance(node, (ast.Attribute, ast.Subscript)):
++                assert not isinstance(node.ctx, (ast.Store, ast.Del))
++            if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
++                assert node.func.id not in {'open', 'print', 'input', 'eval', 'exec'}
+--- a/tests/test_formation_slot_geometry.py
++++ b/tests/test_formation_slot_geometry.py
+@@ -12,9 +12,9 @@
+    validation behavior.
+ 4. Invalid/missing side/depth is rejected.
+ 
+-No Layer 2 mathematical derivation formulas are implemented or exercised
+-here (requirement 10) — FormationEngine.derive() is still expected to
+-raise NotImplementedError after input validation passes.
++After the separately verified E-12 migration and Step B implementation,
++these guards compare real structural outputs instead of a placeholder error.
++The dedicated V1 tests separately verify the six numerical rules.
+ """
+ 
+ from __future__ import annotations
+@@ -83,14 +83,12 @@
+         players = make_standard_squad()
+         engine = FormationEngine()
+ 
+-        with pytest.raises(NotImplementedError) as exc_a:
+-            engine.derive(players, formation_a)
+-        with pytest.raises(NotImplementedError) as exc_b:
+-            engine.derive(players, formation_b)
+-
+-        # Same outcome (input-shape validation passes, then the same
+-        # missing-formula NotImplementedError) for both spellings.
+-        assert str(exc_a.value) == str(exc_b.value)
++        features_a = engine.derive(players, formation_a)
++        features_b = engine.derive(players, formation_b)
++        # Names are descriptive metadata; all computed features must be equal.
++        assert features_a.model_dump(exclude={"formation_name"}) == features_b.model_dump(exclude={"formation_name"})
++        assert features_a.formation_name == formation_a.name
++        assert features_b.formation_name == formation_b.name
+ 
+ 
+ class TestSlotIdRenamingDoesNotAlterStructuralSemantics:
+--- a/tests/test_team_model.py
++++ b/tests/test_team_model.py
+@@ -1,26 +1,9 @@
+-"""
+-Layer 2 — Team Model contract/skeleton tests.
+-
+-Per explicit scope decision ("Option 3"): Modules 1/2/3's derivation
+-formulas are unspecified and intentionally raise NotImplementedError.
+-These tests therefore validate:
+-
+-  1. input/output contracts (right types accepted/rejected, right
+-     exception types raised)
+-  2. type correctness (engines accept/return the documented Layer 0
+-     types; no ad-hoc dict/tuple return values)
+-  3. bounds/invariants (squad size, duplicate-id rejection, role-count
+-     matching against the formation's position pool)
+-  4. deterministic interface behavior (same invalid input -> same
+-     exception every time; no hidden randomness anywhere in Layer 2)
+-  5. correct dependency boundaries (Module 2/3 never require a
+-     Formation object directly, only StructuralFeatures; Module 3's
+-     historical-prior blend step is reachable/wired even though the
+-     pre-prior derivation above it is not yet implemented)
+-
+-None of these tests call into, assume, or reverse-engineer a derivation
+-formula — they stop at "NotImplementedError was raised at the documented
+-point," which is the correct passing behavior for this layer today.
++"""Layer 2 contract and orchestration tests.
++
++FormationEngine now implements the approved six rules after E-12 migration.
++Module 2/3 mathematical specifications remain absent; their explicit errors
++and existing historical-prior wiring continue to be tested without invention.
++The separate tests/test_formation_engine_v1.py exercises the approved math.
+ """
+ 
+ from __future__ import annotations
+@@ -56,16 +39,15 @@
+ 
+ 
+ class TestFormationEngineContract:
+-    def test_valid_input_reaches_not_implemented(self):
+-        """Correct input shape must pass validation and fail ONLY at the
+-        documented missing-formula point, not at input validation."""
+-        engine = FormationEngine()
+-        squad = make_standard_squad()
+-        formation = make_standard_formation()
+-        with pytest.raises(NotImplementedError, match="Formation -> StructuralFeatures"):
+-            engine.derive(squad, formation)
+-
+-    def test_wrong_squad_size_rejected_before_not_implemented(self):
++    def test_valid_input_returns_structural_features(self):
++        engine = FormationEngine()
++        result = engine.derive(make_standard_squad(), make_standard_formation())
++        assert isinstance(result, StructuralFeatures)
++        assert result.formation_name == "4-3-3"
++        assert "formation_type" not in result.model_dump()
++        assert result.width_feature == pytest.approx(0.8)
++
++    def test_wrong_squad_size_rejected_before_derivation(self):
+         engine = FormationEngine()
+         squad = make_standard_squad()[:10]  # only 10 players
+         formation = make_standard_formation()
+@@ -289,15 +271,11 @@
+         with pytest.raises(FormationEngineError):
+             builder.build(bad_squad, formation, historical_prior=None)
+ 
+-    def test_build_propagates_not_implemented_from_formation_engine(self):
+-        """With fully valid input, the orchestrator currently must fail
+-        at Module 1's NotImplementedError (the first missing formula in
+-        the chain) rather than silently succeeding or swallowing it."""
++    def test_build_reaches_dimension_gap_after_formation_success(self):
++        """The next real missing derivation is Module 2, not FormationEngine."""
+         builder = TeamModelBuilder()
+-        squad = make_standard_squad()
+-        formation = make_standard_formation()
+-        with pytest.raises(NotImplementedError, match="Formation -> StructuralFeatures"):
+-            builder.build(squad, formation, historical_prior=None)
++        with pytest.raises(NotImplementedError, match="TeamDimensions"):
++            builder.build(make_standard_squad(), make_standard_formation(), historical_prior=None)
+ 
+     def test_build_accepts_optional_historical_prior(self):
+         """historical_prior=None must be a valid TeamModelBuilder.build()

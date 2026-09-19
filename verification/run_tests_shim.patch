@@ -1,0 +1,118 @@
+--- run_tests_shim.before.py
++++ run_tests_shim.py
+@@ -1,25 +1,34 @@
+-"""Custom, dependency-free test runner.
++"""Local pytest-compatible runner: original tests + isolated Layer 3 tests.
+ 
+-The sandbox has no network access, so real pytest cannot be installed.
+-This script actually imports and executes the project's test modules
+-(using a minimal pytest-compatible shim for `raises`/`approx`/`fixture`)
+-so we get a genuine runtime pass/fail signal instead of only static
+-analysis.
++Run from the repository root. This is not the real pytest distribution: the
++bundled minimal shim supports raises/approx/fixture, and this runner resolves
++only the existing tmp_path/tmp_dataset_dir/seed_data_dir fixtures. No skip,
++xfail, plugins, or parametrized collection is silently claimed as supported.
++
++Layer 3 adds automatic test-module discovery, machine-readable reports, and a
++nonzero exit status on failure (including collection failures). Original tests
++are unchanged. The bundled shim is the existing local shim with its missing
++ExceptionInfo.value compatibility property restored.
+ """
+ from __future__ import annotations
+ 
++import argparse
+ import importlib
+ import inspect
++import json
+ import pathlib
+ import sys
+ import tempfile
+ import traceback
+ 
+ REPO_ROOT = pathlib.Path(__file__).resolve().parent
++sys.dont_write_bytecode = True
+ sys.path.insert(0, str(REPO_ROOT))
+-sys.path.insert(0, "/data/pytest_shim")
++BUNDLED_SHIM = REPO_ROOT / "tools" / "pytest_shim"
++SHIM_ROOT = BUNDLED_SHIM if (BUNDLED_SHIM / "pytest.py").is_file() else pathlib.Path("/data/pytest_shim")
++sys.path.insert(0, str(SHIM_ROOT))
+ 
+-import pytest  # noqa: E402  (the shim)
++import pytest  # noqa: E402 -- deliberately the local compatibility shim
+ from tests import conftest  # noqa: E402
+ 
+ 
+@@ -50,7 +59,7 @@
+ def run_module(module_name: str, results: list):
+     module = importlib.import_module(module_name)
+     for obj_name, obj in sorted(vars(module).items()):
+-        if inspect.isclass(obj) and obj_name.startswith("Test"):
++        if inspect.isclass(obj) and obj_name.startswith("Test") and obj.__module__ == module_name:
+             instance = obj()
+             for meth_name, meth in sorted(vars(obj).items()):
+                 if meth_name.startswith("test_") and callable(meth):
+@@ -65,32 +74,53 @@
+     try:
+         thunk()
+         results.append((full_name, "PASS", None))
+-    except Exception as e:  # noqa: BLE001
+-        results.append((full_name, "FAIL", f"{type(e).__name__}: {e}\n{traceback.format_exc(limit=3)}"))
++    except Exception as error:
++        results.append((full_name, "FAIL", f"{type(error).__name__}: {error}\n{traceback.format_exc(limit=3)}"))
+ 
+ 
+-def main():
++def main() -> int:
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("--module", action="append", dest="modules", help="Run an explicit module; repeat to select several")
++    parser.add_argument("--json", type=pathlib.Path, dest="json_path", help="Write the actual results to a JSON report")
++    args = parser.parse_args()
++    module_names = args.modules or [f"tests.{path.stem}" for path in sorted((REPO_ROOT / "tests").glob("test_*.py"))]
+     results: list = []
+-    for module_name in ["tests.test_data_layer", "tests.test_team_model", "tests.test_formation_slot_geometry"]:
++    for module_name in module_names:
+         try:
+             run_module(module_name, results)
+-        except Exception as e:  # noqa: BLE001
+-            print(f"ERROR importing/running {module_name}: {type(e).__name__}: {e}")
+-            traceback.print_exc()
++        except Exception as error:
++            # Collection errors count as failures, rather than disappearing
++            # behind a misleading all-green summary or successful exit status.
++            results.append((f"{module_name}.<collection>", "FAIL", f"{type(error).__name__}: {error}\n{traceback.format_exc(limit=3)}"))
+ 
+     passed = [r for r in results if r[1] == "PASS"]
+     failed = [r for r in results if r[1] == "FAIL"]
+     print(f"\n=== RESULTS: {len(passed)} passed, {len(failed)} failed, {len(results)} total ===\n")
+-    for name, status, err in results:
++    for name, status, error in results:
+         if status == "FAIL":
+             print(f"FAIL: {name}")
+-            print(err)
++            print(error)
+             print("-" * 60)
+     print("\nPassed tests:")
+     for name, status, _ in results:
+         if status == "PASS":
+             print(f"  PASS: {name}")
+ 
++    if args.json_path is not None:
++        args.json_path.parent.mkdir(parents=True, exist_ok=True)
++        report = {
++            "runner": "local pytest-compatible harness (not real pytest)",
++            "python": sys.version.split()[0],
++            "shim_path": str(SHIM_ROOT / "pytest.py"),
++            "modules": module_names,
++            "passed": len(passed),
++            "failed": len(failed),
++            "total": len(results),
++            "results": [{"name": name, "status": status, "error": error} for name, status, error in results],
++        }
++        args.json_path.write_text(json.dumps(report, indent=2) + "\n")
++    return 1 if failed else 0
++
+ 
+ if __name__ == "__main__":
+-    main()
++    raise SystemExit(main())

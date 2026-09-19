@@ -1,0 +1,1732 @@
+--- a/football_engine/team_model/__init__.py
++++ b/football_engine/team_model/__init__.py
+@@ -1,25 +1,21 @@
+-"""Layer 2 — Team Model.
++"""Layer 2 — FormationEngine, D1 dimensions and conditional identity assembly.
+ 
+-Module 1 now implements the approved W/H/C/P/U/Ts derivation after E-12.
+-Modules 2/3 retain explicit specification gaps for their numerical derivations;
+-no attribution weights or default identities are substituted for those rules.
+-The existing Section 30 historical-prior blends and builder ordering remain.
++Seven pre-prior identity components are specified. A full identity/model also
++requires an explicit external possession source; no estimator/default is
++fabricated. Historical-prior blends and builder ordering remain unchanged.
+ """
+-
+ from __future__ import annotations
+ 
++from football_engine.team_model.dependencies import PossessionTendencySource
+ from football_engine.team_model.formation_engine import FormationEngine, FormationEngineError
+ from football_engine.team_model.team_dimension_engine import TeamDimensionEngine, TeamDimensionEngineError
+-from football_engine.team_model.team_identity_engine import TeamIdentityEngine, TeamIdentityEngineError
++from football_engine.team_model.team_identity_engine import (
++    TeamIdentityEngine, TeamIdentityEngineError, TeamIdentitySpecificationGapError,
++)
+ from football_engine.team_model.team_model_builder import TeamModel, TeamModelBuilder
+ 
+ __all__ = [
+-    "FormationEngine",
+-    "FormationEngineError",
+-    "TeamDimensionEngine",
+-    "TeamDimensionEngineError",
+-    "TeamIdentityEngine",
+-    "TeamIdentityEngineError",
+-    "TeamModel",
+-    "TeamModelBuilder",
++    "FormationEngine", "FormationEngineError", "TeamDimensionEngine", "TeamDimensionEngineError",
++    "TeamIdentityEngine", "TeamIdentityEngineError", "TeamIdentitySpecificationGapError",
++    "PossessionTendencySource", "TeamModel", "TeamModelBuilder",
+ ]
+--- /dev/null
++++ b/football_engine/team_model/_validation.py
+@@ -0,0 +1,54 @@
++"""Local validation shared by Modules 2/3; never re-derive formation geometry."""
++from __future__ import annotations
++
++import math
++from typing import Final
++
++from pydantic import ValidationError
++
++from football_engine.core.enums import PlayerRole
++from football_engine.core.player_season import PlayerSeason
++from football_engine.core.team_dimensions import StructuralFeatures
++
++REQUIRED_SQUAD_SIZE: Final[int] = 11
++
++
++def bounded_number(value: object, *, label: str, upper: float,
++                   error_type: type[ValueError]) -> float:
++    if isinstance(value, bool) or not isinstance(value, (int, float)):
++        raise error_type(f"{label} must be a finite real number in [0, {upper}]")
++    number = float(value)
++    if not math.isfinite(number) or not 0.0 <= number <= upper:
++        raise error_type(f"{label} must be a finite real number in [0, {upper}]")
++    return number
++
++
++def validated_players(players: list[PlayerSeason], structural_features: StructuralFeatures,
++                      *, error_type: type[ValueError], engine_name: str) -> tuple[PlayerSeason, ...]:
++    if not isinstance(players, (list, tuple)) or len(players) != REQUIRED_SQUAD_SIZE:
++        raise error_type(f"{engine_name} requires exactly 11 PlayerSeasons")
++    if not isinstance(structural_features, StructuralFeatures):
++        raise error_type("structural_features must be a StructuralFeatures object")
++    try:
++        StructuralFeatures.model_validate(structural_features.model_dump())
++    except (ValidationError, TypeError, ValueError) as exc:
++        raise error_type(f"Invalid StructuralFeatures: {exc}") from exc
++    ids = []
++    for player in players:
++        if not isinstance(player, PlayerSeason):
++            raise error_type("Every selected player must be a PlayerSeason")
++        if not isinstance(player.role, PlayerRole):
++            raise error_type("PlayerSeason role must be a PlayerRole member")
++        if not isinstance(player.id, str) or not player.id:
++            raise error_type("PlayerSeason id must be a non-empty string")
++        try:
++            PlayerSeason.model_validate(player.model_dump())
++        except (ValidationError, TypeError, ValueError) as exc:
++            raise error_type(f"Invalid PlayerSeason {player.id}: {exc}") from exc
++        ids.append(player.id)
++    if len(set(ids)) != REQUIRED_SQUAD_SIZE:
++        raise error_type(f"{engine_name} received duplicate PlayerSeason id(s)")
++    if sum(player.role == PlayerRole.GK for player in players) != 1:
++        raise error_type(f"{engine_name} requires exactly one GK")
++    # Do not sort/mutate the caller's roster or retain a per-team cache.
++    return tuple(sorted(players, key=lambda player: player.id))
+--- /dev/null
++++ b/football_engine/team_model/_weighted_mean.py
+@@ -0,0 +1,36 @@
++"""Deterministic convex weighted means, not tactical multipliers or priors."""
++from __future__ import annotations
++
++import math
++from typing import Callable
++
++from football_engine.core.enums import PlayerRole
++from football_engine.core.player_season import PlayerSeason
++from football_engine.team_model._validation import bounded_number
++
++
++def role_weighted_mean(players: tuple[PlayerSeason, ...], *, attribute: str,
++                       weight_for_role: Callable[[PlayerRole], float], field_name: str,
++                       upper: float, error_type: type[ValueError]) -> float:
++    weights = []
++    values = []
++    for player in players:
++        weight = weight_for_role(player.role)
++        if (isinstance(weight, bool) or not isinstance(weight, (int, float))
++                or not math.isfinite(weight) or weight < 0):
++            raise error_type(f"{field_name} has an invalid role weight")
++        if weight > 0:
++            value = bounded_number(getattr(player, attribute), label=f"{player.id}.{attribute}",
++                                   upper=upper, error_type=error_type)
++            weights.append(float(weight))
++            values.append(value)
++    denominator = math.fsum(weights)
++    if denominator <= 0:
++        raise error_type(f"{field_name} has a zero role-weight denominator for the selected roster")
++    result = math.fsum(weight * value for weight, value in zip(weights, values)) / denominator
++    if not math.isfinite(result):
++        raise error_type(f"{field_name} produced a nonfinite weighted mean")
++    # Positive weighted means are already in this interval mathematically.
++    # This projection protects floating-point rounding, not invalid inputs:
++    # every consumed value/weight was validated above before calculation.
++    return min(max(result, min(values)), max(values))
+--- /dev/null
++++ b/football_engine/team_model/dependencies.py
+@@ -0,0 +1,22 @@
++"""Explicit unresolved possession-data dependency; no estimator or default."""
++from __future__ import annotations
++
++from typing import Protocol
++
++
++class PossessionTendencySource(Protocol):
++    """Preloaded, deterministic source of a roster's PRE-PRIOR tendency index.
++
++    Return a finite [0,1] value for the exact player-season IDs supplied.
++    This is not the opponent-dependent PossessionShare and not a historical
++    prior passed through again. No default value or production implementation
++    is provided. Missing observations must raise, never fall back to 0.5.
++
++    Callers must establish data provenance, avoid outcome leakage and rejected
++    ability/press/geometry proxies, and perform all I/O before engine use.
++    The ID-only immutable argument restricts this engine's data flow; a Protocol
++    cannot certify arbitrary caller implementations as pure or causally safe.
++    """
++
++    def __call__(self, *, player_season_ids: tuple[str, ...]) -> float:
++        ...
+--- /dev/null
++++ b/football_engine/team_model/role_weight_priors.py
+@@ -0,0 +1,52 @@
++"""Immutable, uncalibrated Layer 2 role-weight priors from design memo V2/V3.
++
++These are NOT Section R scorer/assist tables and are NOT fitted parameters.
++The unique GK is selected directly, so no tunable GK weight vector exists.
++The corrected memo documents common-scale invariance and calibration limits.
++"""
++from __future__ import annotations
++
++from dataclasses import dataclass
++from types import MappingProxyType
++from typing import Final, Mapping
++
++from football_engine.core.enums import PlayerRole
++
++
++@dataclass(frozen=True)
++class DimensionRoleWeights:
++    attack: float
++    creation: float
++    defense: float
++
++
++@dataclass(frozen=True)
++class IdentityRoleWeights:
++    press: float
++    transition: float
++    tempo: float
++    risk: float
++    attack_pace: float
++
++
++DIMENSION_ROLE_WEIGHT_PRIORS: Final[Mapping[PlayerRole, DimensionRoleWeights]] = MappingProxyType({
++    PlayerRole.GK: DimensionRoleWeights(0.00, 0.00, 0.00),
++    PlayerRole.CB: DimensionRoleWeights(0.05, 0.10, 1.00),
++    PlayerRole.FB: DimensionRoleWeights(0.15, 0.35, 0.65),
++    PlayerRole.DM: DimensionRoleWeights(0.10, 0.45, 0.55),
++    PlayerRole.CM: DimensionRoleWeights(0.25, 0.70, 0.35),
++    PlayerRole.WM: DimensionRoleWeights(0.65, 0.55, 0.15),
++    PlayerRole.AM: DimensionRoleWeights(0.55, 0.85, 0.10),
++    PlayerRole.FW: DimensionRoleWeights(1.00, 0.30, 0.05),
++})
++
++IDENTITY_ROLE_WEIGHT_PRIORS: Final[Mapping[PlayerRole, IdentityRoleWeights]] = MappingProxyType({
++    PlayerRole.GK: IdentityRoleWeights(0.00, 0.00, 0.05, 0.00, 0.00),
++    PlayerRole.CB: IdentityRoleWeights(0.30, 0.10, 0.20, 0.05, 0.00),
++    PlayerRole.FB: IdentityRoleWeights(0.50, 0.40, 0.30, 0.15, 0.20),
++    PlayerRole.DM: IdentityRoleWeights(0.60, 0.20, 0.30, 0.10, 0.00),
++    PlayerRole.CM: IdentityRoleWeights(0.55, 0.30, 0.35, 0.25, 0.10),
++    PlayerRole.WM: IdentityRoleWeights(0.45, 0.60, 0.30, 0.45, 0.60),
++    PlayerRole.AM: IdentityRoleWeights(0.35, 0.45, 0.35, 0.55, 0.50),
++    PlayerRole.FW: IdentityRoleWeights(0.25, 0.55, 0.25, 0.75, 1.00),
++})
+--- a/football_engine/team_model/team_dimension_engine.py
++++ b/football_engine/team_model/team_dimension_engine.py
+@@ -1,142 +1,50 @@
++"""Module 2 — D1 from the user-supplied V2 memo and corrected V3 baseline.
++
++Attack/Creation/Defense are independent role-weighted ability means [0,100].
++Goalkeeping is the unique selected GK's ability. These immutable uncalibrated
++Layer 2 weights are separate from Section R attribution weights.
++
++D1 validates but does not numerically use StructuralFeatures. For a fixed
++squad/role assignment it is invariant to formation geometry: this is an
++explicit V1 simplification, not a claim of implemented formation bonuses.
++No historical prior, opponent, runtime, RNG, or lambda enters this engine.
++The existing builder applies the unchanged dimension-prior adjustment once.
+ """
+-Team Dimension Engine — Module 2 (Layer 2).
+-
+-Architecture reference: Section 4, Section 30 (Historical Hybrid blend,
+-already implemented), Section O.2 (Module 2 contract).
+-
+-Locked contract (Section O.2):
+-
+-    INPUT:              List[PlayerSeason] + StructuralFeatures
+-    OUTPUT:             TeamDimensions {attack, creation, defense, goalkeeping}
+-    IMMUTABLE?          YES
+-    RUNTIME?            NO
+-    CAN_CHANGE_λ?       INDIRECT
+-    CAN_CHANGE_STATE?   NO
+-    RANDOMNESS?         NO
+-
+-Section 4 explicit, locked principle (must be preserved by whatever
+-formula is eventually specified):
+-    "Team strength نباید به یک score عمومی 0-100 تبدیل شود که مستقیم λ را
+-    تعیین کند." — dimensions must stay as four separate values; a future
+-    implementation must never collapse them into one scalar before
+-    handing off to the Matchup Engine (Module 6).
+-
+-============================================================================
+-WHAT IS ALREADY LOCKED AND MUST NOT BE RE-DESIGNED
+-============================================================================
+-Section 30's Historical Hybrid blend formula IS locked and IS already
+-implemented as `apply_historical_prior_to_dimensions()` in
+-football_engine.core.team_season:
+-
+-    final = clamp(alpha * derived + (1 - alpha) * historical_prior, 0, 1)
+-    (dimension_adjustment expressed as an additive delta on `derived`,
+-    per that function's own docstring)
+-
+-Per the Module 2 contract's literal input list (PlayerSeason +
+-StructuralFeatures only, no HistoricalPrior), the base derivation this
+-module performs does NOT take a prior. Wiring the dimensions blend is
+-therefore the caller's responsibility (see
+-football_engine/team_model/team_model_builder.py), exactly mirroring how
+-Section 33 describes computed_dimensions/computed_identity both being
+-assembled at match-build time from separate engines — this module stays
+-narrowly scoped to the Module 2 contract as written.
+-
+-============================================================================
+-EXPLICIT SCOPE DECISION (see conversation record — "Option 3"):
+-============================================================================
+-The architecture document locks input/output and the "four separate
+-dimensions, never one scalar" invariant, and it locks that role-weight
+-tables exist (ROLE_ATTACK_WEIGHT / ROLE_CREATION_WEIGHT in
+-football_engine.core.constants, Section R.3/R.4) — but those tables are
+-explicitly documented (constants.py) as belonging to Player Attribution
+-(Module 10/Section R: scorer/assist weighting), not to Team Dimension
+-derivation. No formula is given anywhere for how PlayerSeason attributes
+-(attack_ability, creation_ability, defense_ability, gk_ability) +
+-StructuralFeatures combine into the four 0-100 TeamDimensions values.
+-
+-Per explicit instruction, this module implements ONLY the contract and
+-plumbing (input validation, class shape, NotImplementedError at the
+-missing-formula insertion point).
+-
+-TODO(SPEC-NEEDED, PlayerSeason + StructuralFeatures -> TeamDimensions):
+-    No formula exists yet for deriving TeamDimensions.attack / .creation
+-    / .defense / .goalkeeping from the 11 PlayerSeasons' *_ability fields
+-    combined with StructuralFeatures (e.g. does press_structure_feature
+-    modify defense? does build_up_structure_feature modify creation? by
+-    how much, and is it additive or multiplicative?). This must be
+-    designed and locked before TeamDimensionEngine.derive() can be
+-    implemented.
+-"""
+-
+ from __future__ import annotations
+ 
++from football_engine.core.enums import PlayerRole
+ from football_engine.core.player_season import PlayerSeason
+ from football_engine.core.team_dimensions import StructuralFeatures, TeamDimensions
+-
+-REQUIRED_SQUAD_SIZE = 11
++from football_engine.team_model._validation import bounded_number, validated_players
++from football_engine.team_model._weighted_mean import role_weighted_mean
++from football_engine.team_model.role_weight_priors import DIMENSION_ROLE_WEIGHT_PRIORS
+ 
+ 
+ class TeamDimensionEngineError(ValueError):
+-    """Raised for invalid TeamDimensionEngine input."""
+-
+-
+-def _validate_input_shape(players: list[PlayerSeason]) -> None:
+-    """
+-    Input-shape validation only — NOT derivation logic. Confirms the
+-    call has exactly 11 distinct PlayerSeasons before any (currently
+-    unspecified) derivation would run.
+-    """
+-    if len(players) != REQUIRED_SQUAD_SIZE:
+-        raise TeamDimensionEngineError(
+-            f"TeamDimensionEngine requires exactly {REQUIRED_SQUAD_SIZE} PlayerSeasons, got {len(players)}"
+-        )
+-    player_ids = [p.id for p in players]
+-    if len(set(player_ids)) != len(player_ids):
+-        dupes = {pid for pid in player_ids if player_ids.count(pid) > 1}
+-        raise TeamDimensionEngineError(
+-            f"TeamDimensionEngine received duplicate PlayerSeason id(s): {sorted(dupes)}"
+-        )
++    """Invalid selection, numeric input, structure, or aggregation denominator."""
+ 
+ 
+ class TeamDimensionEngine:
+-    """
+-    Module 2 — Team Dimension Engine.
++    """Stateless D1 derivation of the four pre-prior team dimensions."""
+ 
+-    Usage (once the derivation formula is specified and implemented):
++    def derive(self, players: list[PlayerSeason],
++               structural_features: StructuralFeatures) -> TeamDimensions:
++        selected = validated_players(players, structural_features,
++                                     error_type=TeamDimensionEngineError,
++                                     engine_name="TeamDimensionEngine")
+ 
+-        engine = TeamDimensionEngine()
+-        dims = engine.derive(players, structural_features)
++        def mean(attribute: str, weight_column: str, output: str) -> float:
++            return role_weighted_mean(
++                selected, attribute=attribute,
++                weight_for_role=lambda role: getattr(DIMENSION_ROLE_WEIGHT_PRIORS[role], weight_column),
++                field_name=output, upper=100.0, error_type=TeamDimensionEngineError,
++            )
+ 
+-    Currently `derive()` validates its inputs and then raises
+-    NotImplementedError at the exact point the missing formula belongs —
+-    see the TODO(SPEC-NEEDED) block in the module docstring.
+-    """
+-
+-    def derive(
+-        self,
+-        players: list[PlayerSeason],
+-        structural_features: StructuralFeatures,
+-    ) -> TeamDimensions:
+-        """
+-        Module 2 contract: (List[PlayerSeason], StructuralFeatures) -> TeamDimensions.
+-
+-        Raises:
+-            TeamDimensionEngineError: if the input shape itself is
+-                invalid (wrong squad size, duplicate ids).
+-            NotImplementedError: always, once input validation passes —
+-                the actual derivation formula has not been specified yet
+-                (see module docstring TODO(SPEC-NEEDED)).
+-        """
+-        _validate_input_shape(players)
+-
+-        raise NotImplementedError(
+-            "TeamDimensionEngine.derive(): input shape is valid, but the "
+-            "PlayerSeason + StructuralFeatures -> TeamDimensions derivation "
+-            "formula (Section 4) has not been specified in the locked "
+-            "architecture. See TODO(SPEC-NEEDED, PlayerSeason + "
+-            "StructuralFeatures -> TeamDimensions) in "
+-            "football_engine/team_model/team_dimension_engine.py. "
+-            "Note: whatever formula is specified must preserve the locked "
+-            "invariant that attack/creation/defense/goalkeeping remain four "
+-            "separate values and are never collapsed into one scalar."
++        keeper = next(player for player in selected if player.role == PlayerRole.GK)
++        return TeamDimensions(
++            attack=mean("attack_ability", "attack", "attack"),
++            creation=mean("creation_ability", "creation", "creation"),
++            defense=mean("defense_ability", "defense", "defense"),
++            goalkeeping=bounded_number(keeper.gk_ability, label="selected GK.gk_ability",
++                                       upper=100.0, error_type=TeamDimensionEngineError),
+         )
+--- a/football_engine/team_model/team_identity_engine.py
++++ b/football_engine/team_model/team_identity_engine.py
+@@ -1,158 +1,105 @@
++"""Module 3 — specified V3 mathematics with an explicit possession-source gap.
++
++Five role-weighted player components plus C/U proxies are implemented using
++V2's numerical tables. They are uncalibrated modeling proxies, not proof of
++causal independence or complete downstream tactical/state specifications.
++
++A caller must explicitly inject an independent, preloaded possession source.
++No ability-based/press-based proxy, neutral constant, or prior-only fallback
++is invented. Default use therefore raises a named specification-gap error.
++With a valid source, return a full eight-field pre-prior identity and call
++existing historical-prior blending exactly once. Core models and the public
++three-argument derive call shape are unchanged; the dependency is configured
++at engine construction and the existing builder injection accepts it.
+ """
+-Team Identity Engine — Module 3 (Layer 2).
+-
+-Architecture reference: Section 3, Section 30 (Historical Hybrid blend,
+-already implemented), Section 33, Section O.2 (Module 3 contract).
+-
+-Locked contract (Section O.2):
+-
+-    INPUT:              List[PlayerSeason] + StructuralFeatures + HistoricalPrior
+-    OUTPUT:             TeamIdentity {possession_tendency, press_tendency,
+-                         transition_tendency, tempo, risk_tolerance,
+-                         compactness, build_up_control_score,
+-                         attack_pace_factor}
+-    IMMUTABLE?          YES
+-    RUNTIME?            NO
+-    CAN_CHANGE_λ?       INDIRECT
+-    CAN_CHANGE_STATE?   NO
+-    RANDOMNESS?         NO
+-
+-============================================================================
+-WHAT IS ALREADY LOCKED AND MUST NOT BE RE-DESIGNED
+-============================================================================
+-Section 30's Historical Hybrid blend formula IS locked and IS already
+-implemented as `apply_historical_prior_to_identity()` in
+-football_engine.core.team_season:
+-
+-    final = clamp(alpha * derived + (1 - alpha) * historical_prior, 0, 1)
+-
+-This module's job is therefore two ordered steps:
+-
+-    1. DERIVE a pre-prior TeamIdentity from (PlayerSeasons,
+-       StructuralFeatures) alone — "derived" in the formula above.
+-       *** This derivation formula is NOT specified anywhere (see
+-       TODO(SPEC-NEEDED) below) — it is the missing piece. ***
+-    2. BLEND that derived TeamIdentity against the team's HistoricalPrior
+-       by calling the existing, locked
+-       `apply_historical_prior_to_identity(derived, prior)` — this step
+-       requires NO new formula and NO new code beyond wiring the call;
+-       it is implemented below and is NOT behind NotImplementedError.
+-
+-============================================================================
+-EXPLICIT SCOPE DECISION (see conversation record — "Option 3")
+-============================================================================
+-TODO(SPEC-NEEDED, PlayerSeason + StructuralFeatures -> TeamIdentity [pre-prior]):
+-    No formula exists yet for deriving the *pre-prior* TeamIdentity
+-    (possession_tendency, press_tendency, transition_tendency, tempo,
+-    risk_tolerance, compactness, build_up_control_score,
+-    attack_pace_factor) from the 11 PlayerSeasons' tendency/pace fields
+-    combined with StructuralFeatures. This must be designed and locked
+-    before TeamIdentityEngine.derive()'s internal
+-    `_derive_pre_prior_identity()` step can be implemented. The
+-    post-derivation historical-prior blend (step 2 above) is already
+-    fully implemented and requires no further design work.
+-"""
+-
+ from __future__ import annotations
+ 
+ from football_engine.core.player_season import PlayerSeason
+ from football_engine.core.team_dimensions import StructuralFeatures
+ from football_engine.core.team_identity import TeamIdentity
+ from football_engine.core.team_season import HistoricalPrior, apply_historical_prior_to_identity
+-
+-REQUIRED_SQUAD_SIZE = 11
++from football_engine.team_model._validation import bounded_number, validated_players
++from football_engine.team_model._weighted_mean import role_weighted_mean
++from football_engine.team_model.dependencies import PossessionTendencySource
++from football_engine.team_model.role_weight_priors import IDENTITY_ROLE_WEIGHT_PRIORS
+ 
+ 
+ class TeamIdentityEngineError(ValueError):
+-    """Raised for invalid TeamIdentityEngine input."""
++    """Invalid inputs, denominator, source configuration, or source result."""
+ 
+ 
+-def _validate_input_shape(players: list[PlayerSeason]) -> None:
+-    """Input-shape validation only — NOT derivation logic."""
+-    if len(players) != REQUIRED_SQUAD_SIZE:
+-        raise TeamIdentityEngineError(
+-            f"TeamIdentityEngine requires exactly {REQUIRED_SQUAD_SIZE} PlayerSeasons, got {len(players)}"
+-        )
+-    player_ids = [p.id for p in players]
+-    if len(set(player_ids)) != len(player_ids):
+-        dupes = {pid for pid in player_ids if player_ids.count(pid) > 1}
+-        raise TeamIdentityEngineError(
+-            f"TeamIdentityEngine received duplicate PlayerSeason id(s): {sorted(dupes)}"
+-        )
++class TeamIdentitySpecificationGapError(NotImplementedError):
++    """No explicit source exists for the still-unspecified possession input."""
+ 
+ 
+ def _derive_pre_prior_identity(
+-    players: list[PlayerSeason],
++    players: tuple[PlayerSeason, ...],
+     structural_features: StructuralFeatures,
++    possession_source: PossessionTendencySource,
+ ) -> TeamIdentity:
+-    """
+-    The missing piece: PlayerSeason + StructuralFeatures -> pre-prior
+-    TeamIdentity ("derived" in Section 30's blend formula).
++    def mean(attribute: str, column: str, output: str) -> float:
++        return role_weighted_mean(
++            players, attribute=attribute,
++            weight_for_role=lambda role: getattr(IDENTITY_ROLE_WEIGHT_PRIORS[role], column),
++            field_name=output, upper=1.0, error_type=TeamIdentityEngineError,
++        )
+ 
+-    Deliberately NOT implemented — see module docstring TODO(SPEC-NEEDED).
+-    Kept as its own private function (rather than inlined in `derive()`)
+-    so that once the formula is specified, only this function needs to
+-    change; the historical-prior blend wiring in `derive()` already
+-    works and must not be touched.
+-    """
+-    raise NotImplementedError(
+-        "TeamIdentityEngine._derive_pre_prior_identity(): the PlayerSeason + "
+-        "StructuralFeatures -> pre-prior TeamIdentity derivation formula "
+-        "(Section 3) has not been specified in the locked architecture. See "
+-        "TODO(SPEC-NEEDED, PlayerSeason + StructuralFeatures -> TeamIdentity "
+-        "[pre-prior]) in football_engine/team_model/team_identity_engine.py. "
+-        "Note: the historical-prior blend that consumes this function's "
+-        "output is already implemented "
+-        "(apply_historical_prior_to_identity) and must not be re-derived."
++    components = {
++        "press_tendency": mean("press_tendency", "press", "press_tendency"),
++        "transition_tendency": mean("transition_tendency", "transition", "transition_tendency"),
++        "tempo": mean("pace", "tempo", "tempo"),
++        "risk_tolerance": mean("shot_tendency", "risk", "risk_tolerance"),
++        "attack_pace_factor": mean("pace", "attack_pace", "attack_pace_factor"),
++        "compactness": bounded_number(structural_features.defensive_cover_feature,
++                                        label="C", upper=1.0, error_type=TeamIdentityEngineError),
++        "build_up_control_score": bounded_number(structural_features.build_up_structure_feature,
++                                                  label="U", upper=1.0, error_type=TeamIdentityEngineError),
++    }
++    # Validated/sorted immutable IDs only; do not expose abilities, priors,
++    # structure, opponent, or runtime objects through this dependency.
++    value = possession_source(player_season_ids=tuple(player.id for player in players))
++    components["possession_tendency"] = bounded_number(
++        value, label="possession source result", upper=1.0, error_type=TeamIdentityEngineError,
+     )
++    return TeamIdentity(**components)
+ 
+ 
+ class TeamIdentityEngine:
+-    """
+-    Module 3 — Team Identity Engine.
++    """Stateless per-team computation with a configured external data source.
+ 
+-    Usage (once the pre-prior derivation formula is specified and
+-    implemented):
+-
+-        engine = TeamIdentityEngine()
+-        identity = engine.derive(players, structural_features, prior)
+-
+-    `derive()` validates its inputs, calls the (currently unimplemented)
+-    pre-prior derivation step, then applies the already-locked
+-    historical-prior blend. The blend step itself works today; only the
+-    pre-prior derivation is blocked on a missing specification.
++    The only stored object is the caller-supplied dependency, never a cached
++    team identity or mutable match state. Source purity is a caller contract.
+     """
+ 
+-    def derive(
+-        self,
+-        players: list[PlayerSeason],
+-        structural_features: StructuralFeatures,
+-        historical_prior: HistoricalPrior | None,
+-    ) -> TeamIdentity:
+-        """
+-        Module 3 contract: (List[PlayerSeason], StructuralFeatures,
+-        HistoricalPrior | None) -> TeamIdentity.
++    def __init__(self, *, possession_source: PossessionTendencySource | None = None) -> None:
++        if possession_source is not None and not callable(possession_source):
++            raise TeamIdentityEngineError("possession_source must be callable or None")
++        self._possession_source = possession_source
+ 
+-        `historical_prior` is Optional to mirror TeamSeason.historical_prior's
+-        own semantics (Section 33: a Tier 3 / fully-generic team has no
+-        curated prior at all, which is a valid, non-error state — see
+-        apply_historical_prior_to_identity's own None handling).
+-
+-        Raises:
+-            TeamIdentityEngineError: if the input shape itself is invalid
+-                (wrong squad size, duplicate ids).
+-            NotImplementedError: always, once input validation passes —
+-                propagated from `_derive_pre_prior_identity()`, the
+-                actual pre-prior derivation formula has not been
+-                specified yet (see module docstring TODO(SPEC-NEEDED)).
+-        """
+-        _validate_input_shape(players)
+-
+-        derived = _derive_pre_prior_identity(players, structural_features)
+-
+-        # This call is NOT behind NotImplementedError: Section 30's blend
+-        # formula is locked and already implemented. It is unreachable
+-        # today only because _derive_pre_prior_identity() above always
+-        # raises first — once that function is implemented, this line
+-        # requires no changes.
++    def derive(self, players: list[PlayerSeason], structural_features: StructuralFeatures,
++               historical_prior: HistoricalPrior | None) -> TeamIdentity:
++        selected = validated_players(players, structural_features,
++                                     error_type=TeamIdentityEngineError,
++                                     engine_name="TeamIdentityEngine")
++        if historical_prior is not None:
++            if not isinstance(historical_prior, HistoricalPrior):
++                raise TeamIdentityEngineError("historical_prior must be a HistoricalPrior or None")
++            try:
++                HistoricalPrior.model_validate(historical_prior.model_dump())
++            except (ValueError, TypeError, AttributeError) as exc:
++                raise TeamIdentityEngineError(f"Invalid HistoricalPrior: {exc}") from exc
++            bounded_number(historical_prior.alpha, label="HistoricalPrior.alpha",
++                           upper=1.0, error_type=TeamIdentityEngineError)
++            for name, value in historical_prior.identity_priors.model_dump().items():
++                if value is not None:
++                    bounded_number(value, label=f"IdentityPriors.{name}",
++                                   upper=1.0, error_type=TeamIdentityEngineError)
++        if self._possession_source is None:
++            raise TeamIdentitySpecificationGapError(
++                "Cannot build a pre-prior TeamIdentity: possession_tendency has no approved "
++                "automatic estimator in the current PlayerSeason schema. Supply an explicit "
++                "PossessionTendencySource with independently established pre-prior data. "
++                "No neutral, ability/press proxy, or historical-prior fallback is used."
++            )
++        derived = _derive_pre_prior_identity(selected, structural_features, self._possession_source)
+         return apply_historical_prior_to_identity(derived, historical_prior)
+--- a/football_engine/team_model/team_model_builder.py
++++ b/football_engine/team_model/team_model_builder.py
+@@ -26,11 +26,10 @@
+ call order so Layer 5 doesn't have to re-derive this dependency graph
+ itself.
+ 
+-Every step this file calls is either already-implemented plumbing
+-(FormationEngine/TeamDimensionEngine/TeamIdentityEngine input validation,
+-apply_historical_prior_to_dimensions) or raises NotImplementedError from
+-inside one of those engines (the missing Module 1/2/3 formulas) — this
+-orchestrator adds no numerical logic of its own.
++FormationEngine and D1 dimensions are implemented. Identity assembly uses
++seven specified components plus an explicitly configured possession source.
++Configure TeamIdentityEngine(possession_source=...) and inject that engine
++here; the builder itself adds no source fallback or numerical logic.
+ """
+ 
+ from __future__ import annotations
+@@ -66,8 +65,8 @@
+     Orchestrates Modules 1-3 in the locked dependency order for one
+     (roster, formation, historical_prior) triple.
+ 
+-    This class holds no state of its own and performs no derivation —
+-    it exists purely so Layer 5 (or tests) has one call site instead of
++    This class stores configured engines, not mutable per-match values,
++    and performs no derivation. Layer 5 (or tests) has one call site instead of
+     needing to know the correct Module 1 -> 2/3 -> historical-prior-blend
+     ordering itself.
+     """
+@@ -96,9 +95,9 @@
+             FormationEngineError / TeamDimensionEngineError /
+                 TeamIdentityEngineError: on invalid input shape (wrong
+                 squad size, duplicate ids, role-count mismatch).
+-            NotImplementedError: the next unspecified derivation is Module 2
+-                (TeamDimensions); Module 1's six-rule derivation now succeeds.
+-                Module 3 also remains unspecified. No fallback model is built.
++            TeamIdentitySpecificationGapError (NotImplementedError): an
++                explicit possession source has not been configured. Modules
++                1/2 succeed; no fake identity or fallback model is built.
+         """
+         structural_features = self._formation_engine.derive(players, formation)
+ 
+--- /dev/null
++++ b/tests/fixtures/layer2_memo_v3_example.json
+@@ -0,0 +1,342 @@
++{
++  "provenance": "Synthetic 11-player arithmetic/contract fixture; NOT real historical data",
++  "players": [
++    {
++      "id": "memo_p00",
++      "name": "Synthetic GK 0",
++      "season": "synthetic-v3",
++      "role": "GK",
++      "attack_ability": 10,
++      "creation_ability": 30,
++      "defense_ability": 35,
++      "gk_ability": 85,
++      "shot_tendency": 0.02,
++      "press_tendency": 0.1,
++      "transition_tendency": 0.15,
++      "pace": 0.3,
++      "discipline_score": 0.5,
++      "impact_score": 0.5
++    },
++    {
++      "id": "memo_p01",
++      "name": "Synthetic CB 1",
++      "season": "synthetic-v3",
++      "role": "CB",
++      "attack_ability": 20,
++      "creation_ability": 35,
++      "defense_ability": 84,
++      "gk_ability": 0,
++      "shot_tendency": 0.1,
++      "press_tendency": 0.4,
++      "transition_tendency": 0.2,
++      "pace": 0.45,
++      "discipline_score": 0.5,
++      "impact_score": 0.5
++    },
++    {
++      "id": "memo_p02",
++      "name": "Synthetic CB 2",
++      "season": "synthetic-v3",
++      "role": "CB",
++      "attack_ability": 25,
++      "creation_ability": 40,
++      "defense_ability": 82,
++      "gk_ability": 0,
++      "shot_tendency": 0.12,
++      "press_tendency": 0.45,
++      "transition_tendency": 0.25,
++      "pace": 0.5,
++      "discipline_score": 0.5,
++      "impact_score": 0.5
++    },
++    {
++      "id": "memo_p03",
++      "name": "Synthetic FB 3",
++      "season": "synthetic-v3",
++      "role": "FB",
++      "attack_ability": 45,
++      "creation_ability": 65,
++      "defense_ability": 72,
++      "gk_ability": 0,
++      "shot_tendency": 0.3,
++      "press_tendency": 0.65,
++      "transition_tendency": 0.5,
++      "pace": 0.75,
++      "discipline_score": 0.5,
++      "impact_score": 0.5
++    },
++    {
++      "id": "memo_p04",
++      "name": "Synthetic FB 4",
++      "season": "synthetic-v3",
++      "role": "FB",
++      "attack_ability": 50,
++      "creation_ability": 60,
++      "defense_ability": 70,
++      "gk_ability": 0,
++      "shot_tendency": 0.35,
++      "press_tendency": 0.6,
++      "transition_tendency": 0.55,
++      "pace": 0.8,
++      "discipline_score": 0.5,
++      "impact_score": 0.5
++    },
++    {
++      "id": "memo_p05",
++      "name": "Synthetic DM 5",
++      "season": "synthetic-v3",
++      "role": "DM",
++      "attack_ability": 35,
++      "creation_ability": 70,
++      "defense_ability": 78,
++      "gk_ability": 0,
++      "shot_tendency": 0.2,
++      "press_tendency": 0.7,
++      "transition_tendency": 0.3,
++      "pace": 0.55,
++      "discipline_score": 0.5,
++      "impact_score": 0.5
++    },
++    {
++      "id": "memo_p06",
++      "name": "Synthetic CM 6",
++      "season": "synthetic-v3",
++      "role": "CM",
++      "attack_ability": 60,
++      "creation_ability": 80,
++      "defense_ability": 65,
++      "gk_ability": 0,
++      "shot_tendency": 0.45,
++      "press_tendency": 0.65,
++      "transition_tendency": 0.45,
++      "pace": 0.65,
++      "discipline_score": 0.5,
++      "impact_score": 0.5
++    },
++    {
++      "id": "memo_p07",
++      "name": "Synthetic AM 7",
++      "season": "synthetic-v3",
++      "role": "AM",
++      "attack_ability": 75,
++      "creation_ability": 90,
++      "defense_ability": 40,
++      "gk_ability": 0,
++      "shot_tendency": 0.6,
++      "press_tendency": 0.5,
++      "transition_tendency": 0.55,
++      "pace": 0.7,
++      "discipline_score": 0.5,
++      "impact_score": 0.5
++    },
++    {
++      "id": "memo_p08",
++      "name": "Synthetic WM 8",
++      "season": "synthetic-v3",
++      "role": "WM",
++      "attack_ability": 82,
++      "creation_ability": 78,
++      "defense_ability": 38,
++      "gk_ability": 0,
++      "shot_tendency": 0.7,
++      "press_tendency": 0.55,
++      "transition_tendency": 0.75,
++      "pace": 0.9,
++      "discipline_score": 0.5,
++      "impact_score": 0.5
++    },
++    {
++      "id": "memo_p09",
++      "name": "Synthetic FW 9",
++      "season": "synthetic-v3",
++      "role": "FW",
++      "attack_ability": 90,
++      "creation_ability": 68,
++      "defense_ability": 25,
++      "gk_ability": 0,
++      "shot_tendency": 0.9,
++      "press_tendency": 0.4,
++      "transition_tendency": 0.7,
++      "pace": 0.85,
++      "discipline_score": 0.5,
++      "impact_score": 0.5
++    },
++    {
++      "id": "memo_p10",
++      "name": "Synthetic FW 10",
++      "season": "synthetic-v3",
++      "role": "FW",
++      "attack_ability": 86,
++      "creation_ability": 72,
++      "defense_ability": 30,
++      "gk_ability": 0,
++      "shot_tendency": 0.85,
++      "press_tendency": 0.45,
++      "transition_tendency": 0.8,
++      "pace": 0.95,
++      "discipline_score": 0.5,
++      "impact_score": 0.5
++    }
++  ],
++  "formation": {
++    "name": "Synthetic 4-3-3 (all role types)",
++    "position_pool": [
++      {
++        "slot_id": "memo_slot_00",
++        "role": "GK",
++        "side": "center",
++        "depth": "back"
++      },
++      {
++        "slot_id": "memo_slot_01",
++        "role": "CB",
++        "side": "left",
++        "depth": "back"
++      },
++      {
++        "slot_id": "memo_slot_02",
++        "role": "CB",
++        "side": "right",
++        "depth": "back"
++      },
++      {
++        "slot_id": "memo_slot_03",
++        "role": "FB",
++        "side": "left",
++        "depth": "back"
++      },
++      {
++        "slot_id": "memo_slot_04",
++        "role": "FB",
++        "side": "right",
++        "depth": "back"
++      },
++      {
++        "slot_id": "memo_slot_05",
++        "role": "DM",
++        "side": "center",
++        "depth": "mid"
++      },
++      {
++        "slot_id": "memo_slot_06",
++        "role": "CM",
++        "side": "left",
++        "depth": "mid"
++      },
++      {
++        "slot_id": "memo_slot_07",
++        "role": "AM",
++        "side": "right",
++        "depth": "mid"
++      },
++      {
++        "slot_id": "memo_slot_08",
++        "role": "WM",
++        "side": "left",
++        "depth": "front"
++      },
++      {
++        "slot_id": "memo_slot_09",
++        "role": "FW",
++        "side": "center",
++        "depth": "front"
++      },
++      {
++        "slot_id": "memo_slot_10",
++        "role": "FW",
++        "side": "right",
++        "depth": "front"
++      }
++    ]
++  },
++  "explicit_pre_prior_possession": 0.62,
++  "prior": {
++    "tier": 1,
++    "alpha": 0.55,
++    "identity_priors": {
++      "possession_tendency": 0.95,
++      "press_tendency": 0.9,
++      "transition_tendency": 0.25,
++      "tempo": 0.7,
++      "risk_tolerance": 0.5,
++      "compactness": 0.75
++    },
++    "dimension_adjustment": {
++      "creation": 0.03
++    }
++  },
++  "expected_structure": {
++    "width_feature": 0.8,
++    "line_height_feature": 0.5,
++    "defensive_cover_feature": 0.5,
++    "press_structure_feature": 0.28,
++    "build_up_structure_feature": 0.32,
++    "transition_structure_feature": 0.84
++  },
++  "expected_dimensions": {
++    "attack": 77.35443037974683,
++    "creation": 74.11111111111111,
++    "defense": 73.93406593406593,
++    "goalkeeping": 85.0
++  },
++  "expected_pre_prior_identity": {
++    "press_tendency": 0.5660493827160494,
++    "transition_tendency": 0.5979452054794521,
++    "tempo": 0.7114035087719298,
++    "risk_tolerance": 0.6764615384615384,
++    "attack_pace_factor": 0.8513888888888889,
++    "possession_tendency": 0.62,
++    "compactness": 0.5,
++    "build_up_control_score": 0.32
++  },
++  "expected_final_dimensions": {
++    "attack": 77.35443037974683,
++    "creation": 75.46111111111111,
++    "defense": 73.93406593406593,
++    "goalkeeping": 85.0
++  },
++  "expected_final_identity": {
++    "press_tendency": 0.7163271604938272,
++    "transition_tendency": 0.4413698630136986,
++    "tempo": 0.7062719298245614,
++    "risk_tolerance": 0.5970538461538462,
++    "attack_pace_factor": 0.8513888888888889,
++    "possession_tendency": 0.7685,
++    "compactness": 0.6125,
++    "build_up_control_score": 0.32
++  },
++  "exact_fraction_reference": {
++    "dimensions": {
++      "attack": "6111/79",
++      "creation": "667/9",
++      "defense": "6728/91",
++      "goalkeeping": "85"
++    },
++    "identity": {
++      "press_tendency": "917/1620",
++      "transition_tendency": "873/1460",
++      "tempo": "811/1140",
++      "risk_tolerance": "4397/6500",
++      "attack_pace_factor": "613/720",
++      "possession_tendency": "31/50",
++      "compactness": "1/2",
++      "build_up_control_score": "8/25"
++    },
++    "final_dimensions": {
++      "attack": "6111/79",
++      "creation": "13583/180",
++      "defense": "6728/91",
++      "goalkeeping": "85"
++    },
++    "final_identity": {
++      "press_tendency": "23209/32400",
++      "transition_tendency": "1611/3650",
++      "tempo": "16103/22800",
++      "risk_tolerance": "77617/130000",
++      "attack_pace_factor": "613/720",
++      "possession_tendency": "1537/2000",
++      "compactness": "49/80",
++      "build_up_control_score": "8/25"
++    }
++  }
++}
+--- /dev/null
++++ b/tests/layer2_memo_v3_helpers.py
+@@ -0,0 +1,56 @@
++"""Fully labeled synthetic V3 fixtures; never a production possession source."""
++from __future__ import annotations
++
++import json
++from pathlib import Path
++
++from football_engine.core.enums import PlayerRole, HistoricalTier
++from football_engine.core.formation import Formation, PositionSlot, SlotSide, SlotDepth
++from football_engine.core.player_season import PlayerSeason
++from football_engine.core.team_season import HistoricalPrior, IdentityPriors, DimensionAdjustment
++from football_engine.team_model import FormationEngine, TeamIdentityEngine
++
++
++def reference():
++    return json.loads((Path(__file__).parent/'fixtures/layer2_memo_v3_example.json').read_text())
++
++
++def example_players():
++    return [PlayerSeason(**dict(item, role=PlayerRole[item['role']])) for item in reference()['players']]
++
++
++def example_formation():
++    record=reference()['formation']
++    return Formation(name=record['name'], position_pool=[
++        PositionSlot(**dict(slot, role=PlayerRole[slot['role']], side=SlotSide(slot['side']), depth=SlotDepth(slot['depth'])))
++        for slot in record['position_pool']
++    ])
++
++
++def example_structure():
++    return FormationEngine().derive(example_players(), example_formation())
++
++
++def example_prior():
++    record=reference()['prior']
++    return HistoricalPrior(tier=HistoricalTier(record['tier']), alpha=record['alpha'],
++                           identity_priors=IdentityPriors(**record['identity_priors']),
++                           dimension_adjustment=DimensionAdjustment(**record['dimension_adjustment']))
++
++
++def example_source(players=None, value=None):
++    """Explicit fixture observation for exactly one roster, not a fallback."""
++    selected=players if players is not None else example_players()
++    key=tuple(sorted(player.id for player in selected))
++    observed=reference()['explicit_pre_prior_possession'] if value is None else value
++    def source(*, player_season_ids):
++        if player_season_ids != key:
++            raise LookupError('No synthetic observation for that roster')
++        return observed
++    return source
++
++
++def example_identity(players=None, structure=None, prior=None):
++    selected=example_players() if players is None else players
++    features=example_structure() if structure is None else structure
++    return TeamIdentityEngine(possession_source=example_source(selected)).derive(selected, features, prior)
+--- /dev/null
++++ b/tests/test_layer2_pipeline_and_audit_v3.py
+@@ -0,0 +1,148 @@
++"""Real Layer 2 assembly with explicit synthetic data; downstream gaps stay open."""
++from __future__ import annotations
++
++import ast
++from dataclasses import fields, FrozenInstanceError
++import math
++from pathlib import Path
++from unittest.mock import patch
++
++import pytest
++
++from football_engine.core.enums import MatchState
++from football_engine.core.parameters import DEFAULT_PARAMETER_SET
++from football_engine.core.tactical_profile import TacticalProfile
++from football_engine.core.team_season import apply_historical_prior_to_dimensions, apply_historical_prior_to_identity
++from football_engine.team_model import TeamIdentityEngine, TeamModelBuilder, TeamIdentitySpecificationGapError, FormationEngineError
++from football_engine.team_model.role_weight_priors import DIMENSION_ROLE_WEIGHT_PRIORS as DW, IDENTITY_ROLE_WEIGHT_PRIORS as IW
++from football_engine.matchup import MatchupEngine
++from football_engine.matchup.dependencies import DirectionalMatchupHelpers
++from football_engine.matchup.tactical_profile import TacticalProfileGenerator
++from football_engine.matchup.errors import SpecificationGapError
++from tests.layer2_memo_v3_helpers import example_players, example_structure, example_formation, example_prior, example_source, reference
++
++
++def build(prior=None):
++    players=example_players()
++    builder=TeamModelBuilder(identity_engine=TeamIdentityEngine(possession_source=example_source(players)))
++    return builder.build(players,example_formation(),prior)
++
++
++def test_real_formation_dimension_identity_pipeline_without_prior():
++    model=build();expected=reference()
++    for key,value in expected['expected_structure'].items():assert getattr(model.structural_features,key)==pytest.approx(value)
++    for key,value in expected['expected_dimensions'].items():assert getattr(model.dimensions,key)==pytest.approx(value,abs=1e-12)
++    for key,value in expected['expected_pre_prior_identity'].items():assert getattr(model.identity,key)==pytest.approx(value,abs=1e-12)
++    assert set(model.structural_features.model_dump())==set(example_structure().model_dump())
++    assert 'formation_type' not in model.structural_features.model_dump()
++
++
++def test_real_pipeline_matches_existing_prior_blends_exactly_once():
++    with patch('football_engine.team_model.team_model_builder.apply_historical_prior_to_dimensions',wraps=apply_historical_prior_to_dimensions) as dims_blend:
++        with patch('football_engine.team_model.team_identity_engine.apply_historical_prior_to_identity',wraps=apply_historical_prior_to_identity) as identity_blend:
++            model=build(example_prior())
++    assert dims_blend.call_count==1 and identity_blend.call_count==1
++    for key,value in reference()['expected_final_dimensions'].items():assert getattr(model.dimensions,key)==pytest.approx(value,abs=1e-12)
++    for key,value in reference()['expected_final_identity'].items():assert getattr(model.identity,key)==pytest.approx(value,abs=1e-12)
++
++
++def test_default_builder_still_refuses_to_fabricate_missing_possession():
++    with pytest.raises(TeamIdentitySpecificationGapError,match='possession_tendency'):
++        TeamModelBuilder().build(example_players(),example_formation(),None)
++
++
++def test_formation_failure_precedes_all_source_queries():
++    calls=[]
++    def source(*,player_season_ids):calls.append(player_season_ids);return .62
++    builder=TeamModelBuilder(identity_engine=TeamIdentityEngine(possession_source=source))
++    with pytest.raises(FormationEngineError):builder.build(example_players()[:10],example_formation(),None)
++    assert calls==[]
++
++
++def test_bundle_is_frozen_and_contains_only_the_existing_three_models():
++    model=build()
++    assert {field.name for field in fields(model)}=={'structural_features','dimensions','identity'}
++    with pytest.raises(FrozenInstanceError):model.identity=None
++
++
++def test_tactical_policy_gap_is_not_silently_closed_by_layer2_progress():
++    model=build()
++    with pytest.raises(SpecificationGapError):
++        TacticalProfileGenerator().generate(model.identity,model.structural_features,MatchState.NORMAL)
++
++
++def transport_only_policy(*,identity,structural_features,state):
++    """TEST-ONLY transport, not a proposed canonical Module 5/state equation."""
++    assert state==MatchState.NORMAL
++    return TacticalProfile(press_final=identity.press_tendency,line_final=structural_features.line_height_feature,
++                           width_final=structural_features.width_feature,build_up_control_score=identity.build_up_control_score,
++                           defensive_cover_feature=structural_features.defensive_cover_feature,attack_pace_factor=identity.attack_pace_factor,
++                           transition_tendency_final=identity.transition_tendency,tempo_final=identity.tempo,
++                           possession_tendency_final=identity.possession_tendency)
++
++
++def test_supplied_test_policy_transports_real_layer2_outputs_without_new_math():
++    model=build()
++    tactical=TacticalProfileGenerator(policy=transport_only_policy).generate(model.identity,model.structural_features,MatchState.NORMAL)
++    assert tactical.build_up_control_score==model.identity.build_up_control_score
++    assert tactical.defensive_cover_feature==model.structural_features.defensive_cover_feature
++    assert tactical.possession_tendency_final==model.identity.possession_tendency
++    helpers=DirectionalMatchupHelpers(press_disruption_m=.2,width_mismatch=.1,press_transition_opportunity_t=.05)
++    result=MatchupEngine(DEFAULT_PARAMETER_SET).evaluate_direction(model.dimensions,model.dimensions,tactical,tactical,helpers=helpers)
++    assert math.isfinite(result.m) and result.m>0 and math.isfinite(result.t) and result.t>=0
++    # This is conditional data transport + known equations, not full simulation.
++
++
++def test_current_u_and_press_paths_change_share_not_supplied_press_helper():
++    model=build();base=transport_only_policy(identity=model.identity,structural_features=model.structural_features,state=MatchState.NORMAL)
++    engine=MatchupEngine(DEFAULT_PARAMETER_SET)
++    helpers=DirectionalMatchupHelpers(press_disruption_m=.2,width_mismatch=.1,press_transition_opportunity_t=.05)
++    def evaluate(a,b):return engine.evaluate_direction(model.dimensions,model.dimensions,a,b,helpers=helpers)
++    start=evaluate(base,base)
++    more_u=evaluate(base.model_copy(update={'build_up_control_score':.9}),base)
++    more_b_press=evaluate(base,base.model_copy(update={'press_final':.9}))
++    assert more_u.possession_share>start.possession_share
++    assert more_b_press.possession_share<start.possession_share
++    assert more_u.i_press==start.i_press==more_b_press.i_press
++    assert more_u.t==start.t==more_b_press.t
++
++
++def test_corrected_partial_log_sensitivity_with_helpers_held_fixed():
++    model=build();base=transport_only_policy(identity=model.identity,structural_features=model.structural_features,state=MatchState.NORMAL)
++    engine=MatchupEngine(DEFAULT_PARAMETER_SET)
++    helpers=DirectionalMatchupHelpers(press_disruption_m=.2,width_mismatch=.1,press_transition_opportunity_t=.05)
++    h=1e-5  # Numerical test step, not a model coefficient.
++    def evaluate(u,b):
++        return engine.evaluate_direction(model.dimensions,model.dimensions,
++              base.model_copy(update={'build_up_control_score':u}),base.model_copy(update={'press_final':b}),helpers=helpers)
++    for u,b in ((.1,.2),(.5,.5),(.9,.8)):
++        central=evaluate(u,b);s=central.possession_share
++        analytic=.6*s*(1-s)/(.6+.4*s)
++        numeric_u=(math.log(evaluate(u+h,b).m)-math.log(evaluate(u-h,b).m))/(2*h)
++        numeric_b=(math.log(evaluate(u,b+h).m)-math.log(evaluate(u,b-h).m))/(2*h)
++        assert numeric_u==pytest.approx(analytic,abs=1e-8)
++        assert numeric_b==pytest.approx(-analytic,abs=1e-8)
++
++
++def test_weight_parameter_count_respects_fixed_zeros_and_scale_invariance():
++    positive_dimensions=sum(value>0 for row in DW.values() for value in (row.attack,row.creation,row.defense))
++    positive_identity=sum(value>0 for row in IW.values() for value in (row.press,row.transition,row.tempo,row.risk,row.attack_pace))
++    assert positive_dimensions==21 and positive_identity==34
++    assert (positive_dimensions-3)+(positive_identity-5)==47
++    # No optimization or free fit occurred; 72 includes the descriptive GK column.
++    assert 8*4+8*5==72
++
++
++def test_new_layer2_production_has_no_forbidden_runtime_or_io_dependencies():
++    folder=Path(__file__).parents[1]/'football_engine/team_model'
++    forbidden_prefixes=('random','secrets','numpy.random','football_engine.rng','football_engine.matchup','football_engine.data_layer',
++                        'football_engine.core.team_runtime_state','football_engine.core.match_runtime','football_engine.core.parameters')
++    for name in ('team_dimension_engine.py','team_identity_engine.py','role_weight_priors.py','_validation.py','_weighted_mean.py','dependencies.py'):
++        tree=ast.parse((folder/name).read_text())
++        for node in ast.walk(tree):
++            modules=[]
++            if isinstance(node,ast.Import):modules=[alias.name for alias in node.names]
++            elif isinstance(node,ast.ImportFrom):modules=[node.module or '']
++            for module in modules:assert not module.startswith(forbidden_prefixes),(name,module)
++            if isinstance(node,ast.Call) and isinstance(node.func,ast.Name):
++                assert node.func.id not in {'open','exec','eval','__import__'},(name,node.func.id)
+--- /dev/null
++++ b/tests/test_team_dimension_engine_v3.py
+@@ -0,0 +1,190 @@
++"""D1 numerical/contract regressions independent of production mean code."""
++from __future__ import annotations
++
++from dataclasses import FrozenInstanceError, asdict
++from fractions import Fraction as F
++import math
++
++import pytest
++
++from football_engine.core.enums import PlayerRole
++from football_engine.team_model import FormationEngine, TeamDimensionEngine, TeamDimensionEngineError
++from football_engine.team_model.role_weight_priors import DIMENSION_ROLE_WEIGHT_PRIORS as W
++from football_engine.team_model._weighted_mean import role_weighted_mean
++from tests.layer2_memo_v3_helpers import example_players, example_structure, example_formation, reference
++from tests.team_model_helpers import make_test_player
++
++EXPECTED={
++ 'GK':(0,0,0),'CB':(.05,.10,1),'FB':(.15,.35,.65),'DM':(.10,.45,.55),
++ 'CM':(.25,.70,.35),'WM':(.65,.55,.15),'AM':(.55,.85,.10),'FW':(1,.30,.05),
++}
++
++
++def derive(players=None, features=None):
++    return TeamDimensionEngine().derive(example_players() if players is None else players,
++                                        example_structure() if features is None else features)
++
++
++def test_dimension_weight_values_match_supplied_memo():
++    assert set(W)==set(PlayerRole)
++    for role, values in EXPECTED.items():
++        profile=W[PlayerRole[role]]
++        assert (profile.attack,profile.creation,profile.defense)==values
++
++
++def test_dimension_weight_mapping_and_rows_are_immutable():
++    with pytest.raises(TypeError):
++        W[PlayerRole.CB]=W[PlayerRole.FW]
++    with pytest.raises(FrozenInstanceError):
++        W[PlayerRole.FW].attack=2
++
++
++def test_golden_dimensions_match_independent_fraction_reference():
++    actual=derive().model_dump()
++    for key, expected in reference()['expected_dimensions'].items():
++        assert actual[key]==pytest.approx(expected,abs=1e-12)
++    players=example_players()
++    for column,(key,attribute) in enumerate([('attack','attack_ability'),('creation','creation_ability'),('defense','defense_ability')]):
++        weights=[F(str(EXPECTED[p.role.name][column])) for p in players]
++        exact=sum((w*F(str(getattr(p,attribute))) for w,p in zip(weights,players)),F(0))/sum(weights,F(0))
++        assert actual[key]==pytest.approx(float(exact),abs=1e-12)
++
++
++def test_constant_zero_midpoint_and_maximum_abilities():
++    for value in (0.,12.5,50.,100.):
++        players=[p.model_copy(update=dict(attack_ability=value,creation_ability=value,defense_ability=value,gk_ability=value)) for p in example_players()]
++        assert derive(players).model_dump()==dict(attack=value,creation=value,defense=value,goalkeeping=value)
++
++
++def test_dimensions_are_finite_and_convex_over_positive_contributors():
++    players=example_players(); result=derive(players)
++    for column,(key,attribute) in enumerate([('attack','attack_ability'),('creation','creation_ability'),('defense','defense_ability')]):
++        values=[getattr(p,attribute) for p in players if EXPECTED[p.role.name][column]>0]
++        assert math.isfinite(getattr(result,key))
++        assert min(values)<=getattr(result,key)<=max(values)
++
++
++def test_player_order_is_exactly_invariant():
++    players=example_players(); expected=derive(players)
++    for shift in range(11):
++        assert derive(players[shift:]+players[:shift])==expected
++    assert derive(list(reversed(players)))==expected
++
++
++def test_repeated_execution_does_not_cache_or_mutate_inputs():
++    players=list(reversed(example_players())); features=example_structure()
++    before=[p.model_dump() for p in players]; sf_before=features.model_dump()
++    engine=TeamDimensionEngine(); first=engine.derive(players,features)
++    for _ in range(4):assert engine.derive(players,features)==first
++    assert vars(engine)=={}
++    assert [p.model_dump() for p in players]==before
++    assert features.model_dump()==sf_before
++
++
++def test_each_ability_has_only_its_corresponding_dimension_effect():
++    players=example_players(); base=derive(players).model_dump(); index=9
++    for field,column in [('attack_ability','attack'),('creation_ability','creation'),('defense_ability','defense')]:
++        changed=list(players); changed[index]=players[index].model_copy(update={field:getattr(players[index],field)+1})
++        actual=derive(changed).model_dump()
++        denominator=math.fsum(getattr(W[p.role],column) for p in players)
++        expected_delta=getattr(W[players[index].role],column)/denominator
++        assert actual[column]-base[column]==pytest.approx(expected_delta,abs=1e-12)
++        for key in base:
++            if key!=column:assert actual[key]==base[key]
++
++
++def test_gk_attack_creation_defense_have_zero_dimension_weight():
++    players=example_players(); expected=derive(players)
++    players[0]=players[0].model_copy(update=dict(attack_ability=100,creation_ability=100,defense_ability=100))
++    assert derive(players)==expected
++
++
++def test_only_the_selected_gk_ability_controls_goalkeeping():
++    players=example_players(); base=derive(players)
++    changed=[p if p.role==PlayerRole.GK else p.model_copy(update={'gk_ability':100}) for p in players]
++    assert derive(changed)==base
++    keeper=next(p for p in players if p.role==PlayerRole.GK)
++    others=[p for p in players if p.role!=PlayerRole.GK]
++    result=derive(others+[keeper.model_copy(update={'gk_ability':42.})])
++    assert result.goalkeeping==42.
++    for key in ('attack','creation','defense'):assert getattr(result,key)==getattr(base,key)
++
++
++def test_identity_and_attribution_attributes_do_not_change_dimensions():
++    players=example_players(); base=derive(players)
++    changed=[p.model_copy(update=dict(press_tendency=1,shot_tendency=0,transition_tendency=1,pace=0,discipline_score=1,impact_score=0)) for p in players]
++    assert derive(changed)==base
++
++
++def test_all_valid_structural_values_and_metadata_are_dimension_inert():
++    features=example_structure(); expected=derive(features=features)
++    keys=set(features.model_dump())-{'formation_name'}
++    for value in (0.,1.):
++        variant=features.model_copy(update={**{key:value for key in keys},'formation_name':'arbitrary metadata'})
++        assert derive(features=variant)==expected
++
++
++def test_real_geometry_change_with_same_players_leaves_d1_unchanged():
++    players=example_players(); formation=example_formation()
++    from football_engine.core.formation import SlotSide, SlotDepth
++    other=formation.model_copy(update={'name':'same players, different geometry','position_pool':[
++        slot.model_copy(update={'side':SlotSide.CENTER,'depth':SlotDepth.BACK}) for slot in formation.position_pool
++    ]})
++    a=FormationEngine().derive(players,formation); b=FormationEngine().derive(players,other)
++    assert a.width_feature!=b.width_feature
++    assert a.defensive_cover_feature!=b.defensive_cover_feature
++    assert derive(players,a)==derive(players,b)
++
++
++def test_common_weight_scale_cancels():
++    players=tuple(example_players())
++    for factor in (.1,1.,17.):
++        value=role_weighted_mean(players,attribute='attack_ability',weight_for_role=lambda role:W[role].attack*factor,
++                                 field_name='attack',upper=100,error_type=TeamDimensionEngineError)
++        assert value==pytest.approx(reference()['expected_dimensions']['attack'],abs=1e-12)
++
++
++def test_zero_or_invalid_weight_denominator_is_not_replaced_by_default():
++    players=tuple(example_players())
++    for weight in (0.,-1.,float('nan'),float('inf'),True):
++        with pytest.raises(TeamDimensionEngineError):
++            role_weighted_mean(players,attribute='attack_ability',weight_for_role=lambda role:weight,
++                               field_name='attack',upper=100,error_type=TeamDimensionEngineError)
++
++
++def test_wrong_selection_types_and_counts_rejected():
++    for players in (None,[],example_players()[:10],example_players()+[example_players()[0]],iter(example_players())):
++        with pytest.raises(TeamDimensionEngineError,match='exactly 11'):derive(players=players if players is not None else [])
++    with pytest.raises(TeamDimensionEngineError):TeamDimensionEngine().derive(None,example_structure())
++
++
++def test_invalid_member_ids_roles_and_duplicates_rejected():
++    variants=[object(),example_players()[0].model_copy(update={'id':''}),example_players()[0].model_copy(update={'role':'GK'})]
++    for bad in variants:
++        players=example_players();players[0]=bad
++        with pytest.raises(TeamDimensionEngineError):derive(players)
++    players=example_players();players[1]=players[2]
++    with pytest.raises(TeamDimensionEngineError,match='duplicate'):derive(players)
++
++
++def test_zero_and_multiple_goalkeepers_are_rejected():
++    for count in (0,2):
++        players=[make_test_player(f'gk_case_{i}',PlayerRole.GK if i<count else PlayerRole.CB) for i in range(11)]
++        with pytest.raises(TeamDimensionEngineError,match='exactly one GK'):derive(players)
++
++
++def test_corrupted_nonfinite_or_out_of_range_consumed_abilities_rejected():
++    for value in (float('nan'),float('inf'),float('-inf'),-1.,101.,True,'80',None):
++        players=example_players();players[9]=players[9].model_copy(update={'attack_ability':value})
++        with pytest.raises(TeamDimensionEngineError):derive(players)
++
++
++def test_wrong_or_corrupted_structure_is_rejected():
++    with pytest.raises(TeamDimensionEngineError):TeamDimensionEngine().derive(example_players(),None)
++    for value in (float('nan'),2.,-1.):
++        with pytest.raises(TeamDimensionEngineError):derive(features=example_structure().model_copy(update={'width_feature':value}))
++
++
++def test_dimension_output_is_immutable():
++    result=derive()
++    with pytest.raises(ValueError):result.attack=1
+--- /dev/null
++++ b/tests/test_team_identity_engine_v3.py
+@@ -0,0 +1,231 @@
++"""Identity component math plus explicit, non-default possession boundaries."""
++from __future__ import annotations
++
++from dataclasses import FrozenInstanceError
++from fractions import Fraction as F
++import math
++
++import pytest
++
++from football_engine.core.enums import PlayerRole, HistoricalTier
++from football_engine.core.team_season import HistoricalPrior, IdentityPriors
++from football_engine.team_model import TeamIdentityEngine, TeamIdentityEngineError, TeamIdentitySpecificationGapError
++from football_engine.team_model.role_weight_priors import IDENTITY_ROLE_WEIGHT_PRIORS as W
++from tests.layer2_memo_v3_helpers import example_players, example_structure, example_prior, example_identity, example_source, reference
++from tests.team_model_helpers import make_test_player
++
++EXPECTED={
++ 'GK':(0,0,.05,0,0),'CB':(.30,.10,.20,.05,0),'FB':(.50,.40,.30,.15,.20),'DM':(.60,.20,.30,.10,0),
++ 'CM':(.55,.30,.35,.25,.10),'WM':(.45,.60,.30,.45,.60),'AM':(.35,.45,.35,.55,.50),'FW':(.25,.55,.25,.75,1),
++}
++
++
++def test_identity_weight_tables_and_all_eight_roles():
++    assert set(W)==set(PlayerRole)
++    for role,values in EXPECTED.items():
++        row=W[PlayerRole[role]]
++        assert (row.press,row.transition,row.tempo,row.risk,row.attack_pace)==values
++
++
++def test_identity_weight_tables_are_immutable():
++    with pytest.raises(TypeError):W[PlayerRole.GK]=W[PlayerRole.FW]
++    with pytest.raises(FrozenInstanceError):W[PlayerRole.GK].tempo=0
++
++
++def test_exact_pre_prior_identity_matches_independent_reference():
++    result=example_identity().model_dump()
++    for key,expected in reference()['expected_pre_prior_identity'].items():
++        assert result[key]==pytest.approx(expected,abs=1e-12)
++    players=example_players()
++    for column,(key,attribute) in enumerate([('press_tendency','press_tendency'),('transition_tendency','transition_tendency'),('tempo','pace'),('risk_tolerance','shot_tendency'),('attack_pace_factor','pace')]):
++        weights=[F(str(EXPECTED[p.role.name][column])) for p in players]
++        exact=sum((weight*F(str(getattr(p,attribute))) for weight,p in zip(weights,players)),F(0))/sum(weights,F(0))
++        assert result[key]==pytest.approx(float(exact),abs=1e-12)
++
++
++def test_missing_source_is_named_specification_gap_not_default():
++    with pytest.raises(TeamIdentitySpecificationGapError,match='possession_tendency'):
++        TeamIdentityEngine().derive(example_players(),example_structure(),None)
++    assert issubclass(TeamIdentitySpecificationGapError,NotImplementedError)
++
++
++def test_prior_even_at_alpha_zero_does_not_replace_missing_source():
++    for alpha in (0.,.55,1.):
++        prior=example_prior().model_copy(update={'alpha':alpha})
++        with pytest.raises(TeamIdentitySpecificationGapError):
++            TeamIdentityEngine().derive(example_players(),example_structure(),prior)
++
++
++def test_invalid_noncallable_source_is_rejected():
++    for source in (0.,.5,{},'lookup'):
++        with pytest.raises(TeamIdentityEngineError):TeamIdentityEngine(possession_source=source)
++
++
++def test_invalid_source_outputs_are_not_coerced_or_clamped():
++    for value in (None,True,False,'0.62',float('nan'),float('inf'),-.01,1.01):
++        def source(*,player_season_ids):return value
++        with pytest.raises(TeamIdentityEngineError,match='possession source result'):
++            TeamIdentityEngine(possession_source=source).derive(example_players(),example_structure(),None)
++
++
++def test_source_values_at_both_boundaries_are_valid_not_missing():
++    for value in (0.,1.):
++        source=example_source(value=value)
++        result=TeamIdentityEngine(possession_source=source).derive(example_players(),example_structure(),None)
++        assert result.possession_tendency==value
++
++
++def test_source_exceptions_propagate_without_fallback():
++    def absent(*,player_season_ids):raise LookupError('missing observation')
++    with pytest.raises(LookupError,match='missing observation'):
++        TeamIdentityEngine(possession_source=absent).derive(example_players(),example_structure(),example_prior())
++
++
++def test_source_receives_only_sorted_immutable_ids_once():
++    players=list(reversed(example_players()));calls=[]
++    def source(*,player_season_ids):
++        assert isinstance(player_season_ids,tuple)
++        assert all(isinstance(value,str) for value in player_season_ids)
++        assert player_season_ids==tuple(sorted(p.id for p in players))
++        calls.append(player_season_ids)
++        return .62
++    before=[p.model_dump() for p in players]
++    TeamIdentityEngine(possession_source=source).derive(players,example_structure(),None)
++    assert len(calls)==1
++    assert [p.model_dump() for p in players]==before
++
++
++def test_same_engine_queries_distinct_rosters_not_a_cached_value():
++    a=example_players();b=[p.model_copy(update={'id':'other_'+p.id}) for p in a]
++    lookup={tuple(sorted(p.id for p in a)):.2,tuple(sorted(p.id for p in b)):.8}
++    def source(*,player_season_ids):return lookup[player_season_ids]
++    engine=TeamIdentityEngine(possession_source=source)
++    assert engine.derive(a,example_structure(),None).possession_tendency==.2
++    assert engine.derive(b,example_structure(),None).possession_tendency==.8
++    assert engine.derive(a,example_structure(),None).possession_tendency==.2
++    assert set(vars(engine))=={'_possession_source'}
++
++
++def test_source_not_called_for_invalid_input_or_zero_denominator():
++    calls=[]
++    def source(*,player_season_ids):calls.append(player_season_ids);return .62
++    engine=TeamIdentityEngine(possession_source=source)
++    with pytest.raises(TeamIdentityEngineError):engine.derive(example_players()[:10],example_structure(),None)
++    players=[make_test_player(f'zero_{i}',PlayerRole.GK if i==0 else PlayerRole.CB) for i in range(11)]
++    with pytest.raises(TeamIdentityEngineError,match='attack_pace_factor.*zero role-weight denominator'):
++        engine.derive(players,example_structure(),None)
++    assert calls==[]
++
++
++def test_player_order_and_repeated_calculation_are_exactly_invariant():
++    players=example_players();engine=TeamIdentityEngine(possession_source=example_source(players));features=example_structure()
++    expected=engine.derive(players,features,None)
++    for shift in range(11):assert engine.derive(players[shift:]+players[:shift],features,None)==expected
++    assert engine.derive(list(reversed(players)),features,None)==expected
++
++
++def test_zero_midpoint_and_one_tendencies_are_convex_and_finite():
++    for value in (0.,.37,1.):
++        players=[p.model_copy(update=dict(press_tendency=value,transition_tendency=value,shot_tendency=value,pace=value)) for p in example_players()]
++        result=example_identity(players)
++        for name in ('press_tendency','transition_tendency','tempo','risk_tolerance','attack_pace_factor'):
++            assert getattr(result,name)==pytest.approx(value,abs=1e-15)
++        assert all(math.isfinite(v) and 0<=v<=1 for v in result.model_dump().values())
++
++
++def test_player_abilities_and_attribution_metadata_do_not_feed_identity():
++    players=example_players();expected=example_identity(players)
++    changed=[p.model_copy(update=dict(attack_ability=100,creation_ability=0,defense_ability=100,gk_ability=0,discipline_score=0,impact_score=1)) for p in players]
++    assert example_identity(changed)==expected
++
++
++def test_press_transition_and_shot_changes_affect_only_their_local_component():
++    players=example_players();base=example_identity(players).model_dump();index=6
++    for attribute,output,column in [('press_tendency','press_tendency','press'),('transition_tendency','transition_tendency','transition'),('shot_tendency','risk_tolerance','risk')]:
++        changed=list(players);changed[index]=players[index].model_copy(update={attribute:getattr(players[index],attribute)+.1})
++        actual=example_identity(changed).model_dump()
++        delta=.1*getattr(W[players[index].role],column)/math.fsum(getattr(W[p.role],column) for p in players)
++        assert actual[output]-base[output]==pytest.approx(delta,abs=1e-12)
++        for key in base:
++            if key!=output:assert actual[key]==base[key]
++
++
++def test_cb_pace_changes_tempo_but_not_attack_pace():
++    players=example_players();base=example_identity(players)
++    changed=list(players);changed[1]=players[1].model_copy(update={'pace':players[1].pace+.1})
++    result=example_identity(changed)
++    assert result.tempo>base.tempo
++    assert result.attack_pace_factor==base.attack_pace_factor
++
++
++def test_fb_pace_changes_both_scopes_as_table_requires():
++    players=example_players();base=example_identity(players)
++    changed=list(players);changed[3]=players[3].model_copy(update={'pace':players[3].pace+.1})
++    result=example_identity(changed)
++    assert result.tempo>base.tempo and result.attack_pace_factor>base.attack_pace_factor
++    for column,name in [('tempo','tempo'),('attack_pace','attack_pace_factor')]:
++        delta=.1*getattr(W[PlayerRole.FB],column)/math.fsum(getattr(W[p.role],column) for p in players)
++        assert getattr(result,name)-getattr(base,name)==pytest.approx(delta,abs=1e-12)
++
++
++def test_gk_pace_is_included_in_tempo_but_not_other_means():
++    players=example_players();base=example_identity(players).model_dump()
++    changed=list(players);changed[0]=players[0].model_copy(update={'pace':.9})
++    actual=example_identity(changed).model_dump()
++    assert actual['tempo']>base['tempo']
++    for key in base:
++        if key!='tempo':assert actual[key]==base[key]
++
++
++def test_only_c_and_u_have_local_structural_effects():
++    features=example_structure();base=example_identity(structure=features).model_dump()
++    for key,value in [('width_feature',.1),('line_height_feature',.9),('press_structure_feature',.8),('transition_structure_feature',.1),('cb_pairing_quality',.1),('fullback_exposure',.9),('formation_name','no name semantics')]:
++        assert example_identity(structure=features.model_copy(update={key:value})).model_dump()==base
++    for field,output in [('defensive_cover_feature','compactness'),('build_up_structure_feature','build_up_control_score')]:
++        actual=example_identity(structure=features.model_copy(update={field:.9})).model_dump()
++        assert actual[output]==.9
++        for key in base:
++            if key!=output:assert actual[key]==base[key]
++
++
++def test_existing_prior_blend_matches_all_six_fields_and_two_passthroughs():
++    result=example_identity(prior=example_prior()).model_dump()
++    for key,expected in reference()['expected_final_identity'].items():
++        assert result[key]==pytest.approx(expected,abs=1e-12)
++    assert result['compactness']!=example_structure().defensive_cover_feature
++    assert result['build_up_control_score']==example_structure().build_up_structure_feature
++
++
++def test_none_tier3_and_partial_priors_preserve_existing_behavior():
++    players=example_players();features=example_structure();engine=TeamIdentityEngine(possession_source=example_source(players))
++    base=engine.derive(players,features,None)
++    tier3=HistoricalPrior(tier=HistoricalTier.TIER_3,alpha=1.)
++    assert engine.derive(players,features,tier3)==base
++    partial=HistoricalPrior(tier=HistoricalTier.TIER_1,alpha=.5,identity_priors=IdentityPriors(possession_tendency=.9))
++    actual=engine.derive(players,features,partial).model_dump()
++    assert actual['possession_tendency']==pytest.approx(.5*.62+.5*.9)
++    for key,value in base.model_dump().items():
++        if key!='possession_tendency':assert actual[key]==value
++
++
++def test_invalid_numeric_player_fields_rejected_without_source_fallback():
++    for value in (float('nan'),float('inf'),-.01,1.01,True,'0.5'):
++        players=example_players();players[9]=players[9].model_copy(update={'pace':value})
++        with pytest.raises(TeamIdentityEngineError):example_identity(players)
++
++
++def test_invalid_prior_numeric_values_rejected_before_blend():
++    for value in (float('nan'),float('inf'),-.1,1.1,True):
++        with pytest.raises(TeamIdentityEngineError):example_identity(prior=example_prior().model_copy(update={'alpha':value}))
++    bad=example_prior().model_copy(update={'identity_priors':IdentityPriors.model_construct(possession_tendency=float('nan'))})
++    with pytest.raises(TeamIdentityEngineError):example_identity(prior=bad)
++    with pytest.raises(TeamIdentityEngineError):example_identity(prior={})
++
++
++def test_identity_output_and_inputs_are_immutable():
++    players=example_players();features=example_structure();prior=example_prior()
++    before=[p.model_dump() for p in players];sf=features.model_dump();hp=prior.model_dump()
++    result=example_identity(players,features,prior)
++    with pytest.raises(ValueError):result.tempo=0
++    assert [p.model_dump() for p in players]==before
++    assert features.model_dump()==sf and prior.model_dump()==hp
+--- a/tests/test_team_model.py
++++ b/tests/test_team_model.py
+@@ -1,8 +1,8 @@
+ """Layer 2 contract and orchestration tests.
+ 
+ FormationEngine now implements the approved six rules after E-12 migration.
+-Module 2/3 mathematical specifications remain absent; their explicit errors
+-and existing historical-prior wiring continue to be tested without invention.
++D1 dimensions are implemented; identity retains an explicit missing-possession
++source boundary. Existing historical-prior wiring remains unchanged.
+ The separate tests/test_formation_engine_v1.py exercises the approved math.
+ """
+ 
+@@ -91,12 +91,13 @@
+ 
+ 
+ class TestTeamDimensionEngineContract:
+-    def test_valid_input_reaches_not_implemented(self):
+-        engine = TeamDimensionEngine()
+-        squad = make_standard_squad()
+-        features = make_structural_features()
+-        with pytest.raises(NotImplementedError, match="TeamDimensions"):
+-            engine.derive(squad, features)
++    def test_valid_input_returns_four_dimensions(self):
++        engine = TeamDimensionEngine()
++        squad = make_standard_squad()
++        features = make_structural_features()
++        result = engine.derive(squad, features)
++        assert isinstance(result, TeamDimensions)
++        assert result.model_dump() == dict(attack=50.0, creation=50.0, defense=50.0, goalkeeping=50.0)
+ 
+     def test_wrong_squad_size_rejected(self):
+         engine = TeamDimensionEngine()
+@@ -119,13 +120,11 @@
+         the already-derived StructuralFeatures. This is checked by
+         confirming derive()'s signature needs no Formation import/usage
+         and that a bare StructuralFeatures instance (built with no
+-        Formation in scope) is accepted through to the NotImplementedError
+-        boundary."""
++        Formation in scope) is accepted for actual D1 calculation."""
+         engine = TeamDimensionEngine()
+         squad = make_standard_squad()
+         features = StructuralFeatures(formation_name="not-a-real-formation-object")
+-        with pytest.raises(NotImplementedError):
+-            engine.derive(squad, features)
++        assert isinstance(engine.derive(squad, features), TeamDimensions)
+ 
+     def test_deterministic_failure(self):
+         engine = TeamDimensionEngine()
+@@ -271,10 +270,10 @@
+         with pytest.raises(FormationEngineError):
+             builder.build(bad_squad, formation, historical_prior=None)
+ 
+-    def test_build_reaches_dimension_gap_after_formation_success(self):
+-        """The next real missing derivation is Module 2, not FormationEngine."""
++    def test_build_reaches_possession_source_gap_after_dimension_success(self):
++        """Modules 1/2 succeed; default identity still lacks a possession source."""
+         builder = TeamModelBuilder()
+-        with pytest.raises(NotImplementedError, match="TeamDimensions"):
++        with pytest.raises(NotImplementedError, match="possession_tendency"):
+             builder.build(make_standard_squad(), make_standard_formation(), historical_prior=None)
+ 
+     def test_build_accepts_optional_historical_prior(self):
+@@ -290,8 +289,8 @@
+     def test_team_model_dataclass_shape(self):
+         """TeamModel must expose exactly the three fields a Layer 5
+         match build needs (structural_features, dimensions, identity) —
+-        confirmed structurally without needing a real instance, since
+-        constructing one requires the unimplemented derivations."""
++        confirmed structurally; full builds with an explicit synthetic
++        possession source are separately tested."""
+         import dataclasses
+ 
+         field_names = {f.name for f in dataclasses.fields(TeamModel)}

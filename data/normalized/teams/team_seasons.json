@@ -1,0 +1,941 @@
+{
+  "metadata": {
+    "dataset_version": "2026.09.0",
+    "schema_version": "1.0",
+    "description": "Historical team seasons for testing and gameplay"
+  },
+  "teams": [
+    {
+      "id": "barcelona_2010_11",
+      "club": "FC Barcelona",
+      "season": "2010/11",
+      "roster": [
+        "valdes_2010_11",
+        "alves_2010_11",
+        "pique_2010_11",
+        "puyol_2010_11",
+        "abidal_2010_11",
+        "busquets_2010_11",
+        "xavi_2010_11",
+        "iniesta_2010_11",
+        "pedro_2010_11",
+        "villa_2010_11",
+        "messi_2010_11"
+      ],
+      "default_formation": "4-3-3",
+      "metadata": {
+        "status": "CURATED",
+        "source": "manual_curation",
+        "confidence": 0.95
+      }
+    },
+    {
+      "id": "chelsea_2011_12",
+      "club": "Chelsea FC",
+      "season": "2011/12",
+      "roster": [
+        "cech_2011_12",
+        "ivanovic_2011_12",
+        "terry_2011_12",
+        "cahill_2011_12",
+        "cole_2011_12",
+        "mikel_2011_12",
+        "lampard_2011_12",
+        "ramires_2011_12",
+        "mata_2011_12",
+        "malouda_2011_12",
+        "drogba_2011_12"
+      ],
+      "default_formation": "4-2-3-1",
+      "metadata": {
+        "status": "CURATED",
+        "source": "manual_curation",
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "porto_2015_16",
+      "club": "Porto",
+      "season": "2015/16",
+      "roster": [
+        "porto_0_2015_16",
+        "porto_1_2015_16",
+        "porto_2_2015_16",
+        "porto_3_2015_16",
+        "porto_4_2015_16",
+        "porto_5_2015_16",
+        "porto_6_2015_16",
+        "porto_7_2015_16",
+        "porto_8_2015_16",
+        "porto_9_2015_16",
+        "porto_10_2015_16"
+      ],
+      "default_formation": "4-3-3",
+      "metadata": {
+        "status": "IMPORTED",
+        "source": "synthetic_template",
+        "retrieved_at": "2026-09-19T00:00:00Z",
+        "confidence": 0.1,
+        "notes": "Synthetic Porto 2015/16 (neutral-rated) for UCL engine exercise."
+      }
+    },
+    {
+      "id": "benfica_2015_16",
+      "club": "Benfica",
+      "season": "2015/16",
+      "roster": [
+        "benfica_0_2015_16",
+        "benfica_1_2015_16",
+        "benfica_2_2015_16",
+        "benfica_3_2015_16",
+        "benfica_4_2015_16",
+        "benfica_5_2015_16",
+        "benfica_6_2015_16",
+        "benfica_7_2015_16",
+        "benfica_8_2015_16",
+        "benfica_9_2015_16",
+        "benfica_10_2015_16"
+      ],
+      "default_formation": "4-3-3",
+      "metadata": {
+        "status": "IMPORTED",
+        "source": "synthetic_template",
+        "retrieved_at": "2026-09-19T00:00:00Z",
+        "confidence": 0.1,
+        "notes": "Synthetic Benfica 2015/16 (neutral-rated) for UCL engine exercise."
+      }
+    },
+    {
+      "id": "sporting_2015_16",
+      "club": "Sporting",
+      "season": "2015/16",
+      "roster": [
+        "sporting_0_2015_16",
+        "sporting_1_2015_16",
+        "sporting_2_2015_16",
+        "sporting_3_2015_16",
+        "sporting_4_2015_16",
+        "sporting_5_2015_16",
+        "sporting_6_2015_16",
+        "sporting_7_2015_16",
+        "sporting_8_2015_16",
+        "sporting_9_2015_16",
+        "sporting_10_2015_16"
+      ],
+      "default_formation": "4-3-3",
+      "metadata": {
+        "status": "IMPORTED",
+        "source": "synthetic_template",
+        "retrieved_at": "2026-09-19T00:00:00Z",
+        "confidence": 0.1,
+        "notes": "Synthetic Sporting 2015/16 (neutral-rated) for UCL engine exercise."
+      }
+    },
+    {
+      "id": "ajax_2015_16",
+      "club": "Ajax",
+      "season": "2015/16",
+      "roster": [
+        "ajax_0_2015_16",
+        "ajax_1_2015_16",
+        "ajax_2_2015_16",
+        "ajax_3_2015_16",
+        "ajax_4_2015_16",
+        "ajax_5_2015_16",
+        "ajax_6_2015_16",
+        "ajax_7_2015_16",
+        "ajax_8_2015_16",
+        "ajax_9_2015_16",
+        "ajax_10_2015_16"
+      ],
+      "default_formation": "4-3-3",
+      "metadata": {
+        "status": "IMPORTED",
+        "source": "synthetic_template",
+        "retrieved_at": "2026-09-19T00:00:00Z",
+        "confidence": 0.1,
+        "notes": "Synthetic Ajax 2015/16 (neutral-rated) for UCL engine exercise."
+      }
+    },
+    {
+      "id": "psv_2015_16",
+      "club": "PSV",
+      "season": "2015/16",
+      "roster": [
+        "psv_0_2015_16",
+        "psv_1_2015_16",
+        "psv_2_2015_16",
+        "psv_3_2015_16",
+        "psv_4_2015_16",
+        "psv_5_2015_16",
+        "psv_6_2015_16",
+        "psv_7_2015_16",
+        "psv_8_2015_16",
+        "psv_9_2015_16",
+        "psv_10_2015_16"
+      ],
+      "default_formation": "4-3-3",
+      "metadata": {
+        "status": "IMPORTED",
+        "source": "synthetic_template",
+        "retrieved_at": "2026-09-19T00:00:00Z",
+        "confidence": 0.1,
+        "notes": "Synthetic PSV 2015/16 (neutral-rated) for UCL engine exercise."
+      }
+    },
+    {
+      "id": "galatasaray_2015_16",
+      "club": "Galatasaray",
+      "season": "2015/16",
+      "roster": [
+        "galatasaray_0_2015_16",
+        "galatasaray_1_2015_16",
+        "galatasaray_2_2015_16",
+        "galatasaray_3_2015_16",
+        "galatasaray_4_2015_16",
+        "galatasaray_5_2015_16",
+        "galatasaray_6_2015_16",
+        "galatasaray_7_2015_16",
+        "galatasaray_8_2015_16",
+        "galatasaray_9_2015_16",
+        "galatasaray_10_2015_16"
+      ],
+      "default_formation": "4-3-3",
+      "metadata": {
+        "status": "IMPORTED",
+        "source": "synthetic_template",
+        "retrieved_at": "2026-09-19T00:00:00Z",
+        "confidence": 0.1,
+        "notes": "Synthetic Galatasaray 2015/16 (neutral-rated) for UCL engine exercise."
+      }
+    },
+    {
+      "id": "fenerbahce_2015_16",
+      "club": "Fenerbahce",
+      "season": "2015/16",
+      "roster": [
+        "fenerbahce_0_2015_16",
+        "fenerbahce_1_2015_16",
+        "fenerbahce_2_2015_16",
+        "fenerbahce_3_2015_16",
+        "fenerbahce_4_2015_16",
+        "fenerbahce_5_2015_16",
+        "fenerbahce_6_2015_16",
+        "fenerbahce_7_2015_16",
+        "fenerbahce_8_2015_16",
+        "fenerbahce_9_2015_16",
+        "fenerbahce_10_2015_16"
+      ],
+      "default_formation": "4-3-3",
+      "metadata": {
+        "status": "IMPORTED",
+        "source": "synthetic_template",
+        "retrieved_at": "2026-09-19T00:00:00Z",
+        "confidence": 0.1,
+        "notes": "Synthetic Fenerbahce 2015/16 (neutral-rated) for UCL engine exercise."
+      }
+    },
+    {
+      "id": "olympiacos_2015_16",
+      "club": "Olympiacos",
+      "season": "2015/16",
+      "roster": [
+        "olympiacos_0_2015_16",
+        "olympiacos_1_2015_16",
+        "olympiacos_2_2015_16",
+        "olympiacos_3_2015_16",
+        "olympiacos_4_2015_16",
+        "olympiacos_5_2015_16",
+        "olympiacos_6_2015_16",
+        "olympiacos_7_2015_16",
+        "olympiacos_8_2015_16",
+        "olympiacos_9_2015_16",
+        "olympiacos_10_2015_16"
+      ],
+      "default_formation": "4-3-3",
+      "metadata": {
+        "status": "IMPORTED",
+        "source": "synthetic_template",
+        "retrieved_at": "2026-09-19T00:00:00Z",
+        "confidence": 0.1,
+        "notes": "Synthetic Olympiacos 2015/16 (neutral-rated) for UCL engine exercise."
+      }
+    },
+    {
+      "id": "panathinaikos_2015_16",
+      "club": "Panathinaikos",
+      "season": "2015/16",
+      "roster": [
+        "panathinaikos_0_2015_16",
+        "panathinaikos_1_2015_16",
+        "panathinaikos_2_2015_16",
+        "panathinaikos_3_2015_16",
+        "panathinaikos_4_2015_16",
+        "panathinaikos_5_2015_16",
+        "panathinaikos_6_2015_16",
+        "panathinaikos_7_2015_16",
+        "panathinaikos_8_2015_16",
+        "panathinaikos_9_2015_16",
+        "panathinaikos_10_2015_16"
+      ],
+      "default_formation": "4-3-3",
+      "metadata": {
+        "status": "IMPORTED",
+        "source": "synthetic_template",
+        "retrieved_at": "2026-09-19T00:00:00Z",
+        "confidence": 0.1,
+        "notes": "Synthetic Panathinaikos 2015/16 (neutral-rated) for UCL engine exercise."
+      }
+    },
+    {
+      "id": "celtic_2015_16",
+      "club": "Celtic",
+      "season": "2015/16",
+      "roster": [
+        "celtic_0_2015_16",
+        "celtic_1_2015_16",
+        "celtic_2_2015_16",
+        "celtic_3_2015_16",
+        "celtic_4_2015_16",
+        "celtic_5_2015_16",
+        "celtic_6_2015_16",
+        "celtic_7_2015_16",
+        "celtic_8_2015_16",
+        "celtic_9_2015_16",
+        "celtic_10_2015_16"
+      ],
+      "default_formation": "4-3-3",
+      "metadata": {
+        "status": "IMPORTED",
+        "source": "synthetic_template",
+        "retrieved_at": "2026-09-19T00:00:00Z",
+        "confidence": 0.1,
+        "notes": "Synthetic Celtic 2015/16 (neutral-rated) for UCL engine exercise."
+      }
+    },
+    {
+      "id": "rangers_2015_16",
+      "club": "Rangers",
+      "season": "2015/16",
+      "roster": [
+        "rangers_0_2015_16",
+        "rangers_1_2015_16",
+        "rangers_2_2015_16",
+        "rangers_3_2015_16",
+        "rangers_4_2015_16",
+        "rangers_5_2015_16",
+        "rangers_6_2015_16",
+        "rangers_7_2015_16",
+        "rangers_8_2015_16",
+        "rangers_9_2015_16",
+        "rangers_10_2015_16"
+      ],
+      "default_formation": "4-3-3",
+      "metadata": {
+        "status": "IMPORTED",
+        "source": "synthetic_template",
+        "retrieved_at": "2026-09-19T00:00:00Z",
+        "confidence": 0.1,
+        "notes": "Synthetic Rangers 2015/16 (neutral-rated) for UCL engine exercise."
+      }
+    },
+    {
+      "id": "anderlecht_2015_16",
+      "club": "Anderlecht",
+      "season": "2015/16",
+      "roster": [
+        "anderlecht_0_2015_16",
+        "anderlecht_1_2015_16",
+        "anderlecht_2_2015_16",
+        "anderlecht_3_2015_16",
+        "anderlecht_4_2015_16",
+        "anderlecht_5_2015_16",
+        "anderlecht_6_2015_16",
+        "anderlecht_7_2015_16",
+        "anderlecht_8_2015_16",
+        "anderlecht_9_2015_16",
+        "anderlecht_10_2015_16"
+      ],
+      "default_formation": "4-3-3",
+      "metadata": {
+        "status": "IMPORTED",
+        "source": "synthetic_template",
+        "retrieved_at": "2026-09-19T00:00:00Z",
+        "confidence": 0.1,
+        "notes": "Synthetic Anderlecht 2015/16 (neutral-rated) for UCL engine exercise."
+      }
+    },
+    {
+      "id": "club_brugge_2015_16",
+      "club": "Club Brugge",
+      "season": "2015/16",
+      "roster": [
+        "club_brugge_0_2015_16",
+        "club_brugge_1_2015_16",
+        "club_brugge_2_2015_16",
+        "club_brugge_3_2015_16",
+        "club_brugge_4_2015_16",
+        "club_brugge_5_2015_16",
+        "club_brugge_6_2015_16",
+        "club_brugge_7_2015_16",
+        "club_brugge_8_2015_16",
+        "club_brugge_9_2015_16",
+        "club_brugge_10_2015_16"
+      ],
+      "default_formation": "4-3-3",
+      "metadata": {
+        "status": "IMPORTED",
+        "source": "synthetic_template",
+        "retrieved_at": "2026-09-19T00:00:00Z",
+        "confidence": 0.1,
+        "notes": "Synthetic Club Brugge 2015/16 (neutral-rated) for UCL engine exercise."
+      }
+    },
+    {
+      "id": "dinamo_zagreb_2015_16",
+      "club": "Dinamo Zagreb",
+      "season": "2015/16",
+      "roster": [
+        "dinamo_zagreb_0_2015_16",
+        "dinamo_zagreb_1_2015_16",
+        "dinamo_zagreb_2_2015_16",
+        "dinamo_zagreb_3_2015_16",
+        "dinamo_zagreb_4_2015_16",
+        "dinamo_zagreb_5_2015_16",
+        "dinamo_zagreb_6_2015_16",
+        "dinamo_zagreb_7_2015_16",
+        "dinamo_zagreb_8_2015_16",
+        "dinamo_zagreb_9_2015_16",
+        "dinamo_zagreb_10_2015_16"
+      ],
+      "default_formation": "4-3-3",
+      "metadata": {
+        "status": "IMPORTED",
+        "source": "synthetic_template",
+        "retrieved_at": "2026-09-19T00:00:00Z",
+        "confidence": 0.1,
+        "notes": "Synthetic Dinamo Zagreb 2015/16 (neutral-rated) for UCL engine exercise."
+      }
+    },
+    {
+      "id": "red_star_2015_16",
+      "club": "Red Star",
+      "season": "2015/16",
+      "roster": [
+        "red_star_0_2015_16",
+        "red_star_1_2015_16",
+        "red_star_2_2015_16",
+        "red_star_3_2015_16",
+        "red_star_4_2015_16",
+        "red_star_5_2015_16",
+        "red_star_6_2015_16",
+        "red_star_7_2015_16",
+        "red_star_8_2015_16",
+        "red_star_9_2015_16",
+        "red_star_10_2015_16"
+      ],
+      "default_formation": "4-3-3",
+      "metadata": {
+        "status": "IMPORTED",
+        "source": "synthetic_template",
+        "retrieved_at": "2026-09-19T00:00:00Z",
+        "confidence": 0.1,
+        "notes": "Synthetic Red Star 2015/16 (neutral-rated) for UCL engine exercise."
+      }
+    },
+    {
+      "id": "partizan_2015_16",
+      "club": "Partizan",
+      "season": "2015/16",
+      "roster": [
+        "partizan_0_2015_16",
+        "partizan_1_2015_16",
+        "partizan_2_2015_16",
+        "partizan_3_2015_16",
+        "partizan_4_2015_16",
+        "partizan_5_2015_16",
+        "partizan_6_2015_16",
+        "partizan_7_2015_16",
+        "partizan_8_2015_16",
+        "partizan_9_2015_16",
+        "partizan_10_2015_16"
+      ],
+      "default_formation": "4-3-3",
+      "metadata": {
+        "status": "IMPORTED",
+        "source": "synthetic_template",
+        "retrieved_at": "2026-09-19T00:00:00Z",
+        "confidence": 0.1,
+        "notes": "Synthetic Partizan 2015/16 (neutral-rated) for UCL engine exercise."
+      }
+    },
+    {
+      "id": "shakhtar_2015_16",
+      "club": "Shakhtar",
+      "season": "2015/16",
+      "roster": [
+        "shakhtar_0_2015_16",
+        "shakhtar_1_2015_16",
+        "shakhtar_2_2015_16",
+        "shakhtar_3_2015_16",
+        "shakhtar_4_2015_16",
+        "shakhtar_5_2015_16",
+        "shakhtar_6_2015_16",
+        "shakhtar_7_2015_16",
+        "shakhtar_8_2015_16",
+        "shakhtar_9_2015_16",
+        "shakhtar_10_2015_16"
+      ],
+      "default_formation": "4-3-3",
+      "metadata": {
+        "status": "IMPORTED",
+        "source": "synthetic_template",
+        "retrieved_at": "2026-09-19T00:00:00Z",
+        "confidence": 0.1,
+        "notes": "Synthetic Shakhtar 2015/16 (neutral-rated) for UCL engine exercise."
+      }
+    },
+    {
+      "id": "dynamo_kyiv_2015_16",
+      "club": "Dynamo Kyiv",
+      "season": "2015/16",
+      "roster": [
+        "dynamo_kyiv_0_2015_16",
+        "dynamo_kyiv_1_2015_16",
+        "dynamo_kyiv_2_2015_16",
+        "dynamo_kyiv_3_2015_16",
+        "dynamo_kyiv_4_2015_16",
+        "dynamo_kyiv_5_2015_16",
+        "dynamo_kyiv_6_2015_16",
+        "dynamo_kyiv_7_2015_16",
+        "dynamo_kyiv_8_2015_16",
+        "dynamo_kyiv_9_2015_16",
+        "dynamo_kyiv_10_2015_16"
+      ],
+      "default_formation": "4-3-3",
+      "metadata": {
+        "status": "IMPORTED",
+        "source": "synthetic_template",
+        "retrieved_at": "2026-09-19T00:00:00Z",
+        "confidence": 0.1,
+        "notes": "Synthetic Dynamo Kyiv 2015/16 (neutral-rated) for UCL engine exercise."
+      }
+    },
+    {
+      "id": "basaksehir_2015_16",
+      "club": "Basaksehir",
+      "season": "2015/16",
+      "roster": [
+        "basaksehir_0_2015_16",
+        "basaksehir_1_2015_16",
+        "basaksehir_2_2015_16",
+        "basaksehir_3_2015_16",
+        "basaksehir_4_2015_16",
+        "basaksehir_5_2015_16",
+        "basaksehir_6_2015_16",
+        "basaksehir_7_2015_16",
+        "basaksehir_8_2015_16",
+        "basaksehir_9_2015_16",
+        "basaksehir_10_2015_16"
+      ],
+      "default_formation": "4-3-3",
+      "metadata": {
+        "status": "IMPORTED",
+        "source": "synthetic_template",
+        "retrieved_at": "2026-09-19T00:00:00Z",
+        "confidence": 0.1,
+        "notes": "Synthetic Basaksehir 2015/16 (neutral-rated) for UCL engine exercise."
+      }
+    },
+    {
+      "id": "copenhagen_2015_16",
+      "club": "Copenhagen",
+      "season": "2015/16",
+      "roster": [
+        "copenhagen_0_2015_16",
+        "copenhagen_1_2015_16",
+        "copenhagen_2_2015_16",
+        "copenhagen_3_2015_16",
+        "copenhagen_4_2015_16",
+        "copenhagen_5_2015_16",
+        "copenhagen_6_2015_16",
+        "copenhagen_7_2015_16",
+        "copenhagen_8_2015_16",
+        "copenhagen_9_2015_16",
+        "copenhagen_10_2015_16"
+      ],
+      "default_formation": "4-3-3",
+      "metadata": {
+        "status": "IMPORTED",
+        "source": "synthetic_template",
+        "retrieved_at": "2026-09-19T00:00:00Z",
+        "confidence": 0.1,
+        "notes": "Synthetic Copenhagen 2015/16 (neutral-rated) for UCL engine exercise."
+      }
+    },
+    {
+      "id": "midtjylland_2015_16",
+      "club": "Midtjylland",
+      "season": "2015/16",
+      "roster": [
+        "midtjylland_0_2015_16",
+        "midtjylland_1_2015_16",
+        "midtjylland_2_2015_16",
+        "midtjylland_3_2015_16",
+        "midtjylland_4_2015_16",
+        "midtjylland_5_2015_16",
+        "midtjylland_6_2015_16",
+        "midtjylland_7_2015_16",
+        "midtjylland_8_2015_16",
+        "midtjylland_9_2015_16",
+        "midtjylland_10_2015_16"
+      ],
+      "default_formation": "4-3-3",
+      "metadata": {
+        "status": "IMPORTED",
+        "source": "synthetic_template",
+        "retrieved_at": "2026-09-19T00:00:00Z",
+        "confidence": 0.1,
+        "notes": "Synthetic Midtjylland 2015/16 (neutral-rated) for UCL engine exercise."
+      }
+    },
+    {
+      "id": "salzburg_2015_16",
+      "club": "Salzburg",
+      "season": "2015/16",
+      "roster": [
+        "salzburg_0_2015_16",
+        "salzburg_1_2015_16",
+        "salzburg_2_2015_16",
+        "salzburg_3_2015_16",
+        "salzburg_4_2015_16",
+        "salzburg_5_2015_16",
+        "salzburg_6_2015_16",
+        "salzburg_7_2015_16",
+        "salzburg_8_2015_16",
+        "salzburg_9_2015_16",
+        "salzburg_10_2015_16"
+      ],
+      "default_formation": "4-3-3",
+      "metadata": {
+        "status": "IMPORTED",
+        "source": "synthetic_template",
+        "retrieved_at": "2026-09-19T00:00:00Z",
+        "confidence": 0.1,
+        "notes": "Synthetic Salzburg 2015/16 (neutral-rated) for UCL engine exercise."
+      }
+    },
+    {
+      "id": "bodoe_2015_16",
+      "club": "Bodoe",
+      "season": "2015/16",
+      "roster": [
+        "bodoe_0_2015_16",
+        "bodoe_1_2015_16",
+        "bodoe_2_2015_16",
+        "bodoe_3_2015_16",
+        "bodoe_4_2015_16",
+        "bodoe_5_2015_16",
+        "bodoe_6_2015_16",
+        "bodoe_7_2015_16",
+        "bodoe_8_2015_16",
+        "bodoe_9_2015_16",
+        "bodoe_10_2015_16"
+      ],
+      "default_formation": "4-3-3",
+      "metadata": {
+        "status": "IMPORTED",
+        "source": "synthetic_template",
+        "retrieved_at": "2026-09-19T00:00:00Z",
+        "confidence": 0.1,
+        "notes": "Synthetic Bodoe 2015/16 (neutral-rated) for UCL engine exercise."
+      }
+    },
+    {
+      "id": "ferencvaros_2015_16",
+      "club": "Ferencvaros",
+      "season": "2015/16",
+      "roster": [
+        "ferencvaros_0_2015_16",
+        "ferencvaros_1_2015_16",
+        "ferencvaros_2_2015_16",
+        "ferencvaros_3_2015_16",
+        "ferencvaros_4_2015_16",
+        "ferencvaros_5_2015_16",
+        "ferencvaros_6_2015_16",
+        "ferencvaros_7_2015_16",
+        "ferencvaros_8_2015_16",
+        "ferencvaros_9_2015_16",
+        "ferencvaros_10_2015_16"
+      ],
+      "default_formation": "4-3-3",
+      "metadata": {
+        "status": "IMPORTED",
+        "source": "synthetic_template",
+        "retrieved_at": "2026-09-19T00:00:00Z",
+        "confidence": 0.1,
+        "notes": "Synthetic Ferencvaros 2015/16 (neutral-rated) for UCL engine exercise."
+      }
+    },
+    {
+      "id": "slavia_prague_2015_16",
+      "club": "Slavia Prague",
+      "season": "2015/16",
+      "roster": [
+        "slavia_prague_0_2015_16",
+        "slavia_prague_1_2015_16",
+        "slavia_prague_2_2015_16",
+        "slavia_prague_3_2015_16",
+        "slavia_prague_4_2015_16",
+        "slavia_prague_5_2015_16",
+        "slavia_prague_6_2015_16",
+        "slavia_prague_7_2015_16",
+        "slavia_prague_8_2015_16",
+        "slavia_prague_9_2015_16",
+        "slavia_prague_10_2015_16"
+      ],
+      "default_formation": "4-3-3",
+      "metadata": {
+        "status": "IMPORTED",
+        "source": "synthetic_template",
+        "retrieved_at": "2026-09-19T00:00:00Z",
+        "confidence": 0.1,
+        "notes": "Synthetic Slavia Prague 2015/16 (neutral-rated) for UCL engine exercise."
+      }
+    },
+    {
+      "id": "sparta_prague_2015_16",
+      "club": "Sparta Prague",
+      "season": "2015/16",
+      "roster": [
+        "sparta_prague_0_2015_16",
+        "sparta_prague_1_2015_16",
+        "sparta_prague_2_2015_16",
+        "sparta_prague_3_2015_16",
+        "sparta_prague_4_2015_16",
+        "sparta_prague_5_2015_16",
+        "sparta_prague_6_2015_16",
+        "sparta_prague_7_2015_16",
+        "sparta_prague_8_2015_16",
+        "sparta_prague_9_2015_16",
+        "sparta_prague_10_2015_16"
+      ],
+      "default_formation": "4-3-3",
+      "metadata": {
+        "status": "IMPORTED",
+        "source": "synthetic_template",
+        "retrieved_at": "2026-09-19T00:00:00Z",
+        "confidence": 0.1,
+        "notes": "Synthetic Sparta Prague 2015/16 (neutral-rated) for UCL engine exercise."
+      }
+    },
+    {
+      "id": "legia_2015_16",
+      "club": "Legia",
+      "season": "2015/16",
+      "roster": [
+        "legia_0_2015_16",
+        "legia_1_2015_16",
+        "legia_2_2015_16",
+        "legia_3_2015_16",
+        "legia_4_2015_16",
+        "legia_5_2015_16",
+        "legia_6_2015_16",
+        "legia_7_2015_16",
+        "legia_8_2015_16",
+        "legia_9_2015_16",
+        "legia_10_2015_16"
+      ],
+      "default_formation": "4-3-3",
+      "metadata": {
+        "status": "IMPORTED",
+        "source": "synthetic_template",
+        "retrieved_at": "2026-09-19T00:00:00Z",
+        "confidence": 0.1,
+        "notes": "Synthetic Legia 2015/16 (neutral-rated) for UCL engine exercise."
+      }
+    },
+    {
+      "id": "malmo_2015_16",
+      "club": "Malmo",
+      "season": "2015/16",
+      "roster": [
+        "malmo_0_2015_16",
+        "malmo_1_2015_16",
+        "malmo_2_2015_16",
+        "malmo_3_2015_16",
+        "malmo_4_2015_16",
+        "malmo_5_2015_16",
+        "malmo_6_2015_16",
+        "malmo_7_2015_16",
+        "malmo_8_2015_16",
+        "malmo_9_2015_16",
+        "malmo_10_2015_16"
+      ],
+      "default_formation": "4-3-3",
+      "metadata": {
+        "status": "IMPORTED",
+        "source": "synthetic_template",
+        "retrieved_at": "2026-09-19T00:00:00Z",
+        "confidence": 0.1,
+        "notes": "Synthetic Malmo 2015/16 (neutral-rated) for UCL engine exercise."
+      }
+    },
+    {
+      "id": "young_boys_2015_16",
+      "club": "Young Boys",
+      "season": "2015/16",
+      "roster": [
+        "young_boys_0_2015_16",
+        "young_boys_1_2015_16",
+        "young_boys_2_2015_16",
+        "young_boys_3_2015_16",
+        "young_boys_4_2015_16",
+        "young_boys_5_2015_16",
+        "young_boys_6_2015_16",
+        "young_boys_7_2015_16",
+        "young_boys_8_2015_16",
+        "young_boys_9_2015_16",
+        "young_boys_10_2015_16"
+      ],
+      "default_formation": "4-3-3",
+      "metadata": {
+        "status": "IMPORTED",
+        "source": "synthetic_template",
+        "retrieved_at": "2026-09-19T00:00:00Z",
+        "confidence": 0.1,
+        "notes": "Synthetic Young Boys 2015/16 (neutral-rated) for UCL engine exercise."
+      }
+    },
+    {
+      "id": "basel_2015_16",
+      "club": "Basel",
+      "season": "2015/16",
+      "roster": [
+        "basel_0_2015_16",
+        "basel_1_2015_16",
+        "basel_2_2015_16",
+        "basel_3_2015_16",
+        "basel_4_2015_16",
+        "basel_5_2015_16",
+        "basel_6_2015_16",
+        "basel_7_2015_16",
+        "basel_8_2015_16",
+        "basel_9_2015_16",
+        "basel_10_2015_16"
+      ],
+      "default_formation": "4-3-3",
+      "metadata": {
+        "status": "IMPORTED",
+        "source": "synthetic_template",
+        "retrieved_at": "2026-09-19T00:00:00Z",
+        "confidence": 0.1,
+        "notes": "Synthetic Basel 2015/16 (neutral-rated) for UCL engine exercise."
+      }
+    },
+    {
+      "id": "steaua_2015_16",
+      "club": "Steaua",
+      "season": "2015/16",
+      "roster": [
+        "steaua_0_2015_16",
+        "steaua_1_2015_16",
+        "steaua_2_2015_16",
+        "steaua_3_2015_16",
+        "steaua_4_2015_16",
+        "steaua_5_2015_16",
+        "steaua_6_2015_16",
+        "steaua_7_2015_16",
+        "steaua_8_2015_16",
+        "steaua_9_2015_16",
+        "steaua_10_2015_16"
+      ],
+      "default_formation": "4-3-3",
+      "metadata": {
+        "status": "IMPORTED",
+        "source": "synthetic_template",
+        "retrieved_at": "2026-09-19T00:00:00Z",
+        "confidence": 0.1,
+        "notes": "Synthetic Steaua 2015/16 (neutral-rated) for UCL engine exercise."
+      }
+    },
+    {
+      "id": "rapid_2015_16",
+      "club": "Rapid",
+      "season": "2015/16",
+      "roster": [
+        "rapid_0_2015_16",
+        "rapid_1_2015_16",
+        "rapid_2_2015_16",
+        "rapid_3_2015_16",
+        "rapid_4_2015_16",
+        "rapid_5_2015_16",
+        "rapid_6_2015_16",
+        "rapid_7_2015_16",
+        "rapid_8_2015_16",
+        "rapid_9_2015_16",
+        "rapid_10_2015_16"
+      ],
+      "default_formation": "4-3-3",
+      "metadata": {
+        "status": "IMPORTED",
+        "source": "synthetic_template",
+        "retrieved_at": "2026-09-19T00:00:00Z",
+        "confidence": 0.1,
+        "notes": "Synthetic Rapid 2015/16 (neutral-rated) for UCL engine exercise."
+      }
+    },
+    {
+      "id": "besiktas_2015_16",
+      "club": "Besiktas",
+      "season": "2015/16",
+      "roster": [
+        "besiktas_0_2015_16",
+        "besiktas_1_2015_16",
+        "besiktas_2_2015_16",
+        "besiktas_3_2015_16",
+        "besiktas_4_2015_16",
+        "besiktas_5_2015_16",
+        "besiktas_6_2015_16",
+        "besiktas_7_2015_16",
+        "besiktas_8_2015_16",
+        "besiktas_9_2015_16",
+        "besiktas_10_2015_16"
+      ],
+      "default_formation": "4-3-3",
+      "metadata": {
+        "status": "IMPORTED",
+        "source": "synthetic_template",
+        "retrieved_at": "2026-09-19T00:00:00Z",
+        "confidence": 0.1,
+        "notes": "Synthetic Besiktas 2015/16 (neutral-rated) for UCL engine exercise."
+      }
+    },
+    {
+      "id": "fc_copenhagen_2015_16",
+      "club": "FC Copenhagen",
+      "season": "2015/16",
+      "roster": [
+        "fc_copenhagen_0_2015_16",
+        "fc_copenhagen_1_2015_16",
+        "fc_copenhagen_2_2015_16",
+        "fc_copenhagen_3_2015_16",
+        "fc_copenhagen_4_2015_16",
+        "fc_copenhagen_5_2015_16",
+        "fc_copenhagen_6_2015_16",
+        "fc_copenhagen_7_2015_16",
+        "fc_copenhagen_8_2015_16",
+        "fc_copenhagen_9_2015_16",
+        "fc_copenhagen_10_2015_16"
+      ],
+      "default_formation": "4-3-3",
+      "metadata": {
+        "status": "IMPORTED",
+        "source": "synthetic_template",
+        "retrieved_at": "2026-09-19T00:00:00Z",
+        "confidence": 0.1,
+        "notes": "Synthetic FC Copenhagen 2015/16 (neutral-rated) for UCL engine exercise."
+      }
+    }
+  ]
+}
