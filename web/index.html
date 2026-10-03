@@ -10,10 +10,10 @@
 <style>
 :root{
   --ink:#0b0e0d; --ink-2:#121715; --ink-3:#19201d; --line:#2a332e; --line-2:#394439;
-  --cream:#f2efe6; --muted:#9aa79e; --dim:#67736b;
+  --cream:#f2efe6; --muted:#9aa79e; --dim:#8a988c;
   --pitch:#1d3a2a; --pitch-2:#173021; --grass:#2f6b45;
-  --gold:#e0b453; --gold-dim:#8a6f33;
-  --red:#d2543f; --blue:#5b8fb0;
+  --gold:#e0b453; --gold-dim:#8a6f33; --gold-text:#c9a355;
+  --red:#e0705d; --red-badge:#cd4630; --blue:#5b8fb0;
   --r:3px; --r2:6px;
   --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px; --s8:72px;
   --display:"Barlow Condensed","Oswald","Arial Narrow",system-ui,sans-serif;
@@ -113,7 +113,7 @@ input,select{font-family:inherit;font-size:14px;color:var(--cream);background:va
 .role[data-r=GK]{background:var(--gold)}
 .role[data-r=CB],.role[data-r=FB]{background:var(--blue)}
 .role[data-r=DM],.role[data-r=CM],.role[data-r=WM],.role[data-r=AM]{background:#8aab7d}
-.role[data-r=FW]{background:var(--red);color:#fff}
+.role[data-r=FW]{background:var(--red-badge);color:#fff}
 .pname{font-family:var(--display);font-weight:700;font-size:19px;line-height:1.08;letter-spacing:.02em}
 .pmeta{font-size:11.5px;color:var(--dim);letter-spacing:.04em;text-transform:uppercase;font-weight:600}
 .attrs{margin-top:auto;display:flex;flex-direction:column;gap:5px}
@@ -123,7 +123,7 @@ input,select{font-family:inherit;font-size:14px;color:var(--cream);background:va
 .bar span{display:block;height:100%;background:var(--muted);border-radius:2px;transition:width .3s}
 .attr.hi .bar span{background:var(--gold)}
 .attr b{color:var(--muted);font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
-.tag{font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--gold-dim);
+.tag{font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--gold-text);
   border:1px solid var(--gold-dim);border-radius:2px;padding:1px 5px;display:inline-block}
 
 /* ---------- squad rail ---------- */
@@ -151,6 +151,13 @@ input,select{font-family:inherit;font-size:14px;color:var(--cream);background:va
 .cell.empty:hover,.cell.drop{background:rgba(242,239,230,.07);border-color:rgba(242,239,230,.28)}
 .cell.gkrow{background:rgba(224,180,83,.055)}
 .cell.gkrow.empty:hover,.cell.gkrow.drop{background:rgba(224,180,83,.16);border-color:var(--gold)}
+.zone{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;
+  font-family:var(--display);font-weight:800;letter-spacing:.14em;font-size:11px;color:rgba(242,239,230,.16);
+  text-transform:uppercase;user-select:none;transition:opacity .15s}
+.cell.gkrow .zone{color:rgba(224,180,83,.32)}
+.cell:not(.empty) .zone{opacity:0}
+.dragging-active .cell.empty .zone{color:rgba(242,239,230,.30)}
+.dragging-active .cell.empty.gkrow .zone{color:rgba(224,180,83,.55)}
 .token{width:100%;height:100%;min-height:40px;border-radius:var(--r);background:var(--ink-2);border:1px solid var(--line-2);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:3px 2px;cursor:grab;
   animation:pop .22s cubic-bezier(.2,1.5,.4,1) both;text-align:center;overflow:hidden}
@@ -166,6 +173,26 @@ input,select{font-family:inherit;font-size:14px;color:var(--cream);background:va
 .pitchlabels{display:flex;justify-content:space-between;font-family:var(--display);font-size:10.5px;
   letter-spacing:.18em;color:rgba(242,239,230,.35);margin-bottom:6px;text-transform:uppercase}
 
+/* ---------- persistent tray (squad builder) ---------- */
+.tray{display:flex;flex-direction:column;gap:8px;max-height:340px;overflow-y:auto;padding-right:2px}
+.tray::-webkit-scrollbar{width:5px}
+.tray::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:3px}
+.traycard{display:flex;align-items:center;gap:9px;padding:8px 9px;border-radius:var(--r);background:var(--ink-2);
+  border:1px solid var(--line-2);cursor:grab;transition:border-color .14s,transform .14s}
+.traycard:hover{border-color:var(--gold-dim);transform:translateX(-1px)}
+.traycard.sel{border-color:var(--gold);background:rgba(224,180,83,.08)}
+.traycard.placed{opacity:.4;cursor:default}
+.traycard .role{flex-shrink:0}
+.traycard .ti{min-width:0;flex:1}
+.traycard .tin{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.traycard .tim{font-size:10.5px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.traycard .tag-mini{flex-shrink:0;font-family:var(--display);font-size:9px;font-weight:800;letter-spacing:.08em;
+  color:var(--gold);border:1px solid var(--gold-dim);border-radius:2px;padding:1px 4px}
+.trayhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.trayhead .cnt{font-family:var(--display);font-size:12px;letter-spacing:.1em;color:var(--dim)}
+.trayhead .cnt b{color:var(--cream)}
+.tray-empty-note{font-size:12px;color:var(--dim);line-height:1.5}
+
 /* ---------- meters ---------- */
 .meter{margin-bottom:11px}
 .meter-l{display:flex;justify-content:space-between;font-size:11px;letter-spacing:.1em;text-transform:uppercase;
@@ -175,6 +202,92 @@ input,select{font-family:inherit;font-size:14px;color:var(--cream);background:va
 .meter-t span{display:block;height:100%;background:linear-gradient(90deg,var(--grass),var(--gold));transition:width .45s cubic-bezier(.2,.8,.3,1)}
 .note{font-size:12px;color:var(--dim);line-height:1.45;border-left:2px solid var(--line-2);padding-left:10px;margin-top:var(--s3)}
 .shape{font-family:var(--display);font-size:44px;font-weight:900;letter-spacing:.04em;line-height:1}
+.pitch-empty-cue{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2;text-align:center;
+  pointer-events:none;font-family:var(--display);font-size:13px;letter-spacing:.1em;text-transform:uppercase;
+  color:rgba(242,239,230,.4);background:rgba(15,20,17,.55);padding:10px 18px;border-radius:var(--r2);
+  border:1px dashed rgba(242,239,230,.22)}
+
+/* ---------- tournament ---------- */
+.stbl{width:100%;border-collapse:collapse;font-size:13px}
+.stbl th{font-family:var(--display);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);
+  text-align:right;padding:7px 8px;border-bottom:1px solid var(--line-2);font-weight:700}
+.stbl th:nth-child(1),.stbl th:nth-child(2){text-align:left}
+.stbl td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums;color:var(--cream)}
+.stbl td:nth-child(1){color:var(--dim);width:34px;font-weight:700}
+.stbl td:nth-child(2){text-align:left;color:var(--muted)}
+.stbl tr.you td{background:rgba(224,180,83,.13)}
+.stbl tr.you td:nth-child(2){color:var(--cream);font-weight:700}
+.stbl tr.you td:nth-child(2)::after{content:"YOUR TEAM";font-family:var(--display);font-size:9px;letter-spacing:.1em;
+  color:var(--gold);border:1px solid var(--gold-dim);border-radius:2px;padding:1px 5px;margin-left:8px}
+.stbl tr.q8 td:nth-child(1){color:var(--grass-l,#6fbf7a)}
+.stbl tr.pff td:nth-child(1){color:var(--gold)}
+.stbl tr.out td:nth-child(1),.stbl tr.out td:nth-child(2){color:var(--dim)}
+.stbl tbody tr:hover td{background:rgba(242,239,230,.04)}
+.stbl-legend{display:flex;gap:var(--s5);flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin-top:10px}
+.stbl-legend span{display:inline-flex;align-items:center;gap:6px}
+.stbl-legend i{width:8px;height:8px;border-radius:2px;display:inline-block}
+.stbl-legend .lq i{background:var(--grass-l,#6fbf7a)}
+.stbl-legend .lp i{background:var(--gold)}
+.stbl-legend .le i{background:var(--dim)}
+
+/* ---------- knockout tie cards (Matches tab, explicit leg format) ---------- */
+.tiecard{border:1px solid var(--line-2);border-radius:var(--r);padding:12px 14px;margin-bottom:10px;background:var(--ink-2)}
+.tiecard.hasyou{border-color:var(--gold-dim);background:rgba(224,180,83,.07)}
+.tiecard .legrow{display:flex;justify-content:space-between;align-items:baseline;padding:3px 0;font-size:13px}
+.tiecard .leglabel{font-family:var(--display);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);width:56px;flex-shrink:0}
+.tiecard .legscore{font-variant-numeric:tabular-nums;color:var(--cream);flex:1;text-align:center}
+.tiecard .aggrow{display:flex;justify-content:space-between;align-items:baseline;padding-top:7px;margin-top:6px;
+  border-top:1px solid var(--line);font-size:14px}
+.tiecard .agglabel{font-family:var(--display);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);width:56px;flex-shrink:0}
+.tiecard .aggscore{font-variant-numeric:tabular-nums;font-weight:700;color:var(--cream);flex:1;text-align:center}
+.tiecard .win{color:var(--cream);font-weight:700}
+.tiecard .lose{color:var(--muted)}
+
+/* ---------- connected bracket (R16 -> QF -> SF -> Final -> Champion) ---------- */
+.bracketwrap{overflow-x:auto;padding:10px 4px 20px}
+.bracket2{display:flex;gap:36px;min-width:max-content}
+.bkround{display:flex;flex-direction:column;justify-content:space-around;min-width:190px}
+.bkround .rlabel{font-family:var(--display);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--dim);text-align:center;margin-bottom:12px}
+.bkslot{position:relative;flex:1;display:flex;align-items:center}
+.bkmatch{position:relative;width:100%;padding:8px 10px;border:1px solid var(--line-2);border-radius:var(--r);
+  background:var(--ink-2);font-size:12px}
+.bkmatch.hasyou{border-color:var(--gold-dim);background:rgba(224,180,83,.09)}
+.bkteam{display:flex;justify-content:space-between;gap:8px;padding:2px 0;color:var(--muted)}
+.bkteam.win{color:var(--cream);font-weight:700}
+.bkscore{font-variant-numeric:tabular-nums}
+/* connector lines: right edge of each match reaches to the midpoint before the next round */
+.bkslot:not(.final-slot)::after{content:"";position:absolute;top:50%;right:-18px;width:18px;height:1px;background:var(--line-2)}
+.bkround:not(:first-child) .bkslot::before{content:"";position:absolute;top:50%;left:-18px;width:18px;height:1px;background:var(--line-2)}
+.bkpair{position:relative;display:flex;flex-direction:column;justify-content:space-around;flex:1}
+.bkpair::after{content:"";position:absolute;right:-18px;top:25%;bottom:25%;width:1px;background:var(--line-2)}
+.bkchamp{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-width:150px}
+.bkchamp .cup{font-size:30px;margin-bottom:8px}
+.bkchamp .name{font-family:var(--display);font-weight:800;color:var(--gold);font-size:14px}
+.playoffnote{font-size:12.5px;color:var(--muted);margin:8px 0 var(--s4)}
+.champ{text-align:center;padding:var(--s6) var(--s4);border:1px solid var(--gold-dim);border-radius:var(--r2);
+  background:linear-gradient(168deg,var(--ink-3),var(--ink-2));margin-top:var(--s5);position:relative;overflow:hidden}
+.champ::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(460px 180px at 50% 0,rgba(224,180,83,.15),transparent 70%)}
+.champ .who{font-family:var(--display);font-size:clamp(26px,4.5vw,44px);font-weight:900;letter-spacing:.02em;margin-top:6px}
+.journey{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1px;background:var(--line);
+  border:1px solid var(--line);margin-top:var(--s4)}
+.journey div{background:var(--ink-2);padding:11px 12px}
+.journey .jl{font-family:var(--display);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.journey .jv{font-size:15px;margin-top:3px;font-weight:600}
+
+/* ---------- matchday progressive reveal ---------- */
+.mday{margin-bottom:var(--s5)}
+.mday h4{font-family:var(--display);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);
+  margin-bottom:8px}
+.mdgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:6px}
+.mdm{border:1px solid var(--line-2);border-radius:var(--r);padding:6px 9px;font-size:12px;background:var(--ink-2);
+  opacity:0}
+.mdm.reveal{animation:evreveal .3s ease both}
+.mdm.hasyou{border-color:var(--gold-dim);background:rgba(224,180,83,.09)}
+.mdm .mdteam{display:flex;justify-content:space-between;color:var(--muted)}
+.mdm .mdteam.win{color:var(--cream);font-weight:700}
+
 
 /* ---------- versus ---------- */
 .vs{display:grid;grid-template-columns:1fr auto 1fr;gap:var(--s5);align-items:center;padding:var(--s6) 0}
@@ -212,6 +325,41 @@ input,select{font-family:inherit;font-size:14px;color:var(--cream);background:va
 .ev.goal{font-family:var(--display);font-size:20px;font-weight:800;letter-spacing:.03em}
 .ev.away{flex-direction:row;color:var(--muted)}
 .ev .who{color:var(--cream)}
+
+/* ---------- match playback ---------- */
+.scoreboard{background:linear-gradient(168deg,var(--ink-3),var(--ink-2));border:1px solid var(--line-2);
+  border-radius:var(--r2);padding:var(--s5) var(--s4);margin-bottom:var(--s5);position:relative;overflow:hidden}
+.scoreboard::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(420px 140px at 50% 0,rgba(224,180,83,.09),transparent 70%)}
+.sb-top{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:8px}
+.sb-live{display:inline-flex;align-items:center;gap:6px;font-family:var(--display);font-size:10px;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+.sb-live.on{color:var(--red)}
+.sb-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.sb-live.on .sb-dot{animation:blink 1s step-start infinite}
+@keyframes blink{50%{opacity:.15}}
+.sb-clock{font-family:var(--display);font-size:15px;font-weight:800;letter-spacing:.06em;color:var(--cream);
+  font-variant-numeric:tabular-nums;min-width:64px;text-align:center}
+.sb-main{display:flex;align-items:center;justify-content:center;gap:var(--s5)}
+.sb-side{text-align:center;min-width:120px}
+.sb-side .nm{font-family:var(--display);font-size:13px;letter-spacing:.1em;color:var(--muted);
+  text-transform:uppercase;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-side.mine .nm{color:var(--gold)}
+.sb-n{font-family:var(--display);font-size:clamp(50px,9vw,84px);font-weight:900;line-height:.9;
+  font-variant-numeric:tabular-nums;transition:transform .15s}
+.sb-n.flash{animation:sbflash .7s ease}
+@keyframes sbflash{0%{transform:scale(1);color:var(--cream)}30%{transform:scale(1.22);color:var(--gold)}100%{transform:scale(1);color:var(--cream)}}
+.sb-dash{font-family:var(--display);font-size:clamp(28px,5vw,48px);color:var(--dim)}
+.sb-ticker{margin-top:14px;text-align:center;min-height:22px;font-size:13px;color:var(--muted)}
+.sb-ticker b{color:var(--cream);font-weight:700}
+.sb-ticker.goal b{color:var(--gold);font-family:var(--display);letter-spacing:.06em}
+.sb-skip{display:block;margin:12px auto 0;font-family:var(--display);font-size:10.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--dim);background:none;border:1px solid var(--line-2);border-radius:var(--r);
+  padding:5px 12px;cursor:pointer;transition:color .14s,border-color .14s}
+.sb-skip:hover{color:var(--cream);border-color:var(--gold-dim)}
+.ev.pending{opacity:0}
+.ev.reveal{animation:evreveal .35s ease both}
+@keyframes evreveal{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
 .ev .kind{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);font-weight:700;
   border:1px solid var(--line-2);border-radius:2px;padding:1px 6px;white-space:nowrap}
 .ev.goal .kind{border-color:var(--gold);color:var(--gold)}
@@ -378,8 +526,8 @@ input,select{font-family:inherit;font-size:14px;color:var(--cream);background:va
     <div class="pagehead">
       <div class="eyebrow">Step Two</div>
       <h2>Put them on the grass</h2>
-      <p>Drag a player onto any cell, or tap a player then tap a cell. Exactly one player must occupy the
-        goal band at the bottom. Everything else is yours to decide.</p>
+      <p>Drag a player from the tray onto any cell, or tap a player then tap a cell. Exactly one player must
+        occupy the goal band at the bottom. Everything else is yours to decide.</p>
     </div>
     <div id="build-err"></div>
     <div class="split">
@@ -396,22 +544,31 @@ input,select{font-family:inherit;font-size:14px;color:var(--cream);background:va
               <div class="m-mid"></div><div class="m-circle"></div>
               <div class="m-boxb"></div><div class="m-boxt"></div>
             </div>
+            <div class="pitch-empty-cue" id="pitch-cue">Drag players onto the pitch</div>
           </div>
           <div class="pitchlabels" style="margin:6px 0 0"><span>Your goal ↓</span><span>Goal band</span></div>
         </div>
         <div class="panel mt5">
-          <div class="panel-h"><h3>Bench — not yet placed</h3></div>
-          <div class="panel-b"><div class="row" id="bench"></div></div>
-        </div>
-      </div>
-
-      <aside class="sticky" style="display:flex;flex-direction:column;gap:var(--s4)">
-        <div class="panel">
           <div class="panel-h"><h3>Shape</h3></div>
           <div class="panel-b">
             <div class="shape" id="shape">—</div>
             <p class="dim" style="font-size:12px;margin-top:4px" id="shape-note">Place all eleven to read the structure.</p>
             <div id="meters" class="mt5"></div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="sticky" style="display:flex;flex-direction:column;gap:var(--s4)">
+        <div class="panel">
+          <div class="panel-h">
+            <div class="trayhead" style="width:100%">
+              <h3 style="margin:0">Your players</h3>
+              <span class="cnt"><b id="tray-placed">0</b>/<span id="tray-total">11</span> on pitch</span>
+            </div>
+          </div>
+          <div class="panel-b">
+            <div class="tray" id="tray"></div>
+            <p class="tray-empty-note mt4" id="tray-note"></p>
           </div>
         </div>
         <div class="panel">
@@ -457,6 +614,32 @@ input,select{font-family:inherit;font-size:14px;color:var(--cream);background:va
   </div>
 </section>
 
+<!-- ══════════════ TOURNAMENT ══════════════ -->
+<section class="screen" id="s-tournament">
+  <div class="wrap">
+    <div class="pagehead">
+      <div class="eyebrow">The Competition</div>
+      <h2>Champions League</h2>
+      <p>Thirty-six teams. Eight league-phase matches each, then the playoff round, then the knockouts.
+        Every match below is simulated by the same engine that ran your friendly — no shortcuts, no
+        pre-computed tables.</p>
+    </div>
+    <div id="t-err"></div>
+    <div class="toolbar">
+      <input id="t-seed" type="number" placeholder="Seed (optional)" aria-label="Tournament seed" style="width:150px">
+      <button class="btn primary" id="t-run">Enter the tournament</button>
+      <span class="dim" style="font-size:12px">A full season is 144 league matches plus knockouts — this takes a few seconds.</span>
+    </div>
+    <div id="t-tabs" class="modes mt5" role="tablist" style="display:none">
+      <button data-tab="overview" class="on" role="tab">Overview</button>
+      <button data-tab="table" role="tab">Table</button>
+      <button data-tab="matches" role="tab">Matches</button>
+      <button data-tab="bracket" role="tab">Bracket</button>
+    </div>
+    <div id="t-body" class="mt5"></div>
+  </div>
+</section>
+
 <script>
 "use strict";
 /* ============================================================================
@@ -476,7 +659,7 @@ const S = {
   placements: new Map(),// player_id -> {col,row}
   picked: null,         // tap-to-place selection
   preview: null, opponent: null, result: null,
-  mode: "lottery", draft: null, roleFit: null,
+  mode: "lottery", draft: null, roleFit: null, tournament: null, playback: null, tTab: null, matchesReveal: null,
   screen: "home"
 };
 
@@ -507,9 +690,11 @@ function showErr(id, msg) {
 const STEPS = [
   { id: "home", label: "Start" }, { id: "draft", label: "Draft" },
   { id: "builder", label: "XI" }, { id: "preview", label: "Preview" },
-  { id: "result", label: "Result" }
+  { id: "result", label: "Result" }, { id: "tournament", label: "Tournament" }
 ];
 function go(id) {
+  if (S.screen === "result" && id !== "result") cancelPlayback();
+  if (S.screen === "tournament" && id !== "tournament") cancelMatchesReveal();
   S.screen = id;
   document.querySelectorAll(".screen").forEach(n => n.classList.toggle("on", n.id === "s-" + id));
   const at = STEPS.findIndex(s => s.id === id);
@@ -683,6 +868,23 @@ function placePlayer(pid, col, row) {
     if (from) S.placements.set(sitting, from); else S.placements.delete(sitting);
   }
   S.placements.set(pid, { col, row });
+
+  // Exactly one goalkeeper: row 0 is seven cells wide but is ONE role slot,
+  // not seven. Taking any cell in it evicts whoever else was there (swapped
+  // into the incoming player's old spot, or benched if they had none) so the
+  // placements map can never hold more than one row-0 occupant. This makes
+  // the backend's "exactly one player must occupy the goalkeeper row"
+  // invariant impossible to violate through the UI, rather than something
+  // caught after the fact by a rejected preview.
+  if (row === GK_ROW) {
+    for (const [otherId, pos] of [...S.placements]) {
+      if (otherId !== pid && pos.row === GK_ROW) {
+        if (from) S.placements.set(otherId, from); else S.placements.delete(otherId);
+        break; // there can only ever be at most one other GK-row occupant
+      }
+    }
+  }
+
   S.picked = null;
   renderPitch(); refreshPreview();
 }
@@ -690,6 +892,7 @@ function placePlayer(pid, col, row) {
 function renderPitch() {
   const pitch = $("#pitch");
   [...pitch.querySelectorAll(".cell")].forEach(n => n.remove());
+  const oldCue = $("#pitch-cue"); if (oldCue) oldCue.remove();
   const frag = document.createDocumentFragment();
 
   for (let row = ROWS - 1; row >= 0; row--) {
@@ -697,11 +900,13 @@ function renderPitch() {
       const pid = occupant(col, row);
       const cell = el("div", "cell" + (row === GK_ROW ? " gkrow" : "") + (pid ? "" : " empty"));
       cell.dataset.col = col; cell.dataset.row = row;
+      cell.appendChild(el("div", "zone", assignedRole(col, row)));
 
       cell.addEventListener("dragover", ev => { ev.preventDefault(); cell.classList.add("drop"); });
       cell.addEventListener("dragleave", () => cell.classList.remove("drop"));
       cell.addEventListener("drop", ev => {
         ev.preventDefault(); cell.classList.remove("drop");
+        pitch.classList.remove("dragging-active");
         const id = ev.dataTransfer.getData("text/plain");
         if (id) placePlayer(id, col, row);
       });
@@ -712,7 +917,11 @@ function renderPitch() {
     }
   }
   pitch.appendChild(frag);
-  renderBench();
+  const cue = document.createElement("div");
+  cue.className = "pitch-empty-cue"; cue.id = "pitch-cue"; cue.textContent = "Drag players onto the pitch";
+  pitch.appendChild(cue);
+  cue.style.display = S.placements.size ? "none" : "";
+  renderTray();
 }
 
 function tokenFor(pid, col, row) {
@@ -727,8 +936,15 @@ function tokenFor(pid, col, row) {
   tok.title = p.name + " — drafted " + p.role + ", playing " + assigned;
   tok.appendChild(el("div", "tn", surname(p.name)));
   tok.appendChild(el("div", "tr", assigned + (assigned !== p.role ? " ·" + p.role : "")));
-  tok.addEventListener("dragstart", ev => { ev.dataTransfer.setData("text/plain", pid); tok.classList.add("dragging"); });
-  tok.addEventListener("dragend", () => tok.classList.remove("dragging"));
+  tok.addEventListener("dragstart", ev => {
+    ev.dataTransfer.setData("text/plain", pid);
+    tok.classList.add("dragging");
+    $("#pitch").classList.add("dragging-active");
+  });
+  tok.addEventListener("dragend", () => {
+    tok.classList.remove("dragging");
+    $("#pitch").classList.remove("dragging-active");
+  });
   tok.addEventListener("click", ev => { ev.stopPropagation(); S.picked = (S.picked === pid ? null : pid); });
   tok.addEventListener("keydown", ev => {
     if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); S.picked = pid; }
@@ -752,23 +968,60 @@ function assignedRole(col, row) {
   return ROW_BANDS[row][central ? 0 : 1];
 }
 
-function renderBench() {
-  const host = $("#bench"); host.innerHTML = "";
-  const unplaced = S.squad.filter(id => !S.placements.has(id));
-  if (!unplaced.length) { host.appendChild(el("span", "dim", "Everyone is on the pitch.")).style.fontSize = "13px"; return; }
-  unplaced.forEach(id => {
+function renderTray() {
+  const host = $("#tray"); host.innerHTML = "";
+  $("#tray-total").textContent = S.squad.length;
+  $("#tray-placed").textContent = S.placements.size;
+
+  // Make the tray itself a drop target, so dragging a placed token back onto
+  // it removes that player from the pitch without needing a separate control.
+  host.ondragover = ev => { ev.preventDefault(); host.classList.add("drop"); };
+  host.ondragleave = () => host.classList.remove("drop");
+  host.ondrop = ev => {
+    ev.preventDefault(); host.classList.remove("drop");
+    $("#pitch").classList.remove("dragging-active");
+    const id = ev.dataTransfer.getData("text/plain");
+    if (id && S.placements.has(id)) { S.placements.delete(id); S.picked = null; renderPitch(); refreshPreview(); }
+  };
+
+  if (!S.squad.length) {
+    host.appendChild(el("div", "empty-state", "No players drafted yet."));
+    $("#tray-note").textContent = "";
+    return;
+  }
+
+  S.squad.forEach(id => {
     const p = S.byId.get(id);
-    const chip = el("div", "rail-item" + (S.picked === id ? " sel" : ""));
-    chip.draggable = true; chip.tabIndex = 0;
-    chip.style.cursor = "grab";
-    if (S.picked === id) chip.style.borderColor = "var(--gold)";
-    const r = el("span", "role", p.role); r.dataset.r = p.role; chip.appendChild(r);
-    chip.appendChild(el("span", null, p.name));
-    chip.addEventListener("dragstart", ev => ev.dataTransfer.setData("text/plain", id));
-    chip.addEventListener("click", () => { S.picked = (S.picked === id ? null : id); renderBench(); });
-    chip.addEventListener("keydown", ev => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); S.picked = id; renderBench(); } });
-    host.appendChild(chip);
+    const placed = S.placements.has(id);
+    const card = el("div", "traycard" + (placed ? " placed" : "") + (S.picked === id ? " sel" : ""));
+    card.draggable = !placed;
+    card.tabIndex = 0;
+    const r = el("span", "role", p.role); r.dataset.r = p.role; card.appendChild(r);
+
+    const info = el("div", "ti");
+    info.appendChild(el("div", "tin", p.name));
+    const metaBits = [p.club, p.season].filter(Boolean).join(" · ");
+    if (metaBits) info.appendChild(el("div", "tim", metaBits));
+    card.appendChild(info);
+
+    if (placed) {
+      const spot = S.placements.get(id);
+      const assigned = assignedRole(spot.col, spot.row);
+      card.appendChild(el("span", "tag-mini", assigned));
+      card.title = p.name + " is on the pitch playing " + assigned + ". Drag a token off the pitch to bench them.";
+    } else {
+      card.addEventListener("dragstart", ev => { ev.dataTransfer.setData("text/plain", id); card.style.opacity = ".4"; $("#pitch").classList.add("dragging-active"); });
+      card.addEventListener("dragend", () => { card.style.opacity = ""; $("#pitch").classList.remove("dragging-active"); });
+      card.addEventListener("click", () => { S.picked = (S.picked === id ? null : id); renderTray(); });
+      card.addEventListener("keydown", ev => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); S.picked = id; renderTray(); } });
+    }
+    host.appendChild(card);
   });
+
+  const remaining = S.squad.length - S.placements.size;
+  $("#tray-note").textContent = remaining
+    ? (S.picked ? "Tap a pitch cell to place " + S.byId.get(S.picked).name + "." : remaining + " still in the tray — drag onto the pitch, or tap a card then tap a cell.")
+    : "Everyone is on the pitch. Drag a placed token off the pitch to bench them again.";
 }
 
 /* ---------- live structural read-out (server-computed) ---------- */
@@ -781,6 +1034,17 @@ function refreshPreview() {
     S.preview = null;
     $("#shape").textContent = "—";
     $("#shape-note").textContent = (SQUAD - S.placements.size) + " still to place.";
+    $("#meters").innerHTML = ""; $("#tactics").innerHTML = "";
+    return;
+  }
+  const gkCount = [...S.placements.values()].filter(p => p.row === GK_ROW).length;
+  if (gkCount !== 1) {
+    // Should be unreachable given placePlayer's row-0 eviction rule (it can
+    // never rise above 1), but 11 placed with 0 in the goal band is a real,
+    // legal state — the user simply never dropped anyone into row 0.
+    S.preview = null;
+    $("#go-preview").disabled = true;
+    $("#shape-note").textContent = "Place one player in the goal band to be your goalkeeper before continuing.";
     $("#meters").innerHTML = ""; $("#tactics").innerHTML = "";
     return;
   }
@@ -963,6 +1227,7 @@ function renderPreviewBody() {
    ========================================================================= */
 async function runMatch() {
   go("result");
+  cancelPlayback();
   $("#result-body").innerHTML = '<div class="empty-state" style="padding:var(--s8)">'
     + '<div class="spin"></div><p class="mt5">Simulating…</p></div>';
   try {
@@ -974,7 +1239,7 @@ async function runMatch() {
       match_id: "web_" + Date.now()
     };
     S.result = await api("/api/match/simulate", { method: "POST", body: JSON.stringify(body) });
-    renderResult();
+    startMatchPlayback(S.result);
   } catch (e) {
     $("#result-body").innerHTML = "";
     showErrInto($("#result-body"), e.message);
@@ -992,30 +1257,185 @@ const EVENT_LABEL = {
   SAVE: "Save", SHOT_ON_TARGET: "Shot on target", SHOT_OFF_TARGET: "Shot off target"
 };
 
-function renderResult() {
-  const r = S.result, host = $("#result-body");
-  const iAmHome = r.user_is_home;
-  const myScore = iAmHome ? r.home.score : r.away.score;
-  const oppScore = iAmHome ? r.away.score : r.home.score;
-  const verdict = myScore > oppScore ? "You won" : myScore < oppScore ? "You lost" : "Draw";
+/* ============================================================================
+   MATCH PLAYBACK
+   The simulation already ran and its result is final — playback never
+   decides anything. It only reveals the real, pre-computed timeline
+   (result.timeline, minute-stamped by the engine) at the pace a viewer
+   would expect a football match to unfold, using setTimeout purely for
+   display scheduling. The score shown at every moment is a running count
+   of the real goal events already revealed, not a separate guess.
+   ========================================================================= */
+function cancelPlayback() {
+  if (S.playback) {
+    S.playback.cancelled = true;
+    S.playback.timers.forEach(clearTimeout);
+  }
+  S.playback = null;
+}
+
+function buildPlaybackSchedule() {
+  // Minute-by-minute ticks from 0 to 90. Base pace alone totals ~10.4s,
+  // already inside the requested 10-15s window; a half-time pause is added
+  // on top. Goals are NOT given extra pause time on top of this — with a
+  // high-scoring match that risks pushing well past 15s, and the brief
+  // score-flash animation already gives a goal enough visual weight.
+  const BASE_MS = 106;
+  const HALF_TIME_PAUSE = 900;
+  const steps = [];
+  for (let m = 1; m <= 90; m++) {
+    steps.push({ minute: m, delay: BASE_MS, half: m === 45, full: m === 90 });
+  }
+  steps[44].delay += HALF_TIME_PAUSE; // extra hold right after 45' is revealed
+  return steps;
+}
+
+function startMatchPlayback(result) {
+  cancelPlayback();
+  const iAmHome = result.user_is_home;
+  const homeName = iAmHome ? "Your XI" : result.opponent.club;
+  const awayName = iAmHome ? result.opponent.club : "Your XI";
+  const host = $("#result-body");
   host.innerHTML = "";
 
   const head = el("div", "pagehead center");
+  head.appendChild(el("div", "eyebrow", "Match in progress"));
+  head.appendChild(el("h2", null, homeName + " vs " + awayName));
+  host.appendChild(head);
+
+  const board = el("div", "scoreboard");
+  const top = el("div", "sb-top");
+  const live = el("span", "sb-live on"); live.appendChild(el("span", "sb-dot")); live.appendChild(document.createTextNode(" Live"));
+  const clock = el("span", "sb-clock", "0'");
+  top.appendChild(live); top.appendChild(clock);
+  board.appendChild(top);
+
+  const main = el("div", "sb-main");
+  const homeSide = el("div", "sb-side" + (iAmHome ? " mine" : ""));
+  homeSide.appendChild(el("div", "nm", homeName));
+  const homeN = el("div", "sb-n", "0"); homeSide.appendChild(homeN);
+  const awaySide = el("div", "sb-side" + (!iAmHome ? " mine" : ""));
+  awaySide.appendChild(el("div", "nm", awayName));
+  const awayN = el("div", "sb-n", "0"); awaySide.appendChild(awayN);
+  main.appendChild(homeSide); main.appendChild(el("div", "sb-dash", "–")); main.appendChild(awaySide);
+  board.appendChild(main);
+
+  const ticker = el("div", "sb-ticker", "Kick-off");
+  board.appendChild(ticker);
+
+  const skip = el("button", "sb-skip", "Skip to full time");
+  board.appendChild(skip);
+  host.appendChild(board);
+
+  const tlPanel = el("div", "panel");
+  const tlHead = el("div", "panel-h"); tlHead.appendChild(el("h3", null, "Match events")); tlPanel.appendChild(tlHead);
+  const tlBody = el("div", "panel-b");
+  const tlList = el("div", "timeline");
+  tlBody.appendChild(tlList); tlPanel.appendChild(tlBody);
+  host.appendChild(tlPanel);
+
+  const events = result.timeline.slice();
+  if (!events.length) {
+    tlList.appendChild(el("div", "empty-state", "The engine returned no events for this match."));
+  }
+
+  const state = { homeScore: 0, awayScore: 0, eventIdx: 0 };
+
+  function setTicker(text, isGoal) {
+    ticker.textContent = text;
+    ticker.className = "sb-ticker" + (isGoal ? " goal" : "");
+  }
+
+  function flash(el_) { el_.classList.remove("flash"); void el_.offsetWidth; el_.classList.add("flash"); }
+
+  function eventLine(e) {
+    const mine = (e.is_home_team === iAmHome);
+    const row = el("div", "ev pending " + (e.type === "GOAL" ? "goal " : "") + (mine ? "" : "away"));
+    row.appendChild(el("div", "min", e.minute + "'"));
+    row.appendChild(el("span", "kind", EVENT_LABEL[e.type] || e.type));
+    row.appendChild(el("span", "who", e.player || (mine ? "Your XI" : result.opponent.club)));
+    if (e.assist) row.appendChild(el("span", "dim", "assist " + e.assist));
+    if (e.player_out) row.appendChild(el("span", "dim", "for " + e.player_out));
+    return row;
+  }
+
+  function revealUpTo(minute) {
+    while (state.eventIdx < events.length && events[state.eventIdx].minute <= minute) {
+      const e = events[state.eventIdx++];
+      const row = eventLine(e);
+      tlList.appendChild(row);
+      requestAnimationFrame(() => { row.classList.remove("pending"); row.classList.add("reveal"); });
+      const teamName = e.is_home_team ? homeName : awayName;
+      if (e.type === "GOAL") {
+        if (e.is_home_team) { state.homeScore++; homeN.textContent = state.homeScore; flash(homeN); }
+        else { state.awayScore++; awayN.textContent = state.awayScore; flash(awayN); }
+        setTicker(e.minute + "'  GOAL — " + (e.player || teamName), true);
+      } else if (e.type === "RED_CARD") {
+        setTicker(e.minute + "'  Red card — " + (e.player || teamName));
+      } else if (e.type === "YELLOW_CARD") {
+        setTicker(e.minute + "'  Yellow card — " + (e.player || teamName));
+      } else if (e.type === "SUBSTITUTION") {
+        setTicker(e.minute + "'  Substitution — " + (e.player || teamName));
+      }
+    }
+  }
+
+  const schedule = buildPlaybackSchedule();
+  S.playback = { cancelled: false, timers: [] };
+  const playback = S.playback;
+
+  function step(i) {
+    if (playback.cancelled || i >= schedule.length) {
+      if (!playback.cancelled) finish();
+      return;
+    }
+    const s = schedule[i];
+    const id = setTimeout(() => {
+      if (playback.cancelled) return;
+      clock.textContent = s.full ? "FT" : s.half ? "HT" : s.minute + "'";
+      revealUpTo(s.minute);
+      if (s.half) setTicker("Half time");
+      if (s.full) setTicker("Full time");
+      step(i + 1);
+    }, s.delay);
+    playback.timers.push(id);
+  }
+
+  skip.onclick = () => {
+    if (!playback.cancelled) {
+      playback.cancelled = true;
+      playback.timers.forEach(clearTimeout);
+    }
+    clock.textContent = "FT";
+    revealUpTo(999);
+    // Belt-and-braces: the visible score is a running count of revealed goal
+    // events, which the engine guarantees sums to the final score, but snap
+    // to the actual result explicitly rather than only trusting that count.
+    homeN.textContent = result.home.score; awayN.textContent = result.away.score;
+    setTicker("Full time");
+    finish();
+  };
+
+  live.classList.add("on");
+  step(0);
+
+  function finish() {
+    live.classList.remove("on");
+    S.playback = null;
+    appendFinalSummary(result, host, iAmHome);
+  }
+}
+
+function appendFinalSummary(result, host, iAmHome) {
+  const r = result;
+  const myScore = iAmHome ? r.home.score : r.away.score;
+  const oppScore = iAmHome ? r.away.score : r.home.score;
+  const verdict = myScore > oppScore ? "You won" : myScore < oppScore ? "You lost" : "Draw";
+
+  const head = el("div", "pagehead center mt6");
   head.appendChild(el("div", "eyebrow", "Full time"));
   head.appendChild(el("h2", null, verdict));
   host.appendChild(head);
-
-  const score = el("div", "score");
-  const mk = (name, n, home) => {
-    const s = el("div", "side");
-    s.appendChild(el("div", "nm", name + (home ? " (H)" : "")));
-    s.appendChild(el("div", "n", String(n)));
-    return s;
-  };
-  score.appendChild(mk("Your XI", myScore, iAmHome));
-  score.appendChild(el("div", "dash", "–"));
-  score.appendChild(mk(r.opponent.club, oppScore, !iAmHome));
-  host.appendChild(score);
 
   const t = r.totals;
   const stats = el("div", "stats");
@@ -1032,32 +1452,7 @@ function renderResult() {
   });
   host.appendChild(stats);
 
-  const grid = el("div", "grid2 mt6");
-
-  const tl = el("div", "panel");
-  const th = el("div", "panel-h"); th.appendChild(el("h3", null, "Match events")); tl.appendChild(th);
-  const tb = el("div", "panel-b");
-  if (!r.timeline.length) {
-    tb.appendChild(el("div", "empty-state", "The engine returned no events for this match."));
-  } else {
-    const line = el("div", "timeline");
-    r.timeline.forEach((e, i) => {
-      const mine = (e.is_home_team === iAmHome);
-      const row = el("div", "ev " + (e.type === "GOAL" ? "goal " : "") + (mine ? "" : "away"));
-      row.style.animation = "fade .3s ease both"; row.style.animationDelay = (i * 22) + "ms";
-      row.appendChild(el("div", "min", e.minute + "'"));
-      row.appendChild(el("span", "kind", EVENT_LABEL[e.type] || e.type));
-      const txt = el("span", "who", e.player || (mine ? "Your XI" : r.opponent.club));
-      row.appendChild(txt);
-      if (e.assist) row.appendChild(el("span", "dim", "assist " + e.assist));
-      if (e.player_out) row.appendChild(el("span", "dim", "for " + e.player_out));
-      line.appendChild(row);
-    });
-    tb.appendChild(line);
-  }
-  tl.appendChild(tb); grid.appendChild(tl);
-
-  const info = el("div", "panel");
+  const info = el("div", "panel mt5");
   const ih = el("div", "panel-h"); ih.appendChild(el("h3", null, "This match")); info.appendChild(ih);
   const ib = el("div", "panel-b");
   ib.appendChild(meter("Your attack", r.user_team.dimensions.attack / 100, Math.round(r.user_team.dimensions.attack) + " / 100"));
@@ -1067,11 +1462,9 @@ function renderResult() {
   const seedNote = el("p", "note", "Seed " + r.seed + " — replay this exact match by entering that seed on the preview screen.");
   ib.appendChild(seedNote);
   const missing = el("p", "note",
-    "Not shown because the engine does not produce them yet: possession percentage, player ratings, "
-    + "stamina and minute-by-minute replay.");
+    "Not shown because the engine does not produce them yet: possession percentage, player ratings, and stamina.");
   ib.appendChild(missing);
-  info.appendChild(ib); grid.appendChild(info);
-  host.appendChild(grid);
+  info.appendChild(ib); host.appendChild(info);
 
   const cta = el("div", "center mt6 row"); cta.style.justifyContent = "center";
   const again = el("button", "btn primary", "Play again");
@@ -1087,7 +1480,11 @@ function renderResult() {
     $("#d-options").innerHTML = ""; $("#d-n").textContent = "0";
     go("draft");
   };
-  cta.appendChild(again); cta.appendChild(editXi); cta.appendChild(fresh);
+  cta.appendChild(again); cta.appendChild(editXi);
+  const toCup = el("button", "btn", "Enter the Champions League");
+  toCup.onclick = () => { go("tournament"); };
+  cta.appendChild(toCup);
+  cta.appendChild(fresh);
   host.appendChild(cta);
 }
 
@@ -1218,6 +1615,385 @@ function renderDraft() {
 }
 
 /* ============================================================================
+   TOURNAMENT
+   The backend runs the whole competition and returns the finished result.
+   Nothing here decides a match, a tie, or a champion — this only renders
+   what /api/tournament/start sent back.
+   ========================================================================= */
+const USER_TEAM_ID = "your_xi";
+
+function teamName(id) {
+  if (id === USER_TEAM_ID) return "Your XI";
+  const t = S.teams.find(x => x.id === id);
+  return t ? t.club + " " + t.season : id;
+}
+
+async function runTournament() {
+  if (S.placements.size !== SQUAD) {
+    showErr("#t-err", "Place all eleven players before entering the tournament.");
+    return;
+  }
+  showErr("#t-err", null);
+  $("#t-tabs").style.display = "none";
+  const btn = $("#t-run");
+  btn.disabled = true;
+  $("#t-body").innerHTML = '<div class="empty-state"><div class="spin"></div>'
+    + '<p class="dim" style="margin-top:10px">Simulating the league phase and knockouts…</p></div>';
+  try {
+    const body = {
+      placements: [...S.placements].map(([player_id, pos]) => ({ player_id, col: pos.col, row: pos.row })),
+      seed: $("#t-seed").value ? Number($("#t-seed").value) : null
+    };
+    S.tournament = await api("/api/tournament/start", { method: "POST", body: JSON.stringify(body) });
+    S.tTab = "overview";
+    renderTournament();
+  } catch (e) {
+    showErr("#t-err", e.message);
+    $("#t-body").innerHTML = "";
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function renderTournament() {
+  $("#t-tabs").style.display = "";
+  if (!S.tTab) S.tTab = "overview";
+  [...document.querySelectorAll('#t-tabs button')].forEach(b => b.classList.toggle("on", b.dataset.tab === S.tTab));
+  const renderers = { overview: renderTOverview, table: renderTTable, matches: renderTMatches, bracket: renderTBracket };
+  renderers[S.tTab]();
+}
+
+function switchTTab(tab) {
+  S.tTab = tab;
+  renderTournament();
+}
+
+function tieAggregate(tie) {
+  // Both legs' scores as the engine returned them; aggregate read off them
+  // directly rather than any separately-stored total.
+  const l1 = tie.legs[0], l2 = tie.legs[1];
+  return {
+    l1, l2,
+    aggHome: l1.home_goals + l2.away_goals,
+    aggAway: l1.away_goals + l2.home_goals,
+  };
+}
+
+/* ---------- OVERVIEW ---------- */
+function renderTOverview() {
+  const t = S.tournament, host = $("#t-body");
+  host.innerHTML = "";
+
+  const champ = el("div", "champ");
+  champ.appendChild(el("div", "eyebrow", "Champion of Europe"));
+  champ.appendChild(el("div", "who", teamName(t.champion)));
+  champ.appendChild(el("p", "muted", "Final: " + teamName(t.final.home) + " " + t.final.score + " " + teamName(t.final.away)));
+  host.appendChild(champ);
+
+  const ur = t.user_result || {};
+  const stageLabel = {
+    league_phase: "League phase", round_of_16: "Round of 16", quarter_final: "Quarter-final",
+    semi_final: "Semi-final", final: "Final", champion: "Won it"
+  };
+  const j = el("div", "journey");
+  const add = (label, value) => {
+    const d = el("div");
+    d.appendChild(el("div", "jl", label));
+    d.appendChild(el("div", "jv", value));
+    j.appendChild(d);
+  };
+  const st = ur.league_standing;
+  add("League finish", st ? "#" + st.rank + " · " + st.pts + " pts" : "—");
+  add("Record", st ? st.gf + ":" + st.ga + " (" + (st.gd >= 0 ? "+" : "") + st.gd + ")" : "—");
+  add("Reached", stageLabel[ur.stage_reached] || "—");
+  add("Seed", String(t.session.seed));
+  host.appendChild(j);
+
+  const note = el("p", "note");
+  note.textContent = "Your XI replaced " + teamName(t.session.dropped_team_id)
+    + " to keep the field at 36 — the dataset has exactly 36 slots, so one template club stepped aside. "
+    + "Re-run with seed " + t.session.seed + " to replay this exact season.";
+  host.appendChild(note);
+
+  const jump = el("div", "row mt5");
+  const toTable = el("button", "btn ghost sm", "See full table"); toTable.onclick = () => switchTTab("table");
+  const toMatches = el("button", "btn ghost sm", "See every match"); toMatches.onclick = () => switchTTab("matches");
+  const toBracket = el("button", "btn ghost sm", "See the bracket"); toBracket.onclick = () => switchTTab("bracket");
+  jump.appendChild(toTable); jump.appendChild(toMatches); jump.appendChild(toBracket);
+  host.appendChild(jump);
+}
+
+/* ---------- TABLE ---------- */
+function renderTTable() {
+  const t = S.tournament, host = $("#t-body");
+  host.innerHTML = "";
+
+  const sp = el("div", "panel");
+  const sh = el("div", "panel-h"); sh.appendChild(el("h3", null, "League phase — full table")); sp.appendChild(sh);
+  const sb = el("div", "panel-b");
+  const table = el("table", "stbl");
+  const thead = el("thead");
+  const hr = el("tr");
+  ["#", "Team", "Pld", "W", "D", "L", "GF", "GA", "GD", "Pts"].forEach(h => hr.appendChild(el("th", null, h)));
+  thead.appendChild(hr); table.appendChild(thead);
+  const tb = el("tbody");
+  t.standings.forEach(s => {
+    const band = s.rank <= 8 ? "q8" : s.rank <= 24 ? "pff" : "out";
+    const tr = el("tr", (s.team === USER_TEAM_ID ? "you " : "") + band);
+    [s.rank, teamName(s.team), s.played, s.won, s.drawn, s.lost, s.gf, s.ga, (s.gd >= 0 ? "+" : "") + s.gd, s.pts]
+      .forEach(v => tr.appendChild(el("td", null, String(v))));
+    tb.appendChild(tr);
+  });
+  table.appendChild(tb); sb.appendChild(table);
+
+  const legend = el("div", "stbl-legend");
+  const leg = (cls, text) => { const s2 = el("span", cls); s2.appendChild(el("i")); s2.appendChild(document.createTextNode(text)); legend.appendChild(s2); };
+  leg("lq", "Ranks 1–8 qualify directly to the Round of 16");
+  leg("lp", "Ranks 9–24 enter the knockout playoff");
+  leg("le", "Ranks 25–36 are eliminated");
+  sb.appendChild(legend);
+
+  sp.appendChild(sb); host.appendChild(sp);
+}
+
+/* ---------- MATCHES (progressive matchday reveal + explicit knockout legs) ---------- */
+function cancelMatchesReveal() {
+  if (S.matchesReveal) { S.matchesReveal.cancelled = true; S.matchesReveal.timers.forEach(clearTimeout); }
+  S.matchesReveal = null;
+}
+
+function renderTMatches() {
+  cancelMatchesReveal();
+  const t = S.tournament, host = $("#t-body");
+  host.innerHTML = "";
+
+  const lp = el("div", "panel");
+  const lh = el("div", "panel-h"); lh.appendChild(el("h3", null, "League phase — by matchday")); lp.appendChild(lh);
+  const lb = el("div", "panel-b");
+  lp.appendChild(lb); host.appendChild(lp);
+
+  const matches = t.league_matches || [];
+  if (!matches.length) {
+    lb.appendChild(el("div", "empty-state", "The engine did not return individual match results for this season."));
+  } else {
+    const byDay = new Map();
+    matches.forEach(m => { if (!byDay.has(m.matchday)) byDay.set(m.matchday, []); byDay.get(m.matchday).push(m); });
+    const days = [...byDay.keys()].sort((a, b) => a - b);
+
+    S.matchesReveal = { cancelled: false, timers: [] };
+    const reveal = S.matchesReveal;
+    let dayDelay = 0;
+    days.forEach(day => {
+      const dayMatches = byDay.get(day);
+      // The user's own matches (if any this matchday) get shown first within
+      // the day and given a touch more time on screen; every other result is
+      // a compact card revealed in a quick stagger - a full 144-match league
+      // phase should read in a few seconds, not minutes.
+      const ordered = [...dayMatches].sort((a, b) =>
+        (b.home === USER_TEAM_ID || b.away === USER_TEAM_ID ? 1 : 0) -
+        (a.home === USER_TEAM_ID || a.away === USER_TEAM_ID ? 1 : 0));
+
+      const section = el("div", "mday");
+      section.appendChild(el("h4", null, "Matchday " + day));
+      const grid = el("div", "mdgrid");
+      section.appendChild(grid);
+      lb.appendChild(section);
+
+      const id0 = setTimeout(() => {
+        if (reveal.cancelled) return;
+        ordered.forEach((m, i) => {
+          const hasYou = m.home === USER_TEAM_ID || m.away === USER_TEAM_ID;
+          const cardDelay = i * (hasYou ? 140 : 45);
+          const id = setTimeout(() => {
+            if (reveal.cancelled) return;
+            const card = el("div", "mdm" + (hasYou ? " hasyou" : ""));
+            const homeRow = el("div", "mdteam" + (m.home_score > m.away_score ? " win" : ""));
+            homeRow.appendChild(el("span", null, teamName(m.home)));
+            homeRow.appendChild(el("span", null, String(m.home_score)));
+            const awayRow = el("div", "mdteam" + (m.away_score > m.home_score ? " win" : ""));
+            awayRow.appendChild(el("span", null, teamName(m.away)));
+            awayRow.appendChild(el("span", null, String(m.away_score)));
+            card.appendChild(homeRow); card.appendChild(awayRow);
+            grid.appendChild(card);
+            requestAnimationFrame(() => card.classList.add("reveal"));
+          }, cardDelay);
+          reveal.timers.push(id);
+        });
+      }, dayDelay);
+      reveal.timers.push(id0);
+      dayDelay += 90 + ordered.length * 30; // next matchday starts once this one has mostly landed
+    });
+
+    const skip = el("button", "btn ghost sm mt4", "Show all results now");
+    skip.onclick = () => {
+      cancelMatchesReveal();
+      renderTMatchesInstant(matches, lb);
+    };
+    lp.querySelector(".panel-h").appendChild(skip);
+  }
+
+  // --- knockouts: explicit LEG 1 / LEG 2 / AGGREGATE ---
+  [["Playoff", t.playoff_ties], ["Round of 16", t.r16_ties], ["Quarter-finals", t.qf_ties], ["Semi-finals", t.sf_ties]]
+    .forEach(([label, ties]) => {
+      if (!ties || !ties.length) return;
+      const kp = el("div", "panel mt5");
+      const kh = el("div", "panel-h"); kh.appendChild(el("h3", null, label)); kp.appendChild(kh);
+      const kb = el("div", "panel-b");
+      ties.forEach(tie => kb.appendChild(renderTieCard(tie)));
+      kp.appendChild(kb); host.appendChild(kp);
+    });
+
+  // Final: single match, no legs.
+  const fp = el("div", "panel mt5");
+  const fh = el("div", "panel-h"); fh.appendChild(el("h3", null, "Final")); fp.appendChild(fh);
+  const fb = el("div", "panel-b");
+  const finalCard = el("div", "tiecard hasyou");
+  const frow = el("div", "aggrow");
+  frow.appendChild(el("span", (t.final.home === t.champion ? "win" : "lose"), teamName(t.final.home)));
+  frow.appendChild(el("span", "aggscore", t.final.score));
+  frow.appendChild(el("span", (t.final.away === t.champion ? "win" : "lose"), teamName(t.final.away)));
+  finalCard.appendChild(frow);
+  fb.appendChild(finalCard);
+  fp.appendChild(fb); host.appendChild(fp);
+}
+
+function renderTMatchesInstant(matches, lb) {
+  // Non-animated fallback used by "Show all results now" - same real data,
+  // just no staged reveal.
+  const byDay = new Map();
+  matches.forEach(m => { if (!byDay.has(m.matchday)) byDay.set(m.matchday, []); byDay.get(m.matchday).push(m); });
+  [...lb.querySelectorAll(".mday")].forEach(n => n.remove());
+  [...byDay.keys()].sort((a, b) => a - b).forEach(day => {
+    const section = el("div", "mday");
+    section.appendChild(el("h4", null, "Matchday " + day));
+    const grid = el("div", "mdgrid");
+    byDay.get(day).forEach(m => {
+      const hasYou = m.home === USER_TEAM_ID || m.away === USER_TEAM_ID;
+      const card = el("div", "mdm reveal" + (hasYou ? " hasyou" : ""));
+      const homeRow = el("div", "mdteam" + (m.home_score > m.away_score ? " win" : ""));
+      homeRow.appendChild(el("span", null, teamName(m.home)));
+      homeRow.appendChild(el("span", null, String(m.home_score)));
+      const awayRow = el("div", "mdteam" + (m.away_score > m.home_score ? " win" : ""));
+      awayRow.appendChild(el("span", null, teamName(m.away)));
+      awayRow.appendChild(el("span", null, String(m.away_score)));
+      card.appendChild(homeRow); card.appendChild(awayRow);
+      grid.appendChild(card);
+    });
+    section.appendChild(grid);
+    lb.appendChild(section);
+  });
+}
+
+function renderTieCard(tie) {
+  const { l1, l2, aggHome, aggAway } = tieAggregate(tie);
+  const hasYou = tie.home === USER_TEAM_ID || tie.away === USER_TEAM_ID;
+  const card = el("div", "tiecard" + (hasYou ? " hasyou" : ""));
+
+  const leg1 = el("div", "legrow");
+  leg1.appendChild(el("span", "leglabel", "Leg 1"));
+  leg1.appendChild(el("span", "legscore", teamName(l1.home_team_id) + "  " + l1.score + "  " + teamName(l1.away_team_id)));
+  card.appendChild(leg1);
+
+  const leg2 = el("div", "legrow");
+  leg2.appendChild(el("span", "leglabel", "Leg 2"));
+  leg2.appendChild(el("span", "legscore", teamName(l2.home_team_id) + "  " + l2.score + "  " + teamName(l2.away_team_id)));
+  card.appendChild(leg2);
+
+  const agg = el("div", "aggrow");
+  agg.appendChild(el("span", "agglabel", "Agg."));
+  const home = el("span", "aggscore", teamName(tie.home) + "  " + aggHome + "–" + aggAway + "  " + teamName(tie.away));
+  agg.appendChild(home);
+  card.appendChild(agg);
+
+  const winnerLine = el("p", "note", teamName(tie.winner) + " advance" + (tie.winner === USER_TEAM_ID ? " — that's you." : "."));
+  card.appendChild(winnerLine);
+  return card;
+}
+
+/* ---------- BRACKET ---------- */
+function renderTBracket() {
+  const t = S.tournament, host = $("#t-body");
+  host.innerHTML = "";
+
+  // Playoff shown separately: its 8 winners join the 8 direct qualifiers by
+  // league rank, not by a 1:1 tie pairing, so drawing connector lines from
+  // Playoff straight into the Round of 16 would assert a link that doesn't
+  // exist in the actual draw.
+  if (t.playoff_ties && t.playoff_ties.length) {
+    const pp = el("div", "panel");
+    const ph = el("div", "panel-h"); ph.appendChild(el("h3", null, "Playoff")); pp.appendChild(ph);
+    const pb = el("div", "panel-b");
+    pb.appendChild(el("p", "playoffnote",
+      "Ranks 9–24 play a two-legged playoff. The 8 winners then join the 8 direct qualifiers in the "
+      + "Round of 16 draw below, seeded by league rank — not paired 1-to-1 with a playoff tie, which is "
+      + "why the connected bracket starts at the Round of 16."));
+    t.playoff_ties.forEach(tie => pb.appendChild(renderTieCard(tie)));
+    pp.appendChild(pb); host.appendChild(pp);
+  }
+
+  const bp = el("div", "panel mt5");
+  const bh = el("div", "panel-h"); bh.appendChild(el("h3", null, "Round of 16 → Champion")); bp.appendChild(bh);
+  const bb = el("div", "panel-b");
+  const wrap = el("div", "bracketwrap");
+  const bracket = el("div", "bracket2");
+
+  const roundDefs = [
+    ["Round of 16", t.r16_ties],
+    ["Quarter-finals", t.qf_ties],
+    ["Semi-finals", t.sf_ties],
+  ];
+
+  roundDefs.forEach(([label, ties]) => {
+    if (!ties || !ties.length) return;
+    const col = el("div", "bkround");
+    col.appendChild(el("div", "rlabel", label));
+    ties.forEach(tie => {
+      const { aggHome, aggAway } = tieAggregate(tie);
+      const hasYou = tie.home === USER_TEAM_ID || tie.away === USER_TEAM_ID;
+      const slot = el("div", "bkslot");
+      const box = el("div", "bkmatch" + (hasYou ? " hasyou" : ""));
+      [[tie.home, aggHome], [tie.away, aggAway]].forEach(([id, agg]) => {
+        const row = el("div", "bkteam" + (tie.winner === id ? " win" : ""));
+        row.appendChild(el("span", null, teamName(id)));
+        row.appendChild(el("span", "bkscore", String(agg)));
+        box.appendChild(row);
+      });
+      slot.appendChild(box);
+      col.appendChild(slot);
+    });
+    bracket.appendChild(col);
+  });
+
+  // Final column
+  const finalCol = el("div", "bkround");
+  finalCol.appendChild(el("div", "rlabel", "Final"));
+  const finalSlot = el("div", "bkslot final-slot");
+  const finalBox = el("div", "bkmatch hasyou");
+  [[t.final.home, t.final.score.split("-")[0]], [t.final.away, t.final.score.split("-")[1]]].forEach(([id, sc]) => {
+    const row = el("div", "bkteam" + (id === t.champion ? " win" : ""));
+    row.appendChild(el("span", null, teamName(id)));
+    row.appendChild(el("span", "bkscore", String(sc)));
+    finalBox.appendChild(row);
+  });
+  finalSlot.appendChild(finalBox); finalCol.appendChild(finalSlot);
+  bracket.appendChild(finalCol);
+
+  // Champion column
+  const champCol = el("div", "bkround");
+  champCol.appendChild(el("div", "rlabel", "Champion"));
+  const champSlot = el("div", "bkslot final-slot bkchamp");
+  champSlot.appendChild(el("div", "cup", "🏆"));
+  champSlot.appendChild(el("div", "name", teamName(t.champion)));
+  champCol.appendChild(champSlot);
+  bracket.appendChild(champCol);
+
+  wrap.appendChild(bracket);
+  bb.appendChild(wrap);
+  bp.appendChild(bb); host.appendChild(bp);
+}
+
+
+/* ============================================================================
    WIRING
    ========================================================================= */
 $("#go-draft").onclick = () => go("draft");
@@ -1230,6 +2006,10 @@ $("#go-preview").onclick = () => { go("preview"); loadOpponent(); };
 $("#load-opp").onclick = loadOpponent;
 $("#clear-squad").onclick = () => { S.squad = []; S.placements.clear(); renderPool(); renderRail(); syncSquadGate(); };
 $("#clear-pitch").onclick = () => { S.placements.clear(); S.picked = null; renderPitch(); refreshPreview(); };
+$("#t-run").onclick = runTournament;
+[...document.querySelectorAll('#t-tabs button')].forEach(b => {
+  b.onclick = () => switchTTab(b.dataset.tab);
+});
 
 setMode("lottery");
 boot();

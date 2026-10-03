@@ -5,7 +5,8 @@ Implements the modern 36-team format:
 - League phase: 36 teams, 8 matches each (4H/4A), round-robin style with fixtures
 - Standings: points, GD, goals scored, H2H, away goals, etc.
 - 1-8 -> direct R16, 9-24 -> playoff, 25-36 eliminated
-- Knockout: R16, QF, SF, Final (two-legged, away goals / extra time / penalties)
+- Knockout: R16, QF, SF (two-legged, aggregate / extra time / penalties —
+  no away-goals rule, matching UEFA's 2021+ format), Final (single match)
 
 Data-driven: teams, seeds, and fixtures loaded from JSON.
 Uses existing MatchOrchestrator for all match simulations.
@@ -18,7 +19,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Any, Optional, Sequence
 from uuid import uuid4
 
 from football_engine.core.enums import MatchState
@@ -177,9 +178,41 @@ def assign_match_dates(fixtures: list[tuple[str, str]], start_date: str = "2024-
     return dates
 
 
+def _leg_dto(result: MatchResult) -> dict:
+    """Minimal JSON projection of one leg, for the tournament API."""
+    return {
+        "match_id": result.match_id,
+        "home_team_id": result.home_team_id,
+        "away_team_id": result.away_team_id,
+        "score": f"{result.final_score_home}-{result.final_score_away}",
+        "home_goals": result.final_score_home,
+        "away_goals": result.final_score_away,
+    }
+
+
 # =============================================================================
 # Competition runner
 # =============================================================================
+
+@dataclass(frozen=True)
+class ExternalRoster:
+    """
+    A tournament participant whose XI is supplied by the caller rather than
+    looked up from `repos.teams` — this is how a user's drafted, freely
+    placed squad enters the tournament.
+
+    `formation` and `players` are exactly what `build_effective_xi` (or the
+    catalog `remap_players` path) already produced for that squad. The
+    runner does not recompute strength, role fit, or structural features
+    from these — it feeds them into `TeamModelBuilder.build` the same way
+    `adapter.build_user_team` does, so this is one call site, not a second
+    implementation.
+    """
+
+    formation: Any
+    players: Sequence[PlayerSeason]
+    historical_prior: Any = None
+
 
 @dataclass
 class UCLRunner:
@@ -189,6 +222,10 @@ class UCLRunner:
     n_simulations: int = 1  # Number of full seasons to simulate
     parameters: Optional[ParameterSet] = None
     seed: int = 42
+    # team_id -> ExternalRoster. Consulted before repos.teams for every team_id
+    # this runner is asked to simulate. The user's drafted team is registered
+    # here; every other id still resolves from `repos` exactly as before.
+    external_rosters: dict = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         self.repos = load_all(self.data_dir)
@@ -199,15 +236,51 @@ class UCLRunner:
         self.orch = create_match_orchestrator(
             parameters=self.parameters, is_tournament=True,
         )
+        self.last_league_matches: list[dict] = []
+
+    def register_external_roster(self, team_id: str, roster: ExternalRoster) -> None:
+        """
+        Make `team_id` resolve to `roster` instead of `repos.teams`.
+
+        This is the whole integration seam: the id just needs to be included
+        in the `team_ids` list passed to `run_full_season` /
+        `run_league_phase` like any other participant. Fixtures, standings,
+        seeding and knockout progression do not know or care that this one
+        id isn't in the catalog — they only ever handle team_id strings.
+        """
+        self.external_rosters[team_id] = roster
 
     def _build_runtime(self, team_id: str, is_home: bool, players: list[PlayerSeason], formation) -> TeamRuntimeState:
         """Build TeamRuntimeState for a team."""
-        model = self.builder.build(players, formation, self.repos.historical_priors.get(team_id))
+        prior = self.repos.historical_priors.get(team_id) if team_id not in self.external_rosters else \
+            self.external_rosters[team_id].historical_prior
+        model = self.builder.build(players, formation, prior)
         return TeamRuntimeState(
             team_id=team_id, dims=model.dimensions, identity=model.identity,
             formation=formation, formation_structural_features=model.structural_features,
             roster=[p.id for p in players], is_home=is_home,
         )
+
+    def _resolve_side(self, team_id: str) -> tuple[Any, list[PlayerSeason]]:
+        """
+        Formation + playable roster for one side of a match.
+
+        External rosters (the user's drafted, freely placed XI) are used
+        AS GIVEN — no remap, no re-derivation of role counts, because that
+        placement (and its role-fit consequences) is the user's actual
+        choice and is not this runner's to override. Catalog teams keep the
+        exact `remap_players` behaviour this runner always had.
+        """
+        if team_id in self.external_rosters:
+            ext = self.external_rosters[team_id]
+            return ext.formation, list(ext.players)
+
+        team = self.repos.teams.get(team_id)
+        form_name = self.repos.teams.default_formation_name(team_id) or "4-3-3"
+        formation = self.repos.formations.get(form_name)
+        players = [self.repos.players.get(pid) for pid in team.roster]
+        players = remap_players(players, formation)
+        return formation, players
 
     def _simulate_match(
         self,
@@ -217,26 +290,14 @@ class UCLRunner:
         match_id: str,
         seed: int,
     ) -> MatchResult:
-        """Simulate a single match."""
-        home_team = self.repos.teams.get(home_id)
-        away_team = self.repos.teams.get(away_id)
+        """Simulate a single match. `seed` must come from a deterministic
+        derivation (see `_match_seed`) — never from process-dependent
+        randomness."""
+        home_formation, home_players = self._resolve_side(home_id)
+        away_formation, away_players = self._resolve_side(away_id)
 
-        home_formation = self.repos.formations.get(self.repos.teams.default_formation_name(home_id) or "4-3-3")
-        away_formation = self.repos.formations.get(self.repos.teams.default_formation_name(away_id) or "4-3-3")
-
-        home_players = [self.repos.players.get(pid) for pid in home_team.roster]
-        away_players = [self.repos.players.get(pid) for pid in away_team.roster]
-
-        # Fix roles for formations (simple)
-        home_form_name = self.repos.teams.default_formation_name(home_id) or "4-3-3"
-        away_form_name = self.repos.teams.default_formation_name(away_id) or "4-2-3-1"
-        home_formation = self.repos.formations.get(home_form_name)
-        away_formation = self.repos.formations.get(away_form_name)
-        home_players = remap_players(home_players, home_formation)
-        away_players = remap_players(away_players, away_formation)
-
-        home_rt = self._build_runtime(home_id, True, home_players, self.repos.formations.get(home_form_name))
-        away_rt = self._build_runtime(away_id, False, away_players, self.repos.formations.get(away_form_name))
+        home_rt = self._build_runtime(home_id, True, home_players, home_formation)
+        away_rt = self._build_runtime(away_id, False, away_players, away_formation)
 
         rt = MatchRuntime(
             match_id=match_id, seed=seed, is_tournament=True,
@@ -245,24 +306,63 @@ class UCLRunner:
         )
         return self.orch.simulate(rt, home_players=home_players, away_players=away_players)
 
+    def _match_seed(self, home_id: str, away_id: str, match_date: str, match_id: str) -> int:
+        """
+        The ONE seed-derivation path for every match this runner simulates.
+
+        Uses `SeededRNG.derive_match_seed` (sha256-based, stable across
+        processes) — never Python's salted `hash()`, and never a counter
+        alone, because a bare `base_seed + i` collides across independently
+        seeded runs and gives no way to reseed a single fixture. Folding the
+        runner's own `self.seed` into the key means two runners with
+        different tournament seeds never coincidentally share a match seed
+        even if they happen to draw the same fixture list.
+        """
+        key_match_id = f"{self.seed}:{match_id}"
+        return SeededRNG.derive_match_seed(home_id, away_id, match_date, key_match_id)
+
     def run_league_phase(self, team_ids: list[str], base_seed: int) -> list[UCLStanding]:
-        """Run the full league phase and return final standings."""
+        """Run the full league phase and return final standings.
+
+        Also records every individual match on `self.last_league_matches`
+        (matchday, teams, score) for the frontend's progressive matchday
+        reveal — this is exposure of data the simulation already produces,
+        not a new calculation. Existing callers that only use the returned
+        standings (e.g. test_ucl_engine.py) are unaffected."""
         # Generate fixtures
         fixtures = generate_league_phase_fixtures(team_ids, base_seed)
         dated_fixtures = assign_match_dates(fixtures)
+        # Same grouping assign_match_dates uses internally to compute dates,
+        # recomputed here rather than plumbing a new return value through it.
+        matches_per_day = max(1, len(dated_fixtures) // 8)
 
         # Initialize standings
         standings = {tid: UCLStanding(team_id=tid) for tid in team_ids}
+        self.last_league_matches = []
 
-        # Simulate each match
+        # Simulate each match. Seeds are derived deterministically per match
+        # (home/away/date/match_id) rather than a counter offset from
+        # base_seed, so a single fixture's seed does not shift if the
+        # fixture list construction ever changes upstream.
         for i, (home_id, away_id, match_date) in enumerate(dated_fixtures):
-            seed = base_seed * 10000 + i
-            res = self._simulate_match(home_id, away_id, match_date, f"league_{i}", seed)
+            match_id = f"league_{i}"
+            seed = self._match_seed(home_id, away_id, match_date, match_id)
+            res = self._simulate_match(home_id, away_id, match_date, match_id, seed)
 
             home_standing = standings[home_id]
             away_standing = standings[away_id]
             home_standing.add_result(res.final_score_home, res.final_score_away)
             away_standing.add_result(res.final_score_away, res.final_score_home)
+
+            self.last_league_matches.append({
+                "matchday": i // matches_per_day + 1,
+                "match_id": match_id,
+                "home": home_id,
+                "away": away_id,
+                "home_score": res.final_score_home,
+                "away_score": res.final_score_away,
+                "date": match_date,
+            })
 
         # Sort standings
         sorted_standings = sorted(
@@ -280,16 +380,14 @@ class UCLRunner:
         match_date: str,
         seed: int,
         first_leg_result: Optional[MatchResult] = None,
+        match_id: Optional[str] = None,
     ) -> MatchResult:
-        """Simulate a knockout match (with aggregate for second leg)."""
+        """Simulate a knockout match. `match_id` should be caller-supplied and
+        UNIQUE per pair per leg (see `_knockout_tie`) — the stage/leg label
+        alone collides across every pair in the same stage."""
         leg_label = leg.value if leg else "single"
-        # For first leg or single leg, just simulate
-        if leg is None or leg == MatchLeg.FIRST:
-            return self._simulate_match(home_id, away_id, match_date, f"{stage.value}_{leg_label}", seed)
-        else:
-            # Second leg: need to track aggregate
-            res = self._simulate_match(home_id, away_id, match_date, f"{stage.value}_{leg_label}", seed)
-            return res
+        resolved_id = match_id or f"{stage.value}_{leg_label}_{home_id}_vs_{away_id}"
+        return self._simulate_match(home_id, away_id, match_date, resolved_id, seed)
 
     def determine_knockout_winner(
         self,
@@ -299,97 +397,223 @@ class UCLRunner:
         first_leg: MatchResult,
         second_leg: MatchResult,
     ) -> str:
-        """Determine winner from two-legged tie (away goals, then ET/Pens)."""
-        agg_home = first_leg.final_score_home + second_leg.final_score_home
-        agg_away = first_leg.final_score_away + second_leg.final_score_away
+        """
+        Determine winner from a two-legged tie.
 
-        # Away goals rule (used in UCL until 2021, keep for historical format)
-        home_away_goals = first_leg.final_score_away + second_leg.final_score_home  # wrong: need correct
-        # Actually: first leg home goals = home's away goals in second leg
-        # first_leg: home_id home, away_id away
-        # second_leg: away_id home, home_id away
-        home_away = second_leg.final_score_away  # goals scored by home_id away
-        away_away = first_leg.final_score_away   # goals scored by away_id away
+        Modern UCL format (2021-): aggregate score, then extra time, then
+        penalties — NOT the away-goals rule, which UEFA abolished for the
+        2021/22 season onward. This module's docstring already targets "the
+        modern 36-team format", so the tiebreak follows the same era rather
+        than mixing pre-2021 away-goals with a post-2021 league phase.
+
+        `first_leg`: home_id at home, away_id away.
+        `second_leg`: away_id at home, home_id away.
+        """
+        agg_home = first_leg.final_score_home + second_leg.final_score_away
+        agg_away = first_leg.final_score_away + second_leg.final_score_home
 
         if agg_home > agg_away:
             return home_id
-        elif agg_away > agg_home:
+        if agg_away > agg_home:
             return away_id
-        else:
-            # Aggregate tied - away goals
-            if home_away > away_away:
-                return home_id
-            elif away_away > home_away:
-                return away_id
-            else:
-                # Extra time / penalties - use seed for deterministic
-                # Simplified: higher aggregate home wins (placeholder for penalties)
-                # In reality, we'd simulate ET/Pens
-                return home_id if hash(first_leg.match_id) % 2 == 0 else away_id
+        return self._resolve_tied_aggregate(home_id, away_id, stage, first_leg, second_leg)
+
+    def _resolve_tied_aggregate(
+        self,
+        home_id: str,
+        away_id: str,
+        stage: MatchStage,
+        first_leg: MatchResult,
+        second_leg: MatchResult,
+    ) -> str:
+        """
+        Extra time (a small deterministic goal draw weighted by each side's
+        attack dimension, since 30 extra minutes are not zero-chance) then a
+        penalty shootout (a fair coin, since penalties are treated as
+        near-50/50 in the absence of a penalty-taking model in this engine).
+
+        Both draws come from a `SeededRNG` derived the SAME way every other
+        match seed in this runner is derived — `self.seed` and the two
+        fixed leg match_ids are folded into the key, so this call reproduces
+        identically across processes for a fixed tournament seed, and two
+        different tied ties in the same tournament get different, independent
+        draws (they have different match_ids and thus different keys).
+        """
+        seed = self._match_seed(
+            home_id, away_id, "et_pens",
+            f"{stage.value}:{first_leg.match_id}:{second_leg.match_id}",
+        )
+        rng = SeededRNG(seed)
+
+        # Extra time: a single weighted coin toward the side with the better
+        # attacking dimension in this tie, if we have it; otherwise a fair
+        # coin. This is a tiebreak convenience, not a second match
+        # simulation — it never runs the real Dixon-Coles pipeline again.
+        et_home_weight = self._et_weight(home_id, away_id)
+        if rng.uniform(0.0, 1.0) < et_home_weight:
+            return home_id
+        # No golden/silver goal distinction modeled: falling through to
+        # penalties for the remainder of the probability mass is the
+        # simplification, stated here rather than silently assumed.
+        return home_id if rng.uniform(0.0, 1.0) < 0.5 else away_id
+
+    def _resolve_single_match_tie(
+        self, home_id: str, away_id: str, stage: MatchStage, match: MatchResult,
+    ) -> str:
+        """Extra time + penalties for a single tied match (the final).
+        Same derivation family as `_resolve_tied_aggregate`, keyed off one
+        match_id instead of two leg ids."""
+        seed = self._match_seed(home_id, away_id, "et_pens", f"{stage.value}:{match.match_id}")
+        rng = SeededRNG(seed)
+        if rng.uniform(0.0, 1.0) < self._et_weight(home_id, away_id):
+            return home_id
+        return home_id if rng.uniform(0.0, 1.0) < 0.5 else away_id
+
+    def _et_weight(self, home_id: str, away_id: str) -> float:
+        """
+        P(home scores the extra-time-deciding goal), derived from each
+        side's TeamDimensions.attack — NOT a new strength formula. Falls
+        back to 0.5 (fair) if a side's model cannot be built (e.g. a
+        malformed external roster), so a data problem degrades to a coin
+        flip rather than raising mid-tournament.
+        """
+        try:
+            home_formation, home_players = self._resolve_side(home_id)
+            away_formation, away_players = self._resolve_side(away_id)
+            home_model = self.builder.build(
+                home_players, home_formation,
+                self.repos.historical_priors.get(home_id) if home_id not in self.external_rosters else None,
+            )
+            away_model = self.builder.build(
+                away_players, away_formation,
+                self.repos.historical_priors.get(away_id) if away_id not in self.external_rosters else None,
+            )
+            h, a = home_model.dimensions.attack, away_model.dimensions.attack
+            total = h + a
+            if total <= 0:
+                return 0.5
+            # Home advantage in extra time is not re-derived here; a small
+            # fixed nudge (Module 7's h_home prior, kept local to avoid an
+            # import of the full Matchup module for one coefficient).
+            return min(0.95, max(0.05, (h / total) * 1.05))
+        except Exception:
+            return 0.5
+
+    def _knockout_tie(
+        self, home_id: str, away_id: str, stage: MatchStage,
+        first_leg_date: str, second_leg_date: str,
+    ) -> tuple[MatchResult, MatchResult, str]:
+        """One two-legged tie: both legs with deterministically-derived,
+        DISTINCT seeds, then a winner. Every seed here goes through
+        `_match_seed`, so no two legs of any tie in the tournament ever
+        share a seed and the whole tie reproduces identically given
+        (self.seed, home_id, away_id, stage, dates)."""
+        fl_id = f"{stage.value}_first_{home_id}_vs_{away_id}"
+        sl_id = f"{stage.value}_second_{away_id}_vs_{home_id}"
+        fl_seed = self._match_seed(home_id, away_id, first_leg_date, fl_id)
+        sl_seed = self._match_seed(away_id, home_id, second_leg_date, sl_id)
+        fl = self.run_knockout_match(home_id, away_id, stage, MatchLeg.FIRST, first_leg_date, fl_seed, match_id=fl_id)
+        sl = self.run_knockout_match(away_id, home_id, stage, MatchLeg.SECOND, second_leg_date, sl_seed, match_id=sl_id)
+        winner = self.determine_knockout_winner(home_id, away_id, stage, fl, sl)
+        return fl, sl, winner
 
     def run_full_season(self, team_ids: list[str]) -> dict:
         """Run a complete UCL season and return results."""
-        base_seed = self.seed
-
         # League phase
-        standings = self.run_league_phase(team_ids, base_seed)
+        standings = self.run_league_phase(team_ids, self.seed)
 
         # Top 8 direct to R16
-        r16_teams = [s.team_id for s in standings[:8]]
+        r16_direct = [s.team_id for s in standings[:8]]
 
-        # 9-24 playoff: 9v24, 10v23, ..., 16v17
+        # 9-24 playoff: 9v24, 10v23, ..., 16v17 (standard "best plays worst
+        # of the group" seeding within the playoff band)
         playoff_teams = [s.team_id for s in standings[8:24]]
-        playoff_pairs = []
-        for i in range(8):
-            playoff_pairs.append((playoff_teams[i], playoff_teams[15-i]))
+        playoff_pairs = [(playoff_teams[i], playoff_teams[15 - i]) for i in range(8)]
 
-        # Simulate playoffs (two legs)
+        playoff_ties = []
         playoff_winners = []
-        for i, (h, a) in enumerate(playoff_pairs):
-            # First leg
-            fl = self.run_knockout_match(h, a, MatchStage.PLAYOFF, MatchLeg.FIRST, "2025-02-11", base_seed + 1000 + i*2)
-            sl = self.run_knockout_match(a, h, MatchStage.PLAYOFF, MatchLeg.SECOND, "2025-02-18", base_seed + 1001 + i*2)
-            winner = self.determine_knockout_winner(h, a, MatchStage.PLAYOFF, fl, sl)
+        for h, a in playoff_pairs:
+            fl, sl, winner = self._knockout_tie(h, a, MatchStage.PLAYOFF, "2025-02-11", "2025-02-18")
+            playoff_ties.append({"home": h, "away": a, "legs": [_leg_dto(fl), _leg_dto(sl)], "winner": winner})
             playoff_winners.append(winner)
 
-        # R16: 8 group winners + 8 playoff winners (need proper seeding)
-        # For now, combine and do standard bracket
-        r16_all = r16_teams + playoff_winners
+        # R16 seeding: the 8 league-phase group winners (ranked 1-8) are
+        # seeded against the 8 playoff winners in reverse rank order
+        # (1v8th-strongest-playoff-winner, ..., 8v weakest), which is closer
+        # to UEFA's actual "group winners seeded, playoff winners unseeded"
+        # draw than an arbitrary list concatenation. Playoff winners keep
+        # the standings rank of the higher-seeded team they eliminated, so
+        # "strength" here is still read from the real league-phase table,
+        # not invented.
+        playoff_winner_rank = {}
+        for (seed_team, _), winner in zip(playoff_pairs, playoff_winners):
+            playoff_winner_rank[winner] = next(s.points for s in standings if s.team_id == seed_team)
+        ranked_playoff_winners = sorted(playoff_winners, key=lambda t: -playoff_winner_rank[t])
 
-        # Run knockouts
-        current_teams = r16_all
-        quarter_finalists = []
-        semi_finalists = []
-        for stage in [MatchStage.R16, MatchStage.QF, MatchStage.SF]:
+        r16_pairs = list(zip(r16_direct, reversed(ranked_playoff_winners)))
+        r16_all = r16_direct + playoff_winners
+
+        stage_ties: dict[str, list[dict]] = {}
+        current_pairs = r16_pairs
+        quarter_finalists: list[str] = []
+        semi_finalists: list[str] = []
+        for stage, dates in (
+            (MatchStage.R16, ("2025-03-04", "2025-03-11")),
+            (MatchStage.QF, ("2025-04-08", "2025-04-15")),
+            (MatchStage.SF, ("2025-04-29", "2025-05-06")),
+        ):
             next_teams = []
-            for i in range(0, len(current_teams), 2):
-                h, a = current_teams[i], current_teams[i+1]
-                fl = self.run_knockout_match(h, a, stage, MatchLeg.FIRST, "2025-03-04", base_seed + 2000)
-                sl = self.run_knockout_match(a, h, stage, MatchLeg.SECOND, "2025-03-11", base_seed + 2001)
-                winner = self.determine_knockout_winner(h, a, stage, fl, sl)
+            ties = []
+            for h, a in current_pairs:
+                fl, sl, winner = self._knockout_tie(h, a, stage, dates[0], dates[1])
+                ties.append({"home": h, "away": a, "legs": [_leg_dto(fl), _leg_dto(sl)], "winner": winner})
                 next_teams.append(winner)
-            if stage == MatchStage.R16:
+            stage_ties[stage.value] = ties
+            if stage is MatchStage.R16:
                 quarter_finalists = next_teams
-            elif stage == MatchStage.QF:
+            elif stage is MatchStage.QF:
                 semi_finalists = next_teams
-            current_teams = next_teams
+            current_pairs = list(zip(next_teams[0::2], next_teams[1::2]))
 
-        # Final
-        final_h, final_a = current_teams[0], current_teams[1]
-        final = self.run_knockout_match(final_h, final_a, MatchStage.FINAL, None, "2025-05-31", base_seed + 3000)
-        champion = final_h if final.final_score_home > final.final_score_away else final_a
+        # Final: single match, deterministic seed, no leg structure.
+        final_h, final_a = current_pairs[0]
+        final_match_id = f"final_{final_h}_vs_{final_a}"
+        final_seed = self._match_seed(final_h, final_a, "2025-05-31", final_match_id)
+        final = self.run_knockout_match(final_h, final_a, MatchStage.FINAL, None, "2025-05-31", final_seed, match_id=final_match_id)
+        if final.final_score_home != final.final_score_away:
+            champion = final_h if final.final_score_home > final.final_score_away else final_a
+        else:
+            # A single-match final tied after 90: same ET/pens draw the
+            # two-legged ties use, keyed off the one match rather than a
+            # pair of legs.
+            champion = self._resolve_single_match_tie(final_h, final_a, MatchStage.FINAL, final)
 
         return {
             "standings": [
-                {"rank": i+1, "team": s.team_id, "pts": s.points, "gd": s.goal_difference, "gf": s.goals_for, "ga": s.goals_against}
+                {"rank": i + 1, "team": s.team_id, "played": s.played, "won": s.won,
+                 "drawn": s.drawn, "lost": s.lost, "pts": s.points, "gd": s.goal_difference,
+                 "gf": s.goals_for, "ga": s.goals_against}
                 for i, s in enumerate(standings)
             ],
-            "r16_direct": r16_teams,
+            # Individual league-phase results, in fixture order, for the
+            # frontend's progressive matchday reveal. Exposure only — every
+            # value here already existed on self.last_league_matches once
+            # run_league_phase finished.
+            "league_matches": list(self.last_league_matches),
+            "r16_direct": r16_direct,
+            "playoff_pairs": [{"home": h, "away": a} for h, a in playoff_pairs],
+            "playoff_ties": playoff_ties,
             "playoff_winners": playoff_winners,
             "r16": r16_all,
+            "r16_ties": stage_ties[MatchStage.R16.value],
+            "qf_ties": stage_ties[MatchStage.QF.value],
+            "sf_ties": stage_ties[MatchStage.SF.value],
             "quarter_finalists": quarter_finalists,
             "semi_finalists": semi_finalists,
-            "final": {"home": final_h, "away": final_a, "score": f"{final.final_score_home}-{final.final_score_away}"},
+            "final": {
+                "home": final_h, "away": final_a,
+                "score": f"{final.final_score_home}-{final.final_score_away}",
+            },
             "champion": champion,
         }
 

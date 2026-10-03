@@ -1,1333 +1,846 @@
 {
- "metadata": {
-  "description": "Position sets per PlayerSeason. 'positions' is derived from the player's primary role and their own attributes; 'overrides' is hand-curated and always wins.",
-  "derivation": {
-   "GK": [],
-   "CB": [
-    {
-     "role": "FB",
-     "requires": "pace >= 0.55"
-    },
-    {
-     "role": "DM",
-     "requires": "creation_ability >= 60.0"
-    }
-   ],
-   "FB": [
-    {
-     "role": "WM",
-     "requires": "pace >= 0.58"
-    },
-    {
-     "role": "CB",
-     "requires": "defense_ability >= 72.0"
-    }
-   ],
-   "DM": [
-    {
-     "role": "CM",
-     "requires": "creation_ability >= 0.0"
-    },
-    {
-     "role": "CB",
-     "requires": "defense_ability >= 72.0"
-    }
-   ],
-   "CM": [
-    {
-     "role": "DM",
-     "requires": "defense_ability >= 62.0"
-    },
-    {
-     "role": "AM",
-     "requires": "creation_ability >= 72.0"
-    }
-   ],
-   "WM": [
-    {
-     "role": "FW",
-     "requires": "attack_ability >= 70.0"
-    },
-    {
-     "role": "AM",
-     "requires": "creation_ability >= 70.0"
-    },
-    {
-     "role": "FB",
-     "requires": "defense_ability >= 58.0"
-    }
-   ],
-   "AM": [
-    {
-     "role": "CM",
-     "requires": "defense_ability >= 55.0"
-    },
-    {
-     "role": "FW",
-     "requires": "attack_ability >= 72.0"
-    },
-    {
-     "role": "WM",
-     "requires": "pace >= 0.65"
-    }
-   ],
-   "FW": [
-    {
-     "role": "AM",
-     "requires": "creation_ability >= 68.0"
-    },
-    {
-     "role": "WM",
-     "requires": "pace >= 0.68"
-    }
-   ]
-  }
- },
- "positions": {
-  "valdes_2010_11": [
-   "GK"
-  ],
-  "alves_2010_11": [
-   "FB",
-   "WM"
-  ],
-  "pique_2010_11": [
-   "CB"
-  ],
-  "puyol_2010_11": [
-   "CB"
-  ],
-  "abidal_2010_11": [
-   "FB",
-   "WM",
-   "CB"
-  ],
-  "busquets_2010_11": [
-   "DM",
-   "CM",
-   "CB"
-  ],
-  "xavi_2010_11": [
-   "CM",
-   "AM"
-  ],
-  "iniesta_2010_11": [
-   "CM",
-   "AM"
-  ],
-  "pedro_2010_11": [
-   "WM",
-   "FW"
-  ],
-  "villa_2010_11": [
-   "FW",
-   "WM"
-  ],
-  "messi_2010_11": [
-   "FW",
-   "AM",
-   "WM"
-  ],
-  "cech_2011_12": [
-   "GK"
-  ],
-  "ivanovic_2011_12": [
-   "FB",
-   "CB"
-  ],
-  "terry_2011_12": [
-   "CB"
-  ],
-  "cahill_2011_12": [
-   "CB"
-  ],
-  "cole_2011_12": [
-   "FB",
-   "WM",
-   "CB"
-  ],
-  "mikel_2011_12": [
-   "DM",
-   "CM",
-   "CB"
-  ],
-  "lampard_2011_12": [
-   "CM",
-   "AM"
-  ],
-  "ramires_2011_12": [
-   "CM",
-   "DM"
-  ],
-  "mata_2011_12": [
-   "AM",
-   "FW",
-   "WM"
-  ],
-  "malouda_2011_12": [
-   "WM",
-   "FW"
-  ],
-  "drogba_2011_12": [
-   "FW",
-   "WM"
-  ],
-  "porto_0_2015_16": [
-   "GK"
-  ],
-  "porto_1_2015_16": [
-   "FB"
-  ],
-  "porto_2_2015_16": [
-   "CB"
-  ],
-  "porto_3_2015_16": [
-   "CB"
-  ],
-  "porto_4_2015_16": [
-   "FB"
-  ],
-  "porto_5_2015_16": [
-   "DM",
-   "CM"
-  ],
-  "porto_6_2015_16": [
-   "CM"
-  ],
-  "porto_7_2015_16": [
-   "CM"
-  ],
-  "porto_8_2015_16": [
-   "WM"
-  ],
-  "porto_9_2015_16": [
-   "FW"
-  ],
-  "porto_10_2015_16": [
-   "WM"
-  ],
-  "benfica_0_2015_16": [
-   "GK"
-  ],
-  "benfica_1_2015_16": [
-   "FB"
-  ],
-  "benfica_2_2015_16": [
-   "CB"
-  ],
-  "benfica_3_2015_16": [
-   "CB"
-  ],
-  "benfica_4_2015_16": [
-   "FB"
-  ],
-  "benfica_5_2015_16": [
-   "DM",
-   "CM"
-  ],
-  "benfica_6_2015_16": [
-   "CM"
-  ],
-  "benfica_7_2015_16": [
-   "CM"
-  ],
-  "benfica_8_2015_16": [
-   "WM"
-  ],
-  "benfica_9_2015_16": [
-   "FW"
-  ],
-  "benfica_10_2015_16": [
-   "WM"
-  ],
-  "sporting_0_2015_16": [
-   "GK"
-  ],
-  "sporting_1_2015_16": [
-   "FB"
-  ],
-  "sporting_2_2015_16": [
-   "CB"
-  ],
-  "sporting_3_2015_16": [
-   "CB"
-  ],
-  "sporting_4_2015_16": [
-   "FB"
-  ],
-  "sporting_5_2015_16": [
-   "DM",
-   "CM"
-  ],
-  "sporting_6_2015_16": [
-   "CM"
-  ],
-  "sporting_7_2015_16": [
-   "CM"
-  ],
-  "sporting_8_2015_16": [
-   "WM"
-  ],
-  "sporting_9_2015_16": [
-   "FW"
-  ],
-  "sporting_10_2015_16": [
-   "WM"
-  ],
-  "ajax_0_2015_16": [
-   "GK"
-  ],
-  "ajax_1_2015_16": [
-   "FB"
-  ],
-  "ajax_2_2015_16": [
-   "CB"
-  ],
-  "ajax_3_2015_16": [
-   "CB"
-  ],
-  "ajax_4_2015_16": [
-   "FB"
-  ],
-  "ajax_5_2015_16": [
-   "DM",
-   "CM"
-  ],
-  "ajax_6_2015_16": [
-   "CM"
-  ],
-  "ajax_7_2015_16": [
-   "CM"
-  ],
-  "ajax_8_2015_16": [
-   "WM"
-  ],
-  "ajax_9_2015_16": [
-   "FW"
-  ],
-  "ajax_10_2015_16": [
-   "WM"
-  ],
-  "psv_0_2015_16": [
-   "GK"
-  ],
-  "psv_1_2015_16": [
-   "FB"
-  ],
-  "psv_2_2015_16": [
-   "CB"
-  ],
-  "psv_3_2015_16": [
-   "CB"
-  ],
-  "psv_4_2015_16": [
-   "FB"
-  ],
-  "psv_5_2015_16": [
-   "DM",
-   "CM"
-  ],
-  "psv_6_2015_16": [
-   "CM"
-  ],
-  "psv_7_2015_16": [
-   "CM"
-  ],
-  "psv_8_2015_16": [
-   "WM"
-  ],
-  "psv_9_2015_16": [
-   "FW"
-  ],
-  "psv_10_2015_16": [
-   "WM"
-  ],
-  "galatasaray_0_2015_16": [
-   "GK"
-  ],
-  "galatasaray_1_2015_16": [
-   "FB"
-  ],
-  "galatasaray_2_2015_16": [
-   "CB"
-  ],
-  "galatasaray_3_2015_16": [
-   "CB"
-  ],
-  "galatasaray_4_2015_16": [
-   "FB"
-  ],
-  "galatasaray_5_2015_16": [
-   "DM",
-   "CM"
-  ],
-  "galatasaray_6_2015_16": [
-   "CM"
-  ],
-  "galatasaray_7_2015_16": [
-   "CM"
-  ],
-  "galatasaray_8_2015_16": [
-   "WM"
-  ],
-  "galatasaray_9_2015_16": [
-   "FW"
-  ],
-  "galatasaray_10_2015_16": [
-   "WM"
-  ],
-  "fenerbahce_0_2015_16": [
-   "GK"
-  ],
-  "fenerbahce_1_2015_16": [
-   "FB"
-  ],
-  "fenerbahce_2_2015_16": [
-   "CB"
-  ],
-  "fenerbahce_3_2015_16": [
-   "CB"
-  ],
-  "fenerbahce_4_2015_16": [
-   "FB"
-  ],
-  "fenerbahce_5_2015_16": [
-   "DM",
-   "CM"
-  ],
-  "fenerbahce_6_2015_16": [
-   "CM"
-  ],
-  "fenerbahce_7_2015_16": [
-   "CM"
-  ],
-  "fenerbahce_8_2015_16": [
-   "WM"
-  ],
-  "fenerbahce_9_2015_16": [
-   "FW"
-  ],
-  "fenerbahce_10_2015_16": [
-   "WM"
-  ],
-  "olympiacos_0_2015_16": [
-   "GK"
-  ],
-  "olympiacos_1_2015_16": [
-   "FB"
-  ],
-  "olympiacos_2_2015_16": [
-   "CB"
-  ],
-  "olympiacos_3_2015_16": [
-   "CB"
-  ],
-  "olympiacos_4_2015_16": [
-   "FB"
-  ],
-  "olympiacos_5_2015_16": [
-   "DM",
-   "CM"
-  ],
-  "olympiacos_6_2015_16": [
-   "CM"
-  ],
-  "olympiacos_7_2015_16": [
-   "CM"
-  ],
-  "olympiacos_8_2015_16": [
-   "WM"
-  ],
-  "olympiacos_9_2015_16": [
-   "FW"
-  ],
-  "olympiacos_10_2015_16": [
-   "WM"
-  ],
-  "panathinaikos_0_2015_16": [
-   "GK"
-  ],
-  "panathinaikos_1_2015_16": [
-   "FB"
-  ],
-  "panathinaikos_2_2015_16": [
-   "CB"
-  ],
-  "panathinaikos_3_2015_16": [
-   "CB"
-  ],
-  "panathinaikos_4_2015_16": [
-   "FB"
-  ],
-  "panathinaikos_5_2015_16": [
-   "DM",
-   "CM"
-  ],
-  "panathinaikos_6_2015_16": [
-   "CM"
-  ],
-  "panathinaikos_7_2015_16": [
-   "CM"
-  ],
-  "panathinaikos_8_2015_16": [
-   "WM"
-  ],
-  "panathinaikos_9_2015_16": [
-   "FW"
-  ],
-  "panathinaikos_10_2015_16": [
-   "WM"
-  ],
-  "celtic_0_2015_16": [
-   "GK"
-  ],
-  "celtic_1_2015_16": [
-   "FB"
-  ],
-  "celtic_2_2015_16": [
-   "CB"
-  ],
-  "celtic_3_2015_16": [
-   "CB"
-  ],
-  "celtic_4_2015_16": [
-   "FB"
-  ],
-  "celtic_5_2015_16": [
-   "DM",
-   "CM"
-  ],
-  "celtic_6_2015_16": [
-   "CM"
-  ],
-  "celtic_7_2015_16": [
-   "CM"
-  ],
-  "celtic_8_2015_16": [
-   "WM"
-  ],
-  "celtic_9_2015_16": [
-   "FW"
-  ],
-  "celtic_10_2015_16": [
-   "WM"
-  ],
-  "rangers_0_2015_16": [
-   "GK"
-  ],
-  "rangers_1_2015_16": [
-   "FB"
-  ],
-  "rangers_2_2015_16": [
-   "CB"
-  ],
-  "rangers_3_2015_16": [
-   "CB"
-  ],
-  "rangers_4_2015_16": [
-   "FB"
-  ],
-  "rangers_5_2015_16": [
-   "DM",
-   "CM"
-  ],
-  "rangers_6_2015_16": [
-   "CM"
-  ],
-  "rangers_7_2015_16": [
-   "CM"
-  ],
-  "rangers_8_2015_16": [
-   "WM"
-  ],
-  "rangers_9_2015_16": [
-   "FW"
-  ],
-  "rangers_10_2015_16": [
-   "WM"
-  ],
-  "anderlecht_0_2015_16": [
-   "GK"
-  ],
-  "anderlecht_1_2015_16": [
-   "FB"
-  ],
-  "anderlecht_2_2015_16": [
-   "CB"
-  ],
-  "anderlecht_3_2015_16": [
-   "CB"
-  ],
-  "anderlecht_4_2015_16": [
-   "FB"
-  ],
-  "anderlecht_5_2015_16": [
-   "DM",
-   "CM"
-  ],
-  "anderlecht_6_2015_16": [
-   "CM"
-  ],
-  "anderlecht_7_2015_16": [
-   "CM"
-  ],
-  "anderlecht_8_2015_16": [
-   "WM"
-  ],
-  "anderlecht_9_2015_16": [
-   "FW"
-  ],
-  "anderlecht_10_2015_16": [
-   "WM"
-  ],
-  "club_brugge_0_2015_16": [
-   "GK"
-  ],
-  "club_brugge_1_2015_16": [
-   "FB"
-  ],
-  "club_brugge_2_2015_16": [
-   "CB"
-  ],
-  "club_brugge_3_2015_16": [
-   "CB"
-  ],
-  "club_brugge_4_2015_16": [
-   "FB"
-  ],
-  "club_brugge_5_2015_16": [
-   "DM",
-   "CM"
-  ],
-  "club_brugge_6_2015_16": [
-   "CM"
-  ],
-  "club_brugge_7_2015_16": [
-   "CM"
-  ],
-  "club_brugge_8_2015_16": [
-   "WM"
-  ],
-  "club_brugge_9_2015_16": [
-   "FW"
-  ],
-  "club_brugge_10_2015_16": [
-   "WM"
-  ],
-  "dinamo_zagreb_0_2015_16": [
-   "GK"
-  ],
-  "dinamo_zagreb_1_2015_16": [
-   "FB"
-  ],
-  "dinamo_zagreb_2_2015_16": [
-   "CB"
-  ],
-  "dinamo_zagreb_3_2015_16": [
-   "CB"
-  ],
-  "dinamo_zagreb_4_2015_16": [
-   "FB"
-  ],
-  "dinamo_zagreb_5_2015_16": [
-   "DM",
-   "CM"
-  ],
-  "dinamo_zagreb_6_2015_16": [
-   "CM"
-  ],
-  "dinamo_zagreb_7_2015_16": [
-   "CM"
-  ],
-  "dinamo_zagreb_8_2015_16": [
-   "WM"
-  ],
-  "dinamo_zagreb_9_2015_16": [
-   "FW"
-  ],
-  "dinamo_zagreb_10_2015_16": [
-   "WM"
-  ],
-  "red_star_0_2015_16": [
-   "GK"
-  ],
-  "red_star_1_2015_16": [
-   "FB"
-  ],
-  "red_star_2_2015_16": [
-   "CB"
-  ],
-  "red_star_3_2015_16": [
-   "CB"
-  ],
-  "red_star_4_2015_16": [
-   "FB"
-  ],
-  "red_star_5_2015_16": [
-   "DM",
-   "CM"
-  ],
-  "red_star_6_2015_16": [
-   "CM"
-  ],
-  "red_star_7_2015_16": [
-   "CM"
-  ],
-  "red_star_8_2015_16": [
-   "WM"
-  ],
-  "red_star_9_2015_16": [
-   "FW"
-  ],
-  "red_star_10_2015_16": [
-   "WM"
-  ],
-  "partizan_0_2015_16": [
-   "GK"
-  ],
-  "partizan_1_2015_16": [
-   "FB"
-  ],
-  "partizan_2_2015_16": [
-   "CB"
-  ],
-  "partizan_3_2015_16": [
-   "CB"
-  ],
-  "partizan_4_2015_16": [
-   "FB"
-  ],
-  "partizan_5_2015_16": [
-   "DM",
-   "CM"
-  ],
-  "partizan_6_2015_16": [
-   "CM"
-  ],
-  "partizan_7_2015_16": [
-   "CM"
-  ],
-  "partizan_8_2015_16": [
-   "WM"
-  ],
-  "partizan_9_2015_16": [
-   "FW"
-  ],
-  "partizan_10_2015_16": [
-   "WM"
-  ],
-  "shakhtar_0_2015_16": [
-   "GK"
-  ],
-  "shakhtar_1_2015_16": [
-   "FB"
-  ],
-  "shakhtar_2_2015_16": [
-   "CB"
-  ],
-  "shakhtar_3_2015_16": [
-   "CB"
-  ],
-  "shakhtar_4_2015_16": [
-   "FB"
-  ],
-  "shakhtar_5_2015_16": [
-   "DM",
-   "CM"
-  ],
-  "shakhtar_6_2015_16": [
-   "CM"
-  ],
-  "shakhtar_7_2015_16": [
-   "CM"
-  ],
-  "shakhtar_8_2015_16": [
-   "WM"
-  ],
-  "shakhtar_9_2015_16": [
-   "FW"
-  ],
-  "shakhtar_10_2015_16": [
-   "WM"
-  ],
-  "dynamo_kyiv_0_2015_16": [
-   "GK"
-  ],
-  "dynamo_kyiv_1_2015_16": [
-   "FB"
-  ],
-  "dynamo_kyiv_2_2015_16": [
-   "CB"
-  ],
-  "dynamo_kyiv_3_2015_16": [
-   "CB"
-  ],
-  "dynamo_kyiv_4_2015_16": [
-   "FB"
-  ],
-  "dynamo_kyiv_5_2015_16": [
-   "DM",
-   "CM"
-  ],
-  "dynamo_kyiv_6_2015_16": [
-   "CM"
-  ],
-  "dynamo_kyiv_7_2015_16": [
-   "CM"
-  ],
-  "dynamo_kyiv_8_2015_16": [
-   "WM"
-  ],
-  "dynamo_kyiv_9_2015_16": [
-   "FW"
-  ],
-  "dynamo_kyiv_10_2015_16": [
-   "WM"
-  ],
-  "basaksehir_0_2015_16": [
-   "GK"
-  ],
-  "basaksehir_1_2015_16": [
-   "FB"
-  ],
-  "basaksehir_2_2015_16": [
-   "CB"
-  ],
-  "basaksehir_3_2015_16": [
-   "CB"
-  ],
-  "basaksehir_4_2015_16": [
-   "FB"
-  ],
-  "basaksehir_5_2015_16": [
-   "DM",
-   "CM"
-  ],
-  "basaksehir_6_2015_16": [
-   "CM"
-  ],
-  "basaksehir_7_2015_16": [
-   "CM"
-  ],
-  "basaksehir_8_2015_16": [
-   "WM"
-  ],
-  "basaksehir_9_2015_16": [
-   "FW"
-  ],
-  "basaksehir_10_2015_16": [
-   "WM"
-  ],
-  "copenhagen_0_2015_16": [
-   "GK"
-  ],
-  "copenhagen_1_2015_16": [
-   "FB"
-  ],
-  "copenhagen_2_2015_16": [
-   "CB"
-  ],
-  "copenhagen_3_2015_16": [
-   "CB"
-  ],
-  "copenhagen_4_2015_16": [
-   "FB"
-  ],
-  "copenhagen_5_2015_16": [
-   "DM",
-   "CM"
-  ],
-  "copenhagen_6_2015_16": [
-   "CM"
-  ],
-  "copenhagen_7_2015_16": [
-   "CM"
-  ],
-  "copenhagen_8_2015_16": [
-   "WM"
-  ],
-  "copenhagen_9_2015_16": [
-   "FW"
-  ],
-  "copenhagen_10_2015_16": [
-   "WM"
-  ],
-  "midtjylland_0_2015_16": [
-   "GK"
-  ],
-  "midtjylland_1_2015_16": [
-   "FB"
-  ],
-  "midtjylland_2_2015_16": [
-   "CB"
-  ],
-  "midtjylland_3_2015_16": [
-   "CB"
-  ],
-  "midtjylland_4_2015_16": [
-   "FB"
-  ],
-  "midtjylland_5_2015_16": [
-   "DM",
-   "CM"
-  ],
-  "midtjylland_6_2015_16": [
-   "CM"
-  ],
-  "midtjylland_7_2015_16": [
-   "CM"
-  ],
-  "midtjylland_8_2015_16": [
-   "WM"
-  ],
-  "midtjylland_9_2015_16": [
-   "FW"
-  ],
-  "midtjylland_10_2015_16": [
-   "WM"
-  ],
-  "salzburg_0_2015_16": [
-   "GK"
-  ],
-  "salzburg_1_2015_16": [
-   "FB"
-  ],
-  "salzburg_2_2015_16": [
-   "CB"
-  ],
-  "salzburg_3_2015_16": [
-   "CB"
-  ],
-  "salzburg_4_2015_16": [
-   "FB"
-  ],
-  "salzburg_5_2015_16": [
-   "DM",
-   "CM"
-  ],
-  "salzburg_6_2015_16": [
-   "CM"
-  ],
-  "salzburg_7_2015_16": [
-   "CM"
-  ],
-  "salzburg_8_2015_16": [
-   "WM"
-  ],
-  "salzburg_9_2015_16": [
-   "FW"
-  ],
-  "salzburg_10_2015_16": [
-   "WM"
-  ],
-  "bodoe_0_2015_16": [
-   "GK"
-  ],
-  "bodoe_1_2015_16": [
-   "FB"
-  ],
-  "bodoe_2_2015_16": [
-   "CB"
-  ],
-  "bodoe_3_2015_16": [
-   "CB"
-  ],
-  "bodoe_4_2015_16": [
-   "FB"
-  ],
-  "bodoe_5_2015_16": [
-   "DM",
-   "CM"
-  ],
-  "bodoe_6_2015_16": [
-   "CM"
-  ],
-  "bodoe_7_2015_16": [
-   "CM"
-  ],
-  "bodoe_8_2015_16": [
-   "WM"
-  ],
-  "bodoe_9_2015_16": [
-   "FW"
-  ],
-  "bodoe_10_2015_16": [
-   "WM"
-  ],
-  "ferencvaros_0_2015_16": [
-   "GK"
-  ],
-  "ferencvaros_1_2015_16": [
-   "FB"
-  ],
-  "ferencvaros_2_2015_16": [
-   "CB"
-  ],
-  "ferencvaros_3_2015_16": [
-   "CB"
-  ],
-  "ferencvaros_4_2015_16": [
-   "FB"
-  ],
-  "ferencvaros_5_2015_16": [
-   "DM",
-   "CM"
-  ],
-  "ferencvaros_6_2015_16": [
-   "CM"
-  ],
-  "ferencvaros_7_2015_16": [
-   "CM"
-  ],
-  "ferencvaros_8_2015_16": [
-   "WM"
-  ],
-  "ferencvaros_9_2015_16": [
-   "FW"
-  ],
-  "ferencvaros_10_2015_16": [
-   "WM"
-  ],
-  "slavia_prague_0_2015_16": [
-   "GK"
-  ],
-  "slavia_prague_1_2015_16": [
-   "FB"
-  ],
-  "slavia_prague_2_2015_16": [
-   "CB"
-  ],
-  "slavia_prague_3_2015_16": [
-   "CB"
-  ],
-  "slavia_prague_4_2015_16": [
-   "FB"
-  ],
-  "slavia_prague_5_2015_16": [
-   "DM",
-   "CM"
-  ],
-  "slavia_prague_6_2015_16": [
-   "CM"
-  ],
-  "slavia_prague_7_2015_16": [
-   "CM"
-  ],
-  "slavia_prague_8_2015_16": [
-   "WM"
-  ],
-  "slavia_prague_9_2015_16": [
-   "FW"
-  ],
-  "slavia_prague_10_2015_16": [
-   "WM"
-  ],
-  "sparta_prague_0_2015_16": [
-   "GK"
-  ],
-  "sparta_prague_1_2015_16": [
-   "FB"
-  ],
-  "sparta_prague_2_2015_16": [
-   "CB"
-  ],
-  "sparta_prague_3_2015_16": [
-   "CB"
-  ],
-  "sparta_prague_4_2015_16": [
-   "FB"
-  ],
-  "sparta_prague_5_2015_16": [
-   "DM",
-   "CM"
-  ],
-  "sparta_prague_6_2015_16": [
-   "CM"
-  ],
-  "sparta_prague_7_2015_16": [
-   "CM"
-  ],
-  "sparta_prague_8_2015_16": [
-   "WM"
-  ],
-  "sparta_prague_9_2015_16": [
-   "FW"
-  ],
-  "sparta_prague_10_2015_16": [
-   "WM"
-  ],
-  "legia_0_2015_16": [
-   "GK"
-  ],
-  "legia_1_2015_16": [
-   "FB"
-  ],
-  "legia_2_2015_16": [
-   "CB"
-  ],
-  "legia_3_2015_16": [
-   "CB"
-  ],
-  "legia_4_2015_16": [
-   "FB"
-  ],
-  "legia_5_2015_16": [
-   "DM",
-   "CM"
-  ],
-  "legia_6_2015_16": [
-   "CM"
-  ],
-  "legia_7_2015_16": [
-   "CM"
-  ],
-  "legia_8_2015_16": [
-   "WM"
-  ],
-  "legia_9_2015_16": [
-   "FW"
-  ],
-  "legia_10_2015_16": [
-   "WM"
-  ],
-  "malmo_0_2015_16": [
-   "GK"
-  ],
-  "malmo_1_2015_16": [
-   "FB"
-  ],
-  "malmo_2_2015_16": [
-   "CB"
-  ],
-  "malmo_3_2015_16": [
-   "CB"
-  ],
-  "malmo_4_2015_16": [
-   "FB"
-  ],
-  "malmo_5_2015_16": [
-   "DM",
-   "CM"
-  ],
-  "malmo_6_2015_16": [
-   "CM"
-  ],
-  "malmo_7_2015_16": [
-   "CM"
-  ],
-  "malmo_8_2015_16": [
-   "WM"
-  ],
-  "malmo_9_2015_16": [
-   "FW"
-  ],
-  "malmo_10_2015_16": [
-   "WM"
-  ],
-  "young_boys_0_2015_16": [
-   "GK"
-  ],
-  "young_boys_1_2015_16": [
-   "FB"
-  ],
-  "young_boys_2_2015_16": [
-   "CB"
-  ],
-  "young_boys_3_2015_16": [
-   "CB"
-  ],
-  "young_boys_4_2015_16": [
-   "FB"
-  ],
-  "young_boys_5_2015_16": [
-   "DM",
-   "CM"
-  ],
-  "young_boys_6_2015_16": [
-   "CM"
-  ],
-  "young_boys_7_2015_16": [
-   "CM"
-  ],
-  "young_boys_8_2015_16": [
-   "WM"
-  ],
-  "young_boys_9_2015_16": [
-   "FW"
-  ],
-  "young_boys_10_2015_16": [
-   "WM"
-  ],
-  "basel_0_2015_16": [
-   "GK"
-  ],
-  "basel_1_2015_16": [
-   "FB"
-  ],
-  "basel_2_2015_16": [
-   "CB"
-  ],
-  "basel_3_2015_16": [
-   "CB"
-  ],
-  "basel_4_2015_16": [
-   "FB"
-  ],
-  "basel_5_2015_16": [
-   "DM",
-   "CM"
-  ],
-  "basel_6_2015_16": [
-   "CM"
-  ],
-  "basel_7_2015_16": [
-   "CM"
-  ],
-  "basel_8_2015_16": [
-   "WM"
-  ],
-  "basel_9_2015_16": [
-   "FW"
-  ],
-  "basel_10_2015_16": [
-   "WM"
-  ],
-  "steaua_0_2015_16": [
-   "GK"
-  ],
-  "steaua_1_2015_16": [
-   "FB"
-  ],
-  "steaua_2_2015_16": [
-   "CB"
-  ],
-  "steaua_3_2015_16": [
-   "CB"
-  ],
-  "steaua_4_2015_16": [
-   "FB"
-  ],
-  "steaua_5_2015_16": [
-   "DM",
-   "CM"
-  ],
-  "steaua_6_2015_16": [
-   "CM"
-  ],
-  "steaua_7_2015_16": [
-   "CM"
-  ],
-  "steaua_8_2015_16": [
-   "WM"
-  ],
-  "steaua_9_2015_16": [
-   "FW"
-  ],
-  "steaua_10_2015_16": [
-   "WM"
-  ],
-  "rapid_0_2015_16": [
-   "GK"
-  ],
-  "rapid_1_2015_16": [
-   "FB"
-  ],
-  "rapid_2_2015_16": [
-   "CB"
-  ],
-  "rapid_3_2015_16": [
-   "CB"
-  ],
-  "rapid_4_2015_16": [
-   "FB"
-  ],
-  "rapid_5_2015_16": [
-   "DM",
-   "CM"
-  ],
-  "rapid_6_2015_16": [
-   "CM"
-  ],
-  "rapid_7_2015_16": [
-   "CM"
-  ],
-  "rapid_8_2015_16": [
-   "WM"
-  ],
-  "rapid_9_2015_16": [
-   "FW"
-  ],
-  "rapid_10_2015_16": [
-   "WM"
-  ],
-  "besiktas_0_2015_16": [
-   "GK"
-  ],
-  "besiktas_1_2015_16": [
-   "FB"
-  ],
-  "besiktas_2_2015_16": [
-   "CB"
-  ],
-  "besiktas_3_2015_16": [
-   "CB"
-  ],
-  "besiktas_4_2015_16": [
-   "FB"
-  ],
-  "besiktas_5_2015_16": [
-   "DM",
-   "CM"
-  ],
-  "besiktas_6_2015_16": [
-   "CM"
-  ],
-  "besiktas_7_2015_16": [
-   "CM"
-  ],
-  "besiktas_8_2015_16": [
-   "WM"
-  ],
-  "besiktas_9_2015_16": [
-   "FW"
-  ],
-  "besiktas_10_2015_16": [
-   "WM"
-  ],
-  "fc_copenhagen_0_2015_16": [
-   "GK"
-  ],
-  "fc_copenhagen_1_2015_16": [
-   "FB"
-  ],
-  "fc_copenhagen_2_2015_16": [
-   "CB"
-  ],
-  "fc_copenhagen_3_2015_16": [
-   "CB"
-  ],
-  "fc_copenhagen_4_2015_16": [
-   "FB"
-  ],
-  "fc_copenhagen_5_2015_16": [
-   "DM",
-   "CM"
-  ],
-  "fc_copenhagen_6_2015_16": [
-   "CM"
-  ],
-  "fc_copenhagen_7_2015_16": [
-   "CM"
-  ],
-  "fc_copenhagen_8_2015_16": [
-   "WM"
-  ],
-  "fc_copenhagen_9_2015_16": [
-   "FW"
-  ],
-  "fc_copenhagen_10_2015_16": [
-   "WM"
-  ]
- },
- "overrides": {}
+  "metadata": {
+    "dataset_version": "2026.09.24-v1",
+    "schema_version": "1.0",
+    "generated_at": "2026-09-24T00:00:00Z",
+    "description": "Derived position sets for the V1 dataset."
+  },
+  "positions": {
+    "valdes_2010_11": [
+      "GK"
+    ],
+    "alves_2010_11": [
+      "FB",
+      "WM"
+    ],
+    "abidal_2010_11": [
+      "FB",
+      "WM",
+      "CB"
+    ],
+    "pique_2010_11": [
+      "CB"
+    ],
+    "puyol_2010_11": [
+      "CB"
+    ],
+    "busquets_2010_11": [
+      "DM",
+      "CM",
+      "CB"
+    ],
+    "xavi_2010_11": [
+      "CM",
+      "AM"
+    ],
+    "iniesta_2010_11": [
+      "CM",
+      "AM"
+    ],
+    "pedro_2010_11": [
+      "WM",
+      "FW"
+    ],
+    "villa_2010_11": [
+      "FW",
+      "WM"
+    ],
+    "messi_2010_11": [
+      "FW",
+      "AM",
+      "WM"
+    ],
+    "mascherano_2010_11": [
+      "CB",
+      "FB",
+      "DM"
+    ],
+    "keita_2010_11": [
+      "DM",
+      "CM"
+    ],
+    "maxwell_2010_11": [
+      "FB",
+      "WM",
+      "CB"
+    ],
+    "afellay_2010_11": [
+      "WM",
+      "FW",
+      "AM"
+    ],
+    "adriano_2010_11": [
+      "WM",
+      "FW",
+      "AM",
+      "FB"
+    ],
+    "pinto_2010_11": [
+      "GK"
+    ],
+    "fontaas_2010_11": [
+      "CB",
+      "FB"
+    ],
+    "thiago_2010_11": [
+      "AM",
+      "WM"
+    ],
+    "montoya_2010_11": [
+      "FB",
+      "WM"
+    ],
+    "cech_2011_12": [
+      "GK"
+    ],
+    "ivanovic_2011_12": [
+      "CB",
+      "FB"
+    ],
+    "terry_2011_12": [
+      "CB"
+    ],
+    "cole_2011_12": [
+      "FB",
+      "WM",
+      "CB"
+    ],
+    "mikel_2011_12": [
+      "DM",
+      "CM",
+      "CB"
+    ],
+    "lampard_2011_12": [
+      "CM",
+      "AM"
+    ],
+    "ramires_2011_12": [
+      "CM",
+      "DM"
+    ],
+    "mata_2011_12": [
+      "WM",
+      "FW",
+      "AM"
+    ],
+    "malouda_2011_12": [
+      "WM",
+      "FW"
+    ],
+    "drogba_2011_12": [
+      "FW",
+      "WM"
+    ],
+    "cahill_2011_12": [
+      "CB"
+    ],
+    "torres_2011_12": [
+      "FW",
+      "AM",
+      "WM"
+    ],
+    "essien_2011_12": [
+      "CM",
+      "DM",
+      "AM"
+    ],
+    "alex_2011_12": [
+      "CB",
+      "FB"
+    ],
+    "meireles_2011_12": [
+      "DM",
+      "CM"
+    ],
+    "bosingwa_2011_12": [
+      "FB",
+      "WM",
+      "CB"
+    ],
+    "kalou_2011_12": [
+      "WM",
+      "FW"
+    ],
+    "david_luiz_2011_12": [
+      "CB",
+      "FB",
+      "DM"
+    ],
+    "sturridge_2011_12": [
+      "WM",
+      "FW",
+      "AM"
+    ],
+    "hilario_2011_12": [
+      "GK"
+    ],
+    "ferreira_2011_12": [
+      "FB",
+      "WM"
+    ],
+    "van_der_sar_2007_08": [
+      "GK"
+    ],
+    "ferdinand_2007_08": [
+      "CB",
+      "FB",
+      "DM"
+    ],
+    "vidic_2007_08": [
+      "CB",
+      "FB"
+    ],
+    "evra_2007_08": [
+      "FB",
+      "WM",
+      "CB"
+    ],
+    "brown_2007_08": [
+      "CB",
+      "FB"
+    ],
+    "hargreaves_2007_08": [
+      "DM",
+      "CM",
+      "CB"
+    ],
+    "carrick_2007_08": [
+      "CM",
+      "DM",
+      "AM"
+    ],
+    "scholes_2007_08": [
+      "CM",
+      "DM",
+      "AM"
+    ],
+    "giggs_2007_08": [
+      "WM",
+      "FW",
+      "AM"
+    ],
+    "ronaldo_2007_08": [
+      "WM",
+      "FW",
+      "AM"
+    ],
+    "rooney_2007_08": [
+      "FW",
+      "AM",
+      "WM"
+    ],
+    "tevez_2007_08": [
+      "FW",
+      "AM",
+      "WM"
+    ],
+    "berbatov_2007_08": [
+      "FW",
+      "AM",
+      "WM"
+    ],
+    "anderson_2007_08": [
+      "AM",
+      "CM",
+      "WM"
+    ],
+    "nani_2007_08": [
+      "WM",
+      "FW",
+      "AM"
+    ],
+    "neville_g_2007_08": [
+      "FB",
+      "WM",
+      "CB"
+    ],
+    "park_2007_08": [
+      "WM",
+      "FB"
+    ],
+    "fletcher_2007_08": [
+      "CM",
+      "DM"
+    ],
+    "kuszczak_2007_08": [
+      "GK"
+    ],
+    "oshea_2007_08": [
+      "DM",
+      "CM"
+    ],
+    "silvestre_2007_08": [
+      "FB",
+      "WM",
+      "CB"
+    ],
+    "casillas_2011_12": [
+      "GK"
+    ],
+    "ramos_2011_12": [
+      "CB",
+      "FB",
+      "DM"
+    ],
+    "pepe_2011_12": [
+      "CB",
+      "FB"
+    ],
+    "marcelo_2011_12": [
+      "FB",
+      "WM"
+    ],
+    "arbeloa_2011_12": [
+      "FB",
+      "WM",
+      "CB"
+    ],
+    "alonso_2011_12": [
+      "DM",
+      "CM",
+      "CB"
+    ],
+    "khedira_2011_12": [
+      "DM",
+      "CM",
+      "CB"
+    ],
+    "ozil_2011_12": [
+      "AM",
+      "FW",
+      "WM"
+    ],
+    "di_maria_2011_12": [
+      "WM",
+      "FW",
+      "AM",
+      "FB"
+    ],
+    "benzema_2011_12": [
+      "FW",
+      "AM",
+      "WM"
+    ],
+    "ronaldo_2011_12": [
+      "WM",
+      "FW",
+      "AM"
+    ],
+    "higuain_2011_12": [
+      "FW",
+      "AM",
+      "WM"
+    ],
+    "modric_2011_12": [
+      "CM",
+      "DM",
+      "AM"
+    ],
+    "varane_2011_12": [
+      "CB",
+      "FB"
+    ],
+    "coentrao_2011_12": [
+      "FB",
+      "WM",
+      "CB"
+    ],
+    "kaka_2011_12": [
+      "AM",
+      "FW",
+      "WM"
+    ],
+    "callejon_2011_12": [
+      "WM",
+      "FW"
+    ],
+    "albiol_2011_12": [
+      "CB",
+      "FB",
+      "DM"
+    ],
+    "diego_lopez_2011_12": [
+      "GK"
+    ],
+    "neuer_2012_13": [
+      "GK"
+    ],
+    "lahm_2012_13": [
+      "FB",
+      "WM",
+      "CB"
+    ],
+    "boateng_2012_13": [
+      "CB",
+      "FB",
+      "DM"
+    ],
+    "dante_2012_13": [
+      "CB",
+      "FB"
+    ],
+    "alaba_2012_13": [
+      "FB",
+      "WM",
+      "CB"
+    ],
+    "schweinsteiger_2012_13": [
+      "DM",
+      "CM",
+      "CB"
+    ],
+    "javi_martinez_2012_13": [
+      "DM",
+      "CM",
+      "CB"
+    ],
+    "ribery_2012_13": [
+      "WM",
+      "FW",
+      "AM",
+      "FB"
+    ],
+    "muller_2012_13": [
+      "AM",
+      "CM",
+      "FW",
+      "WM"
+    ],
+    "robben_2012_13": [
+      "WM",
+      "FW",
+      "AM"
+    ],
+    "gomez_2012_13": [
+      "FW",
+      "WM"
+    ],
+    "mandzukic_2012_13": [
+      "FW",
+      "WM"
+    ],
+    "kroos_2012_13": [
+      "AM",
+      "CM",
+      "FW",
+      "WM"
+    ],
+    "badstuber_2012_13": [
+      "CB",
+      "FB",
+      "DM"
+    ],
+    "van_buyten_2012_13": [
+      "CB",
+      "FB"
+    ],
+    "shaqiri_2012_13": [
+      "WM",
+      "FW",
+      "AM"
+    ],
+    "luiz_gustavo_2012_13": [
+      "DM",
+      "CM",
+      "CB"
+    ],
+    "pizarro_2012_13": [
+      "FW",
+      "AM"
+    ],
+    "tymoshchuk_2012_13": [
+      "DM",
+      "CM",
+      "CB"
+    ],
+    "hart_2011_12": [
+      "GK"
+    ],
+    "richards_2011_12": [
+      "FB",
+      "WM",
+      "CB"
+    ],
+    "kompany_2011_12": [
+      "CB",
+      "FB"
+    ],
+    "lescott_2011_12": [
+      "CB",
+      "FB"
+    ],
+    "clichy_2011_12": [
+      "FB",
+      "WM",
+      "CB"
+    ],
+    "de_jong_2011_12": [
+      "DM",
+      "CM",
+      "CB"
+    ],
+    "barry_2011_12": [
+      "DM",
+      "CM",
+      "CB"
+    ],
+    "silva_2011_12": [
+      "AM",
+      "FW",
+      "WM"
+    ],
+    "nasri_2011_12": [
+      "AM",
+      "FW",
+      "WM"
+    ],
+    "tevez_mc_2011_12": [
+      "FW",
+      "AM",
+      "WM"
+    ],
+    "aguero_2011_12": [
+      "FW",
+      "AM",
+      "WM"
+    ],
+    "yaya_toure_2011_12": [
+      "CM",
+      "DM",
+      "AM"
+    ],
+    "balotelli_2011_12": [
+      "FW",
+      "WM"
+    ],
+    "milner_2011_12": [
+      "CM",
+      "DM",
+      "AM"
+    ],
+    "zabaleta_2011_12": [
+      "FB",
+      "WM",
+      "CB"
+    ],
+    "kolarov_2011_12": [
+      "FB",
+      "WM",
+      "CB"
+    ],
+    "dzeko_2011_12": [
+      "FW",
+      "AM",
+      "WM"
+    ],
+    "johnson_a_2011_12": [
+      "WM",
+      "FW",
+      "AM"
+    ],
+    "kolo_toure_2011_12": [
+      "CB",
+      "FB"
+    ],
+    "weidenfeller_2012_13": [
+      "GK"
+    ],
+    "piszczek_2012_13": [
+      "FB",
+      "WM",
+      "CB"
+    ],
+    "hummels_2012_13": [
+      "CB",
+      "FB",
+      "DM"
+    ],
+    "subotic_2012_13": [
+      "CB",
+      "FB",
+      "DM"
+    ],
+    "schmelzer_2012_13": [
+      "FB",
+      "WM",
+      "CB"
+    ],
+    "gundogan_2012_13": [
+      "DM",
+      "CM",
+      "CB"
+    ],
+    "bender_2012_13": [
+      "DM",
+      "CM",
+      "CB"
+    ],
+    "gotze_2012_13": [
+      "AM",
+      "FW",
+      "WM"
+    ],
+    "reus_2012_13": [
+      "AM",
+      "CM",
+      "FW",
+      "WM"
+    ],
+    "blaszczykowski_2012_13": [
+      "WM",
+      "FW",
+      "AM"
+    ],
+    "lewandowski_2012_13": [
+      "FW",
+      "AM",
+      "WM"
+    ],
+    "sahin_2012_13": [
+      "CM",
+      "DM",
+      "AM"
+    ],
+    "kehl_2012_13": [
+      "DM",
+      "CM",
+      "CB"
+    ],
+    "langerak_2012_13": [
+      "GK"
+    ],
+    "perisic_2012_13": [
+      "WM",
+      "FW",
+      "AM"
+    ],
+    "santana_2012_13": [
+      "CB",
+      "FB"
+    ],
+    "julio_cesar_2009_10": [
+      "GK"
+    ],
+    "maicon_2009_10": [
+      "FB",
+      "WM",
+      "CB"
+    ],
+    "samuel_2009_10": [
+      "CB",
+      "FB"
+    ],
+    "lucio_2009_10": [
+      "CB",
+      "FB"
+    ],
+    "zanetti_2009_10": [
+      "DM",
+      "CM",
+      "CB"
+    ],
+    "cambiasso_2009_10": [
+      "DM",
+      "CM",
+      "CB"
+    ],
+    "sneijder_2009_10": [
+      "AM",
+      "FW",
+      "WM"
+    ],
+    "etoo_2009_10": [
+      "FW",
+      "AM",
+      "WM"
+    ],
+    "pandev_2009_10": [
+      "AM",
+      "FW",
+      "WM"
+    ],
+    "milito_d_2009_10": [
+      "FW",
+      "AM",
+      "WM"
+    ],
+    "stankovic_2009_10": [
+      "CM",
+      "DM",
+      "AM"
+    ],
+    "thiago_motta_2009_10": [
+      "CM",
+      "DM",
+      "AM"
+    ],
+    "chivu_2009_10": [
+      "FB",
+      "WM",
+      "CB"
+    ],
+    "cordoba_2009_10": [
+      "CB",
+      "FB"
+    ],
+    "castellazzi_2009_10": [
+      "GK"
+    ],
+    "muntari_2009_10": [
+      "CM",
+      "DM"
+    ],
+    "santon_2009_10": [
+      "FB",
+      "WM",
+      "CB"
+    ],
+    "buffon_2011_12": [
+      "GK"
+    ],
+    "chiellini_2011_12": [
+      "CB",
+      "FB"
+    ],
+    "bonucci_2011_12": [
+      "CB",
+      "FB",
+      "DM"
+    ],
+    "barzagli_2011_12": [
+      "CB",
+      "FB"
+    ],
+    "lichtsteiner_2011_12": [
+      "FB",
+      "WM",
+      "CB"
+    ],
+    "pirlo_2011_12": [
+      "DM",
+      "CM"
+    ],
+    "vidal_2011_12": [
+      "DM",
+      "CM",
+      "CB"
+    ],
+    "marchisio_2011_12": [
+      "CM",
+      "DM",
+      "AM"
+    ],
+    "elia_2011_12": [
+      "WM",
+      "FW",
+      "AM"
+    ],
+    "vucinic_2011_12": [
+      "FW",
+      "AM",
+      "WM"
+    ],
+    "matri_2011_12": [
+      "FW",
+      "WM"
+    ],
+    "quagliarella_2011_12": [
+      "FW",
+      "WM"
+    ],
+    "storari_2011_12": [
+      "GK"
+    ],
+    "krasic_2011_12": [
+      "WM",
+      "FW",
+      "AM"
+    ],
+    "pepe_juve_2011_12": [
+      "WM",
+      "FW"
+    ],
+    "szczesny_2012_13": [
+      "GK"
+    ],
+    "sagna_2012_13": [
+      "FB",
+      "WM",
+      "CB"
+    ],
+    "mertesacker_2012_13": [
+      "CB",
+      "DM"
+    ],
+    "koscielny_2012_13": [
+      "CB",
+      "FB"
+    ],
+    "vermaelen_2012_13": [
+      "CB",
+      "FB",
+      "DM"
+    ],
+    "gibbs_2012_13": [
+      "FB",
+      "WM",
+      "CB"
+    ],
+    "arteta_2012_13": [
+      "CM",
+      "DM",
+      "AM"
+    ],
+    "cazorla_2012_13": [
+      "AM",
+      "CM",
+      "FW",
+      "WM"
+    ],
+    "walcott_2012_13": [
+      "WM",
+      "FW",
+      "AM"
+    ],
+    "gervinho_2012_13": [
+      "WM",
+      "FW"
+    ],
+    "giroud_2012_13": [
+      "FW",
+      "WM"
+    ],
+    "wilshere_2012_13": [
+      "CM",
+      "AM"
+    ],
+    "rosicky_2012_13": [
+      "AM",
+      "CM",
+      "FW",
+      "WM"
+    ],
+    "podolski_2012_13": [
+      "WM",
+      "FW",
+      "AM"
+    ],
+    "fabianski_2012_13": [
+      "GK"
+    ],
+    "ramsey_2012_13": [
+      "CM",
+      "AM"
+    ],
+    "oxlade_2012_13": [
+      "WM",
+      "FW"
+    ],
+    "monreal_2012_13": [
+      "FB",
+      "WM",
+      "CB"
+    ]
+  },
+  "overrides": {}
 }

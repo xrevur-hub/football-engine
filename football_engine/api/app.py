@@ -24,7 +24,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from football_engine.api import adapter, sessions
+from football_engine.api import adapter, sessions, tournament
 from football_engine.api.adapter import AdapterError
 
 WEB_DIR = Path(__file__).resolve().parents[2] / "web"
@@ -75,6 +75,11 @@ class SimulateRequest(BaseModel):
     user_is_home: bool = True
     seed: int | None = None
     match_id: str = "web_match"
+
+
+class StartTournamentRequest(BaseModel):
+    placements: list[Placement] = Field(..., min_length=11, max_length=11)
+    seed: int | None = None
 
 
 # --------------------------------------------------------------------------
@@ -184,6 +189,26 @@ def simulate(req: SimulateRequest) -> dict:
         seed=req.seed,
         match_id=req.match_id,
     )
+
+
+@app.post("/api/tournament/start")
+def tournament_start(req: StartTournamentRequest) -> dict:
+    """
+    Run a full 36-team UCL season with the user's drafted, freely placed XI
+    as one of the participants. This can take several seconds (36 league
+    matches + knockouts, each through the real MatchOrchestrator) — it is
+    synchronous by design so the response is the complete, real result.
+    """
+    return _guard(
+        tournament.start_tournament,
+        [p.model_dump() for p in req.placements],
+        req.seed,
+    )
+
+
+@app.get("/api/tournament/{session_id}")
+def tournament_get(session_id: str) -> dict:
+    return _guard(tournament.get_tournament, session_id)
 
 
 # --------------------------------------------------------------------------

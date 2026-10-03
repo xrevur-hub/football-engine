@@ -142,8 +142,11 @@ XI = [(3, 0), (0, 2), (2, 1), (3, 1), (4, 1), (6, 2), (2, 4), (3, 4), (4, 4), (2
 @step("grid maps onto a Formation")
 def _():
     from football_engine.api.pitch_formation import build_formation, shape_label, normalize_placements
-    team = REPOS.teams.get(REPOS.teams.ids()[0]) if hasattr(REPOS.teams, "ids") else None
-    roster = list(team.roster) if team else [p.id for p in REPOS.players.all(include_placeholder=False)[:11]]
+    real_teams = sorted(REPOS.teams.all(include_placeholder=False), key=lambda t: t.id)
+    roster = list(real_teams[0].roster)[:11] if real_teams else \
+        [p.id for p in REPOS.players.all(include_placeholder=False)[:11]]
+    if len(roster) < 11:
+        raise RuntimeError(f"first team has only {len(roster)} players; need 11 for a free XI")
     placements = [{"player_id": roster[i], "col": c, "row": r} for i, (c, r) in enumerate(XI)]
     globals()["PLACEMENTS"] = placements
     formation = build_formation(placements)
@@ -157,6 +160,7 @@ def _():
     built = adapter.build_user_team(PLACEMENTS)
     d = built["dto"]["dimensions"]
     globals()["USER_DTO"] = built["dto"]
+    globals()["USER_DTO_ENGINE"] = built["engine"]
     return (f"att {d['attack']:.0f} cre {d['creation']:.0f} "
             f"def {d['defense']:.0f} gk {d['goalkeeping']:.0f}")
 
@@ -214,14 +218,89 @@ def _():
     return f"defensive cover 6-3-1={out['6-3-1']:.2f} > 2-3-5={out['2-3-5']:.2f}"
 
 
-print("\n=== 7. api surface ===")
+print("\n=== 8. UCL tournament with user team ===")
+
+
+@step("user team registers as an external roster and enters the field")
+def _():
+    from football_engine.competition.ucl import ExternalRoster, UCLRunner
+    runner = UCLRunner(data_dir=DATA, seed=1)
+    runner.register_external_roster(
+        "your_xi",
+        ExternalRoster(formation=USER_DTO_ENGINE["formation"], players=USER_DTO_ENGINE["effective_xi"]),
+    )
+    formation, players = runner._resolve_side("your_xi")
+    assert formation is USER_DTO_ENGINE["formation"]
+    assert [p.id for p in players] == [p.id for p in USER_DTO_ENGINE["effective_xi"]]
+    return "external roster resolves unchanged"
+
+
+@step("no builtin hash() used for tournament determinism")
+def _():
+    import ast
+    src = (ROOT / "football_engine" / "competition" / "ucl.py").read_text()
+    calls = [n.lineno for n in ast.walk(ast.parse(src))
+             if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == "hash"]
+    if calls:
+        raise RuntimeError(f"builtin hash() called at line(s) {calls}")
+    return "clean"
+
+
+@step("match seeds are stable across processes")
+def _():
+    import subprocess, sys
+    script = (
+        f"import sys; sys.path.insert(0, {str(ROOT)!r})\n"
+        "from football_engine.rng.seeded_rng import SeededRNG\n"
+        "print(SeededRNG.derive_match_seed('a', 'b', '2025-01-01', 'm'))\n"
+    )
+    outs = [subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, check=True).stdout.strip()
+            for _ in range(2)]
+    if outs[0] != outs[1]:
+        raise RuntimeError(f"seed differs across processes: {outs}")
+    return outs[0]
+
+
+@step("a full 36-team tournament runs with the user's team and reaches a champion")
+def _():
+    from football_engine.api import tournament
+    result = tournament.start_tournament(PLACEMENTS, seed=42)
+    globals()["TOURNAMENT_RESULT"] = result
+    assert any(s["team"] == "your_xi" for s in result["standings"]), "user team missing from standings"
+    assert result["champion"] in (result["final"]["home"], result["final"]["away"])
+    return f"champion={result['champion']}, user reached {result['user_result']['stage_reached']}"
+
+
+@step("same seed reproduces the same tournament result")
+def _():
+    from football_engine.api import tournament
+    again = tournament.start_tournament(PLACEMENTS, seed=42)
+    assert again["champion"] == TOURNAMENT_RESULT["champion"]
+    assert again["final"]["score"] == TOURNAMENT_RESULT["final"]["score"]
+    return "reproducible"
+
+
+@step("no duplicate match seeds within one tournament's knockout stages")
+def _():
+    ids = []
+    for key in ("playoff_ties", "r16_ties", "qf_ties", "sf_ties"):
+        for tie in TOURNAMENT_RESULT[key]:
+            for leg in tie["legs"]:
+                ids.append(leg["match_id"])
+    if len(ids) != len(set(ids)):
+        raise RuntimeError("duplicate match_id found across knockout ties")
+    return f"{len(ids)} unique knockout match ids"
+
+
+print("\n=== 9. api surface ===")
 
 
 @step("FastAPI app imports and routes are registered")
 def _():
     from football_engine.api.app import app
     paths = sorted({r.path for r in app.routes if r.path.startswith("/api")})
-    required = ["/api/health", "/api/players", "/api/draft/start", "/api/match/simulate", "/api/role-fit"]
+    required = ["/api/health", "/api/players", "/api/draft/start", "/api/match/simulate",
+                "/api/role-fit", "/api/tournament/start", "/api/tournament/{session_id}"]
     missing = [p for p in required if p not in paths]
     if missing:
         raise RuntimeError(f"missing routes: {missing}")

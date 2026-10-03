@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://football-engine.local/schemas/possession_tendency.schema.json",
+  "title": "Possession Tendency Dataset",
+  "type": "object",
+  "required": [
+    "metadata",
+    "possession_tendencies"
+  ],
+  "properties": {
+    "metadata": {
+      "type": "object"
+    },
+    "possession_tendencies": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "team_season_id",
+          "possession_tendency",
+          "source_metadata"
+        ],
+        "properties": {
+          "team_season_id": {
+            "type": "string"
+          },
+          "possession_tendency": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "source_metadata": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  }
+}
